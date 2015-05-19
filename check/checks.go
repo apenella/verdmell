@@ -41,6 +41,16 @@ func (c *Checks) GetCheck() map[string]CheckObject{
 //#---------------------------------------------------------------------
 
 //
+//# AddCheck: method add a new check to the Checks struct
+func (c *Checks) AddCheck(obj CheckObject) error { 
+  if _,exist := c.Check[obj.GetName()]; !exist{
+    env.Output.WriteChDebug("(Checks::AddCheck) New Check '"+obj.GetName()+"'")
+    c.Check[obj.GetName()] = obj
+  }
+  return nil
+}
+
+//
 //# GetCheckNames: returns an array with the check namess defined on Checks object 
 func (c *Checks) GetCheckNames() []string {
   var names []string
@@ -122,7 +132,7 @@ func (c *Checks) StartCheckTaskPools() (error, int){
     runGraphList[check.GetName()] = nil
     // each check will run under its own goroutine
     go func (o CheckObject, rgl map[string]interface{}) {
-      env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing taks for '"+o.GetName()+"''s pool")
+      env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing tasks for '"+o.GetName()+"''s pool")
       if err,exit := c.InitCheckTasks(o, rgl); err == nil {
         statusChan <- exit        
       } else {
@@ -350,7 +360,7 @@ func RetrieveChecks(folder string) *Checks{
       select{
         // get a CheckObject object
         case obj := <- checkObjChan:
-          env.Output.WriteChDebug("check (-::RetrieveChecks::gorutine) New check to store: "+obj.GetName())
+          env.Output.WriteChDebug("check (Checks::RetrieveChecks::gorutine) New check to store: "+obj.GetName())
           if _,exist := checks[obj.GetName()]; !exist{
             checks[obj.GetName()] = obj
           }
