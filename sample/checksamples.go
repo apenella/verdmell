@@ -18,12 +18,12 @@ package sample
 //# CheckResult struct:
 //# CheckResult defines a map to store the maps
 type CheckSample struct{
-  check string
-	exit int
-  output string
-  expirationTime time.Duration
-  elapsedTime time.Duration
-  sampletime time.Time
+  check string `json:"check"`
+	exit int `json:"exit"`
+  output string `json:"output"`
+  sampleTime time.Time `json:"sampletime"`
+  expirationTime time.Duration `json:"expirationtime"`
+  elapsedTime time.Duration `json:"elapsedtime"`
 }
 
 //#
@@ -56,7 +56,7 @@ func (s *CheckSample) SetElapsedTime(d time.Duration){
 //
 //# SetSampletime: method sets the value for the CheckObject object sample
 func (s *CheckSample) SetSampletime(t time.Time){
-  s.sampletime = t
+  s.sampleTime = t
 }
 //
 //# GetCheck: method sets the Name value for the CheckObject object sample
@@ -86,7 +86,7 @@ func (s *CheckSample) GetElapsedTime() time.Duration {
 //
 //# GetSampletime: method sets the value for the CheckObject object sample
 func (s *CheckSample) GetSampletime() time.Time {
-  return s.sampletime
+  return s.sampleTime
 }
 
 //
