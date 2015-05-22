@@ -38,11 +38,12 @@ func NewCheckSystem(e *environment.Environment) (error, *CheckSystem){
 
   // get the environment attributes
   env = e
+
   // folder contains check definitions
   folder := env.Setup.Checksfolder
-  //Get defined checks
+  // Get defined checks
+  // validate checks and set the checks into check system
   ck := RetrieveChecks(folder)
-
   if err = ck.ValidateChecks(nil); err == nil {
     cks.SetChecks(ck)
     //Init the running queues to proceed the executions
@@ -51,19 +52,21 @@ func NewCheckSystem(e *environment.Environment) (error, *CheckSystem){
     return err, nil
   }
 
-   if err, ss = sample.NewSampleSystem(env); err == nil {
-     cks.SetSampleSystem(ss)
-   } else {
-     return err, nil
-   }
-
-  //Get defined checks groups
+  // Get defined checks groups
+  // validate checks and set the checks into check system
   cg := RetrieveCheckgroups(folder)
   if err := cg.ValidateCheckgroups(ck); err == nil {
     cks.SetCheckgroups(cg)
   } else {
     return err, nil
   }  
+  
+  // starting sample system
+  if err, ss = sample.NewSampleSystem(env); err == nil {
+   cks.SetSampleSystem(ss)
+  } else {
+   return err, nil
+  }
 
 	return err, cks
 }
@@ -115,16 +118,34 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
   statusChan := make(chan int)
   defer close(statusChan)
 
+  // the next will be only used during ec or eg
+  // check will contain the Check configurations
+  check := new(Checks)
+  // checks will contain all the CheckObject definition
+  checks := make(map[string]CheckObject)
+  //
+
   switch req := i.(type){
   case *CheckObject:
-    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Starting the check: "+req.String())
-    
-    // starting the check object task for the gived check
-    //_,result = req.StartCheckObjectTask()
-    
+    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Starting the check '"+req.String()+"'")
+    //add the check to be executed
+    checks[req.GetName()] = *req
+    //add the check dependencies
+    for _,dependency := range req.GetDepend(){
+      if checkObj, err := c.Ck.GetCheckObjectByName(dependency); err != nil {
+        return err,2
+      } else {
+        if _,exist := checks[dependency]; !exist{
+          checks[dependency] = *checkObj
+        }
+      }
+    }
+
+    check.SetCheck(checks)
+
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := req.StartCheckObjectTask();
+      _,res := check.StartCheckTaskPools()
       statusChan <- res
     }()
     // waiting the CheckObject result
@@ -135,35 +156,51 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
     env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Running a Checkgroup")
 
     for _,checkname := range req {
-      env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Running the checkgroup check: "+checkname)
-      checks := c.GetChecks()
+      env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Preparing the check '"+checkname+"'")
+      cks := c.GetChecks()
 
-      if checkObj, err := checks.GetCheckObjectByName(checkname); err != nil {
+      if checkObj, err := cks.GetCheckObjectByName(checkname); err != nil {
         return err,2
-      } else {        
+      } else {
+        if _,exist := checks[checkname]; !exist{
+          checks[checkname] = *checkObj
+        }
+        //add the check dependencies
+        for _,dependency := range checkObj.GetDepend(){
+          if checkObjdependency, err := c.Ck.GetCheckObjectByName(dependency); err != nil {
+            return err,2
+          } else {
+            if _,exist := checks[dependency]; !exist{
+              checks[dependency] = *checkObjdependency
+            }
+          }
+        }
+      }
+    }
+    check.SetCheck(checks)
+    // run a goroutine for each checkObject and write the result to the channel
+    go func() {
+      _,res := check.StartCheckTaskPools()
+      statusChan <- res
+    }()
 
-        // run a goroutine for each checkObject and write the result to the channel
-        go func() {
-          _,res := checkObj.StartCheckObjectTask();
-          statusChan <- res
-        }()
-      }
-    }
     // waiting the CheckObjects results
-    for i:= 0; i<len(req); i++{
-      subExitStatus := <-statusChan
-      if exitStatus < subExitStatus {
-        exitStatus = subExitStatus
-      }
-      env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(subExitStatus)+"' done")
-    }
+    exitStatus = <-statusChan
+    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(exitStatus)+"' done")
+    // for i:= 0; i<len(req); i++{
+    //   subExitStatus := <-statusChan
+    //   if exitStatus < subExitStatus {
+    //     exitStatus = subExitStatus
+    //   }
+    //   env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(subExitStatus)+"' done")
+    // }
     
   default:
-    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Running all checks")
-    
+    //env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Running all checks")
     // Get Checks attribute from CheckSystem
-    checks :=  c.GetChecks()
-    _,exitStatus = checks.StartCheckTaskPools()
+    //checks :=  c.GetChecks()
+    //_,exitStatus = checks.StartCheckTaskPools()
+    _,exitStatus = c.GetChecksExitStatus()
   }
 
   if exitStatus < 0 {
@@ -172,6 +209,18 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
 
   return nil,exitStatus
 }
+
+//
+//# GetChecksExitStatus: return the status of all checks
+func (c *CheckSystem) GetChecksExitStatus() (error, int) {
+  env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
+  // Get Checks attribute from CheckSystem
+  checks :=  c.GetChecks()
+  _,exitStatus := checks.StartCheckTaskPools()
+
+  return nil, exitStatus
+}
+
 //
 //# InitCheckRunningQueues: prepares each checkobject to be run
 func (c *CheckSystem) InitCheckRunningQueues() error {
