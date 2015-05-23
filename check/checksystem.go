@@ -145,7 +145,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
 
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := check.StartCheckTaskPools()
+      _,res := check.StartCheckTaskPools(c.GetSampleSystem())
       statusChan <- res
     }()
     // waiting the CheckObject result
@@ -180,7 +180,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
     check.SetCheck(checks)
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := check.StartCheckTaskPools()
+      _,res := check.StartCheckTaskPools(c.GetSampleSystem())
       statusChan <- res
     }()
 
@@ -216,9 +216,28 @@ func (c *CheckSystem) GetChecksExitStatus() (error, int) {
   env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
   // Get Checks attribute from CheckSystem
   checks :=  c.GetChecks()
-  _,exitStatus := checks.StartCheckTaskPools()
+
+  env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Samples:"+c.Cs.String())
+
+  _,exitStatus := checks.StartCheckTaskPools(c.GetSampleSystem())
+
+  c.GetChecksAllSamples()
 
   return nil, exitStatus
+}
+
+//
+//# GetChecksSamples: return the status of all checks
+func (c *CheckSystem) GetChecksAllSamples() {
+  env.Output.WriteChDebug("(CheckSystem::GetChecksSamples)")
+  // Get Checks attribute from CheckSystem
+  checks :=  c.GetChecks()
+  samplesystem := c.GetSampleSystem()
+
+  for check := range checks.Check {
+    _,s := samplesystem.GetSample(check)
+    env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+s.String())
+  }
 }
 
 //
@@ -232,7 +251,6 @@ func (c *CheckSystem) InitCheckRunningQueues() error {
         checkObj.StartQueue()
       }(obj)
   }
-
   return nil
 }
 // InitCheckRunningQueues

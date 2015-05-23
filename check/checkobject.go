@@ -29,12 +29,13 @@ type CheckObject struct{
   Command string `json:"command"`
   Depend []string `json:"depend"`
   ExpirationTime int `json:"expirationTime"`
-  Interval int `json: "interval"` 
+  Interval int `json: "interval"`
   Custom interface{}
 
   //Queues
   TaskQueue chan *CheckObject
-  StatusChan chan int
+  //StatusChan chan int
+  SampleChan chan *sample.CheckSample
 }
 
 //#
@@ -69,10 +70,14 @@ func (c *CheckObject) SetInterval(i int) {
 func (c *CheckObject) SetTaskQueue(q chan *CheckObject) {
   c.TaskQueue = q
 }
-//# SetStatusChan: method sets the StatusChan value for the CheckObject object
-func (c *CheckObject) SetStatusChan(sc chan int) {
-  c.StatusChan = sc
+//# SetSampleChan: method sets the StatusChan value for the CheckObject object
+func (c *CheckObject) SetSampleChan(sc chan *sample.CheckSample) {
+  c.SampleChan = sc
 }
+// //# SetStatusChan: method sets the StatusChan value for the CheckObject object
+// func (c *CheckObject) SetStatusChan(sc chan int) {
+//   c.StatusChan = sc
+// }
 
 //# GetName: method returns the Name value for the CheckObject object
 func (c *CheckObject) GetName() string {
@@ -102,10 +107,14 @@ func (c *CheckObject) GetInterval() int{
 func (c *CheckObject) GetTaskQueue() chan *CheckObject{
   return c.TaskQueue
 }
-//# GetStatusChan: method returns the StatusChan value for the CheckObject object
-func (c *CheckObject) GetStatusChan() chan int{
-  return c.StatusChan
+//# GetSampleChan: method returns the StatusChan value for the CheckObject object
+func (c *CheckObject) GetSampleChan() chan *sample.CheckSample{
+  return c.SampleChan
 }
+// //# GetStatusChan: method returns the StatusChan value for the CheckObject object
+// func (c *CheckObject) GetStatusChan() chan int{
+//   return c.StatusChan
+// }
 
 //#
 //# Common methods
@@ -114,11 +123,11 @@ func (c *CheckObject) GetStatusChan() chan int{
 //# String: converts a CheckObject object to string
 func (c *CheckObject) String() string {
   str := "{"
-  str += " Name: '"+c.GetName()+"',"
-  str += " Description: '"+c.GetDescription()+"',"
-  str += " Command: '"+c.GetCommand()+"',"
-  str += " Expiration Time: '"+strconv.Itoa(c.GetExpirationTime())+"' ,"
-  str += " Depend: ["
+  str += " name: '"+c.GetName()+"',"
+  str += " description: '"+c.GetDescription()+"',"
+  str += " command: '"+c.GetCommand()+"',"
+  str += " expirationTime: '"+strconv.Itoa(c.GetExpirationTime())+"' ,"
+  str += " depend: ["
   for _, d := range c.GetDepend() {
     str += "'"+d+"',"
   }
@@ -156,6 +165,8 @@ func (c *CheckObject) StartQueue(){
   expired := make(chan bool)
   result := -1
   queue := c.TaskQueue
+  sample := new(sample.CheckSample)
+
   defer close(queue)
 
   sampleExpiration := func() {
@@ -176,13 +187,14 @@ func (c *CheckObject) StartQueue(){
         env.Output.WriteChDebug("(CheckObject::StartQueue) ObjectTask started and won't be started again. The check '"+checkObj.GetName()+"' alreadey has a sample")
       } else {
         env.Output.WriteChDebug("(CheckObject::StartQueue) ObjectTask started. The check'"+checkObj.GetName()+"' has not a sample")
-        _,result = checkObj.StartCheckObjectTask()
+        _,sample = checkObj.StartCheckObjectTask()
+        result = sample.GetExit()
         go sampleExpiration()
         env.Output.WriteChDebug("(CheckObject::StartQueue) ObjectTask finished. The exit code for '"+checkObj.GetName()+"' is '"+strconv.Itoa(result)+"'")
       }
-      checkObj.StatusChan <- result
+      checkObj.SampleChan <- sample
     case <-expired:
-            env.Output.WriteChDebug("(CheckObject::StartQueue) Sample for "+c.GetName()+" has expired")
+      env.Output.WriteChDebug("(CheckObject::StartQueue) Sample for "+c.GetName()+" has expired")
       result = -1
     }
   }
@@ -197,7 +209,7 @@ func (c *CheckObject) EnqueueCheckObject() (error){
 }
 //
 //# StartCheckObjectTask: executes the command defined on check an return the result
-func (c *CheckObject) StartCheckObjectTask() (error, int) {  
+func (c *CheckObject) StartCheckObjectTask() (error,  *sample.CheckSample) {  
   env.Output.WriteChDebug("(CheckObject::StartCheckObjectTask) Running a check: "+c.String())
   exit := 0
   output := ""
@@ -232,7 +244,7 @@ func (c *CheckObject) StartCheckObjectTask() (error, int) {
   _,sample := c.GenerateCheckSample(exit,output,elapsedtime, time.Duration(c.GetExpirationTime())*time.Second)
   env.Output.WriteChDebug("(CheckObject::StartCheckObjectTask) sample for '"+c.String()+"'::"+sample.String())
 
-  return nil, sample.GetExit()
+  return nil, sample
 }
 //
 //# GenerateCheckSample: method prepares the system to gather check's data
