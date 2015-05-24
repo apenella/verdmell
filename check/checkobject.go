@@ -18,6 +18,7 @@ import (
   "strings"
   "strconv"
   "verdmell/sample"
+  "verdmell/utils"
 )
 //#
 //#
@@ -30,12 +31,11 @@ type CheckObject struct{
   Depend []string `json:"depend"`
   ExpirationTime int `json:"expirationTime"`
   Interval int `json: "interval"`
-  Custom interface{}
-
+  Custom interface{} `json:"-"`
   //Queues
-  TaskQueue chan *CheckObject
+  TaskQueue chan *CheckObject `json:"-"`
   //StatusChan chan int
-  SampleChan chan *sample.CheckSample
+  SampleChan chan *sample.CheckSample `json:"-"`
 }
 
 //#
@@ -122,19 +122,7 @@ func (c *CheckObject) GetSampleChan() chan *sample.CheckSample{
 
 //# String: converts a CheckObject object to string
 func (c *CheckObject) String() string {
-  str := "{"
-  str += " name: '"+c.GetName()+"',"
-  str += " description: '"+c.GetDescription()+"',"
-  str += " command: '"+c.GetCommand()+"',"
-  str += " expirationTime: '"+strconv.Itoa(c.GetExpirationTime())+"' ,"
-  str += " depend: ["
-  for _, d := range c.GetDepend() {
-    str += "'"+d+"',"
-  }
-  str += "]"
-  str += "}"
-  
-  return str
+  return utils.ObjectToJsonString(c)
 }
 
 //#
