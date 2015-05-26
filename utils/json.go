@@ -29,6 +29,6 @@ func LoadJSONFile(f string, object interface{}) {
 //
 //# ObjectToJsonString: converst any object to a json
 func ObjectToJsonString(object interface{}) string {
-  jsoned, _ := json.Marshal(object)
+  jsoned, _ := json.MarshalIndent(object,"","	")
   return string(jsoned)
 }

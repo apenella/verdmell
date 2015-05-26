@@ -30,7 +30,7 @@ type CheckObject struct{
   Command string `json:"command"`
   Depend []string `json:"depend"`
   ExpirationTime int `json:"expirationTime"`
-  Interval int `json: "interval"`
+  Interval int `json: "-"`
   Custom interface{} `json:"-"`
   //Queues
   TaskQueue chan *CheckObject `json:"-"`
@@ -198,7 +198,7 @@ func (c *CheckObject) EnqueueCheckObject() (error){
 //
 //# StartCheckObjectTask: executes the command defined on check an return the result
 func (c *CheckObject) StartCheckObjectTask() (error,  *sample.CheckSample) {  
-  env.Output.WriteChDebug("(CheckObject::StartCheckObjectTask) Running a check: "+c.String())
+  env.Output.WriteChDebug("(CheckObject::StartCheckObjectTask) Running a check: "+c.GetName())
   exit := 0
   output := ""
   //Exit codes
@@ -230,7 +230,7 @@ func (c *CheckObject) StartCheckObjectTask() (error,  *sample.CheckSample) {
 
   if len(out) > 0 { output = string(out[:len(out)-1])}
   _,sample := c.GenerateCheckSample(exit,output,elapsedtime, time.Duration(c.GetExpirationTime())*time.Second)
-  env.Output.WriteChDebug("(CheckObject::StartCheckObjectTask) sample for '"+c.String()+"'::"+sample.String())
+  env.Output.WriteChDebug("(CheckObject::StartCheckObjectTask) sample arrived for '"+c.GetName()+"'")
 
   return nil, sample
 }

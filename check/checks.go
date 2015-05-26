@@ -23,7 +23,7 @@ import (
 //# Checks struct: 
 //# Checks is an struct where the checks are stored
 type Checks struct{
-  Check map[string] CheckObject `json:"check"`
+  Check map[string] CheckObject `json:"checks"`
 }
 //#
 //# Getters/Setters methods for Checks object
@@ -300,7 +300,7 @@ func (c *Checks) InitCheckTasks(checkObj CheckObject, runGraphList map[string]in
 //  The method requieres a file path.
 //  The method returns a pointer to Checks object
 func UnmarshalCheck(file string) *Checks{
-  env.Output.WriteChDebug("check (-::UnmarshalCheck)")
+  env.Output.WriteChDebug("(Checks::UnmarshalCheck)")
 
   c := new(Checks)
   // extract the content from the file and dumps it on the CHecks object
@@ -329,7 +329,7 @@ func RetrieveChecks(folder string) *Checks{
     
     c := UnmarshalCheck(checkFile)
 
-    if len(c.GetCheck()) == 0 { env.Output.WriteChWarn("check (-::RetrieveChecks) You should review the file "+checkFile+", no check has been load from it") }
+    if len(c.GetCheck()) == 0 { env.Output.WriteChWarn("(Checks::RetrieveChecks) You should review the file "+checkFile+", no check has been load from it") }
     for checkName, checkObj := range c.GetCheck(){
       queue := make(chan *CheckObject)
       sample := make(chan *sample.CheckSample)
@@ -373,7 +373,7 @@ func RetrieveChecks(folder string) *Checks{
       select{
         // get a CheckObject object
         case obj := <- checkObjChan:
-          env.Output.WriteChDebug("check (Checks::RetrieveChecks::gorutine) New check to store: "+obj.GetName())
+          env.Output.WriteChDebug("(Checks::RetrieveChecks::routine) New check to store: "+obj.GetName())
           if _,exist := checks[obj.GetName()]; !exist{
             checks[obj.GetName()] = obj
           }
@@ -413,13 +413,6 @@ func Itoa(i int) string {
 
 //# String: convert a Checks object to string
 func (c *Checks) String() string {
-  str := "{"
-  for checkName, checkObj := range c.GetCheck() {
-    str += "'"+checkName+"' : {"
-    str += checkObj.String()
-    str += "},"
-  }
-  str += "}"
-  return str
+  return utils.ObjectToJsonString(c)
 }
 //#######################################################################################################

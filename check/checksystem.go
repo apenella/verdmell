@@ -13,6 +13,7 @@ import (
   "strconv"
   "verdmell/environment"
   "verdmell/sample"
+  "verdmell/utils"
 )
 //
 var env *environment.Environment
@@ -22,11 +23,11 @@ var env *environment.Environment
 //# The struct for CheckSystem has all Check, Checkgroup and samples information
 type CheckSystem struct{
   // Map to storage the checks
-  Ck *Checks
+  Ck *Checks  `json:"checks"`
   // Map to storage the checkgroups
-  Cg *Checkgroups
+  Cg *Checkgroups  `json:"checkgroups"`
   // Map to storage the samples
-  Cs *sample.SampleSystem
+  Cs *sample.SampleSystem  `json:"samples"`
 }
 //
 //# NewCheckSystem: return a Checksystem instance to be run
@@ -226,18 +227,31 @@ func (c *CheckSystem) GetChecksExitStatus() (error, int) {
   return nil, exitStatus
 }
 
+
 //
 //# GetChecksSamples: return the status of all checks
 func (c *CheckSystem) GetChecksAllSamples() {
   env.Output.WriteChDebug("(CheckSystem::GetChecksSamples)")
   // Get Checks attribute from CheckSystem
   checks :=  c.GetChecks()
-  samplesystem := c.GetSampleSystem()
+  //samplesystem := c.GetSampleSystem()
 
   for check := range checks.Check {
-    _,s := samplesystem.GetSample(check)
-    env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+s.String())
+    //_,s := samplesystem.GetSample(check)
+    s := c.GetCheckSample(check)
+    env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+s)
   }
+}
+
+//
+//# GetChecksSamples: return the status of all checks
+func (c *CheckSystem) GetCheckSample(check string) string {
+  env.Output.WriteChDebug("(CheckSystem::GetCheckSample)")
+  
+  samplesystem := c.GetSampleSystem()
+  _,s := samplesystem.GetSample(check)
+
+  return s.String()
 }
 
 //
@@ -264,4 +278,14 @@ func (c *CheckSystem) TestCheckRunningQueues() error {
   }  
   return nil
 }
+
+//#
+//# Common methods
+//#---------------------------------------------------------------------
+
+//# String: convert a Checks object to string
+func (c *CheckSystem) String() string {
+  return utils.ObjectToJsonString(c)
+}
+
 //#######################################################################################################
