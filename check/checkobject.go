@@ -245,8 +245,7 @@ func (c *CheckObject) GenerateCheckSample(e int, o string, elapsedtime time.Dura
   cs.SetElapsedTime(elapsedtime)
   cs.SetSampletime(time.Now())
   cs.SetExpirationTime(expirationtime)
-  env.Output.WriteChDebug("(CheckObject::GenerateCheckSample) '"+cs.String()+"'")
-
+  
   return nil,cs
 }
 //#######################################################################################################

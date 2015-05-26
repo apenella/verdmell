@@ -188,19 +188,9 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
     // waiting the CheckObjects results
     exitStatus = <-statusChan
     env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(exitStatus)+"' done")
-    // for i:= 0; i<len(req); i++{
-    //   subExitStatus := <-statusChan
-    //   if exitStatus < subExitStatus {
-    //     exitStatus = subExitStatus
-    //   }
-    //   env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(subExitStatus)+"' done")
-    // }
     
   default:
-    //env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Running all checks")
-    // Get Checks attribute from CheckSystem
-    //checks :=  c.GetChecks()
-    //_,exitStatus = checks.StartCheckTaskPools()
+
     _,exitStatus = c.GetChecksExitStatus()
   }
 
@@ -209,49 +199,6 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
   }
 
   return nil,exitStatus
-}
-
-//
-//# GetChecksExitStatus: return the status of all checks
-func (c *CheckSystem) GetChecksExitStatus() (error, int) {
-  env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
-  // Get Checks attribute from CheckSystem
-  checks :=  c.GetChecks()
-
-  env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Samples:"+c.Cs.String())
-
-  _,exitStatus := checks.StartCheckTaskPools(c.GetSampleSystem())
-
-  c.GetChecksAllSamples()
-
-  return nil, exitStatus
-}
-
-
-//
-//# GetChecksSamples: return the status of all checks
-func (c *CheckSystem) GetChecksAllSamples() {
-  env.Output.WriteChDebug("(CheckSystem::GetChecksSamples)")
-  // Get Checks attribute from CheckSystem
-  checks :=  c.GetChecks()
-  //samplesystem := c.GetSampleSystem()
-
-  for check := range checks.Check {
-    //_,s := samplesystem.GetSample(check)
-    s := c.GetCheckSample(check)
-    env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+s)
-  }
-}
-
-//
-//# GetChecksSamples: return the status of all checks
-func (c *CheckSystem) GetCheckSample(check string) string {
-  env.Output.WriteChDebug("(CheckSystem::GetCheckSample)")
-  
-  samplesystem := c.GetSampleSystem()
-  _,s := samplesystem.GetSample(check)
-
-  return s.String()
 }
 
 //
@@ -267,17 +214,94 @@ func (c *CheckSystem) InitCheckRunningQueues() error {
   }
   return nil
 }
-// InitCheckRunningQueues
-func (c *CheckSystem) TestCheckRunningQueues() error {
-  cs := c.GetChecks()
 
-  for _,obj := range cs.GetCheck() {
-      env.Output.WriteChDebug("(CheckSystem::TestCheckRunningQueues) CheckQueue for '"+obj.GetName()+"'")
-      env.Output.WriteChDebug(obj)
-      obj.EnqueueCheckObject()
-  }  
-  return nil
+//
+//# GetChecksExitStatus: return the status of all checks
+func (c *CheckSystem) GetChecksExitStatus() (error, int) {
+  env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
+  // Get Checks attribute from CheckSystem
+  checks :=  c.GetChecks()
+
+  _,exitStatus := checks.StartCheckTaskPools(c.GetSampleSystem())
+
+  res := &Result{
+    Exit: exitStatus,
+    Severity: Itoa(exitStatus),
+    Service: env.Setup.Hostname, 
+  }
+
+
+  env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+utils.ObjectToJsonString(res))
+  return nil, exitStatus
 }
+
+//
+//# GetAllChecks: return all checks
+func (c *CheckSystem) GetAllChecks() string {
+  env.Output.WriteChDebug("(CheckSystem::GetAllChecks)")
+  // Get Checks attribute from CheckSystem
+  checks := c.GetChecks()
+
+  return checks.String()
+}
+
+//
+//# GetCheck: return a checks
+func (c *CheckSystem) GetCheck(check string) string {
+  env.Output.WriteChDebug("(CheckSystem::GetCheck)")
+  // Get Checks attribute from CheckSystem
+  cks := c.GetChecks()
+  // Get Check map from Checks
+  ck := cks.GetCheck()
+  // Get CheckObject
+  obj := ck[check]
+  return obj.String()
+}
+
+//
+//# GetAllCheckgroups: return all checks
+func (c *CheckSystem) GetAllCheckgroups() string {
+  env.Output.WriteChDebug("(CheckSystem::GetAllCheckgroups)")
+  // Get Checkgroups attribute from CheckSystem
+  groups := c.GetCheckgroups()
+
+  return groups.String()
+}
+
+//
+//# GetCheckgroup: return a checks
+func (c *CheckSystem) GetCheckgroup(group string) string {
+  env.Output.WriteChDebug("(CheckSystem::GetCheckgroup)")
+  // Get Checkgroupss attribute from CheckSystem
+  cgs := c.GetCheckgroups()
+  // Get Check map from Checks
+  cg := cgs.GetCheckgroup()
+  // Get CheckObject
+  g := cg[group]
+  return utils.ObjectToJsonString(g)
+}
+
+//
+//# GetAllSamples: return the status of all checks
+func (c *CheckSystem) GetAllSamples() string {
+  env.Output.WriteChDebug("(CheckSystem::GetAllSamples)")
+  // Get Samplesystem attribute from CheckSystem
+  samplesystem := c.GetSampleSystem()
+
+  return samplesystem.String()
+}
+
+//
+//# GetSampleForCheck: return the status of all checks
+func (c *CheckSystem) GetSampleForCheck(check string) string {
+  env.Output.WriteChDebug("(CheckSystem::GetSampleForCheck)")
+  
+  samplesystem := c.GetSampleSystem()
+  _,s := samplesystem.GetSample(check)
+
+  return s.String()
+}
+
 
 //#
 //# Common methods
@@ -288,4 +312,16 @@ func (c *CheckSystem) String() string {
   return utils.ObjectToJsonString(c)
 }
 
+//#######################################################################################################
+
+
+//#
+//#
+//# Result struct
+//# The struct for Result summarizes the healh status
+type Result struct{
+  Exit int  `json:"exit"`
+  Severity string `json:"severity"`
+  Service string  `json:"service"`
+}
 //#######################################################################################################
