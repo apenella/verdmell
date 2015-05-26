@@ -10,7 +10,7 @@ package sample
 
  import (
    "time"
-   "strconv"
+   "verdmell/utils"
  )
 
 //#
@@ -18,12 +18,12 @@ package sample
 //# CheckResult struct:
 //# CheckResult defines a map to store the maps
 type CheckSample struct{
-  check string `json:"check"`
-	exit int `json:"exit"`
-  output string `json:"output"`
-  sampleTime time.Time `json:"sampletime"`
-  expirationTime time.Duration `json:"expirationtime"`
-  elapsedTime time.Duration `json:"elapsedtime"`
+  Check string `json:"check"`
+	Exit int `json:"exit"`
+  Output string `json:"output"`
+  SampleTime time.Time `json:"sampletime"`
+  ExpirationTime time.Duration `json:"expirationtime"`
+  ElapsedTime time.Duration `json:"elapsedtime"`
 }
 
 //#
@@ -33,78 +33,65 @@ type CheckSample struct{
 //
 //# SetCheck: method sets the Name value for the CheckObject object sample
 func (s *CheckSample) SetCheck(c string){
-  	s.check = c
+  	s.Check = c
 }
 //# SetExit: method sets the value for the CheckObject object sample
 func (s *CheckSample) SetExit(e int){
-  s.exit = e
+  s.Exit = e
 }
 //# SetOutput: method sets the value for the CheckObject object sample
 func (s *CheckSample) SetOutput(o string){
-  s.output = o
+  s.Output = o
 }
 //
 //# SetExpirationTime: method sets the value for the CheckObject object sample
 func (s *CheckSample) SetExpirationTime(d time.Duration){
-  s.expirationTime = d
+  s.ExpirationTime = d
 }
 //
 //# SetElapsedTime: method sets the value for the CheckObject object sample
 func (s *CheckSample) SetElapsedTime(d time.Duration){
-  s.elapsedTime = d
+  s.ElapsedTime = d
 }
 //
 //# SetSampletime: method sets the value for the CheckObject object sample
 func (s *CheckSample) SetSampletime(t time.Time){
-  s.sampleTime = t
+  s.SampleTime = t
 }
 //
 //# GetCheck: method sets the Name value for the CheckObject object sample
 func (s *CheckSample) GetCheck() string{
-    return s.check
+    return s.Check
 }
 //
 //# GetExit: method sets the value for the exit object sample
 func (s *CheckSample) GetExit() int{
-  return s.exit
+  return s.Exit
 }
 //
 //# GetOutput: method sets the value for the output object sample
 func (s *CheckSample) GetOutput() string {
-  return s.output
+  return s.Output
 }
 //
 //# GetExpirationTime: method sets the value for the CheckObject object sample
 func (s *CheckSample) GetExpirationTime() time.Duration {
-  return s.expirationTime
+  return s.ExpirationTime
 }
 //
 //# GetElapsedTime: method sets the value for the CheckObject object sample
 func (s *CheckSample) GetElapsedTime() time.Duration {
-  return s.elapsedTime
+  return s.ElapsedTime
 }
 //
 //# GetSampletime: method sets the value for the CheckObject object sample
 func (s *CheckSample) GetSampletime() time.Time {
-  return s.sampleTime
+  return s.SampleTime
 }
 
 //
 //# String: method converts a sample to string
 func (s *CheckSample) String() string {
-  str := "{"
-  str += "check: '"+s.GetCheck()+"',"
-  exit := s.GetExit() 
-  str += "exit: "+strconv.Itoa(exit)+","
-  str += "output: '"+s.GetOutput()+"',"
-  sampletime := s.GetSampletime()
-  str += "sampletime: '"+sampletime.String()+"',"
-  elapsedtime := s.GetElapsedTime()
-  str += "elapsedtime: "+elapsedtime.String()+","
-  e := s.GetExpirationTime()
-  str += "expirationtime: '"+e.String()+"'"
-  str += "}"
-  
-  return str
+  return utils.ObjectToJsonString(s)
 }
 //#######################################################################################################
