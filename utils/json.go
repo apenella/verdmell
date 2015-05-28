@@ -7,8 +7,12 @@ import (
   "github.com/apenella/messageOutput"
 )
 
-// functions for JSON
-// function to dump data from the file f to object
+//# 
+//# functions for JSON
+//#--------------------------------------------------------------------
+
+//
+//# LoadJSONFile: function to dump data from the file f to object
 func LoadJSONFile(f string, object interface{}) {
     
   file, e := ioutil.ReadFile(f)
@@ -20,4 +24,11 @@ func LoadJSONFile(f string, object interface{}) {
 
   json.Unmarshal(file, object)
 
+}
+
+//
+//# ObjectToJsonString: converst any object to a json
+func ObjectToJsonString(object interface{}) string {
+  jsoned, _ := json.MarshalIndent(object,"","	")
+  return string(jsoned)
 }

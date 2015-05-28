@@ -13,6 +13,7 @@ import (
   "strconv"
   "verdmell/environment"
   "verdmell/sample"
+  "verdmell/utils"
 )
 //
 var env *environment.Environment
@@ -22,11 +23,11 @@ var env *environment.Environment
 //# The struct for CheckSystem has all Check, Checkgroup and samples information
 type CheckSystem struct{
   // Map to storage the checks
-  Ck *Checks
+  Ck *Checks  `json:"checks"`
   // Map to storage the checkgroups
-  Cg *Checkgroups
+  Cg *Checkgroups  `json:"checkgroups"`
   // Map to storage the samples
-  Cs *sample.SampleSystem
+  Cs *sample.SampleSystem  `json:"samples"`
 }
 //
 //# NewCheckSystem: return a Checksystem instance to be run
@@ -145,7 +146,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
 
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := check.StartCheckTaskPools()
+      _,res := check.StartCheckTaskPools(c.GetSampleSystem())
       statusChan <- res
     }()
     // waiting the CheckObject result
@@ -180,26 +181,16 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
     check.SetCheck(checks)
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := check.StartCheckTaskPools()
+      _,res := check.StartCheckTaskPools(c.GetSampleSystem())
       statusChan <- res
     }()
 
     // waiting the CheckObjects results
     exitStatus = <-statusChan
     env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(exitStatus)+"' done")
-    // for i:= 0; i<len(req); i++{
-    //   subExitStatus := <-statusChan
-    //   if exitStatus < subExitStatus {
-    //     exitStatus = subExitStatus
-    //   }
-    //   env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(subExitStatus)+"' done")
-    // }
     
   default:
-    //env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Running all checks")
-    // Get Checks attribute from CheckSystem
-    //checks :=  c.GetChecks()
-    //_,exitStatus = checks.StartCheckTaskPools()
+
     _,exitStatus = c.GetChecksExitStatus()
   }
 
@@ -208,17 +199,6 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
   }
 
   return nil,exitStatus
-}
-
-//
-//# GetChecksExitStatus: return the status of all checks
-func (c *CheckSystem) GetChecksExitStatus() (error, int) {
-  env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
-  // Get Checks attribute from CheckSystem
-  checks :=  c.GetChecks()
-  _,exitStatus := checks.StartCheckTaskPools()
-
-  return nil, exitStatus
 }
 
 //
@@ -232,18 +212,116 @@ func (c *CheckSystem) InitCheckRunningQueues() error {
         checkObj.StartQueue()
       }(obj)
   }
-
   return nil
 }
-// InitCheckRunningQueues
-func (c *CheckSystem) TestCheckRunningQueues() error {
-  cs := c.GetChecks()
 
-  for _,obj := range cs.GetCheck() {
-      env.Output.WriteChDebug("(CheckSystem::TestCheckRunningQueues) CheckQueue for '"+obj.GetName()+"'")
-      env.Output.WriteChDebug(obj)
-      obj.EnqueueCheckObject()
-  }  
-  return nil
+//
+//# GetChecksExitStatus: return the status of all checks
+func (c *CheckSystem) GetChecksExitStatus() (error, int) {
+  env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
+  // Get Checks attribute from CheckSystem
+  checks :=  c.GetChecks()
+
+  _,exitStatus := checks.StartCheckTaskPools(c.GetSampleSystem())
+
+  res := &Result{
+    Exit: exitStatus,
+    Severity: Itoa(exitStatus),
+    Service: env.Setup.Hostname, 
+  }
+
+
+  env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+utils.ObjectToJsonString(res))
+  return nil, exitStatus
+}
+
+//
+//# GetAllChecks: return all checks
+func (c *CheckSystem) GetAllChecks() string {
+  env.Output.WriteChDebug("(CheckSystem::GetAllChecks)")
+  // Get Checks attribute from CheckSystem
+  checks := c.GetChecks()
+
+  return checks.String()
+}
+
+//
+//# GetCheck: return a checks
+func (c *CheckSystem) GetCheck(check string) string {
+  env.Output.WriteChDebug("(CheckSystem::GetCheck)")
+  // Get Checks attribute from CheckSystem
+  cks := c.GetChecks()
+  // Get Check map from Checks
+  ck := cks.GetCheck()
+  // Get CheckObject
+  obj := ck[check]
+  return obj.String()
+}
+
+//
+//# GetAllCheckgroups: return all checks
+func (c *CheckSystem) GetAllCheckgroups() string {
+  env.Output.WriteChDebug("(CheckSystem::GetAllCheckgroups)")
+  // Get Checkgroups attribute from CheckSystem
+  groups := c.GetCheckgroups()
+
+  return groups.String()
+}
+
+//
+//# GetCheckgroup: return a checks
+func (c *CheckSystem) GetCheckgroup(group string) string {
+  env.Output.WriteChDebug("(CheckSystem::GetCheckgroup)")
+  // Get Checkgroupss attribute from CheckSystem
+  cgs := c.GetCheckgroups()
+  // Get Check map from Checks
+  cg := cgs.GetCheckgroup()
+  // Get CheckObject
+  g := cg[group]
+  return utils.ObjectToJsonString(g)
+}
+
+//
+//# GetAllSamples: return the status of all checks
+func (c *CheckSystem) GetAllSamples() string {
+  env.Output.WriteChDebug("(CheckSystem::GetAllSamples)")
+  // Get Samplesystem attribute from CheckSystem
+  samplesystem := c.GetSampleSystem()
+
+  return samplesystem.String()
+}
+
+//
+//# GetSampleForCheck: return the status of all checks
+func (c *CheckSystem) GetSampleForCheck(check string) string {
+  env.Output.WriteChDebug("(CheckSystem::GetSampleForCheck)")
+  
+  samplesystem := c.GetSampleSystem()
+  _,s := samplesystem.GetSample(check)
+
+  return s.String()
+}
+
+
+//#
+//# Common methods
+//#---------------------------------------------------------------------
+
+//# String: convert a Checks object to string
+func (c *CheckSystem) String() string {
+  return utils.ObjectToJsonString(c)
+}
+
+//#######################################################################################################
+
+
+//#
+//#
+//# Result struct
+//# The struct for Result summarizes the healh status
+type Result struct{
+  Exit int  `json:"exit"`
+  Severity string `json:"severity"`
+  Service string  `json:"service"`
 }
 //#######################################################################################################

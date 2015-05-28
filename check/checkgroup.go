@@ -20,7 +20,7 @@ import (
 //# Checkgroups struct:
 //# struct for checkgroups definition
 type Checkgroups struct{
-  Checkgroup map[string] []string `json:"checkgroup"`
+  Checkgroup map[string] []string `json:"checkgroups"`
 }
 
 //#
@@ -94,7 +94,7 @@ func (c *Checkgroups) ValidateCheckgroups(i interface{}) error {
 //
 //# UnmarshalCheckgroups: load checkgroup from file to an checkgroups object
 func UnmarshalCheckgroups(file string) *Checkgroups{
-  env.Output.WriteChDebug("checkgroups (-::UnmarshalCheckgroup)")
+  env.Output.WriteChDebug("checkgroups (Checkgroups::UnmarshalCheckgroup)")
 
   c := new(Checkgroups)
   utils.LoadJSONFile(file, c)
@@ -177,15 +177,6 @@ func mergeCheckgroups(allCheckgroups []map[string][]string) *map[string][]string
 //
 //# String: method converts a Checks object to string
 func (c *Checkgroups) String() string {
-  str := "{"
-  for checkgroupName, checks := range c.GetCheckgroup() {
-    str += checkgroupName + ": {"
-    for _, check := range checks {
-      str += "'"+check+"',"
-    }
-  str += "}"
-  }
-  str += "}"
-  return str
+  return utils.ObjectToJsonString(c)
 }
 //#######################################################################################################

@@ -1,5 +1,5 @@
 {
-	"check": {
+	"checks": {
 		"first": {
 			"description": "The number one",
 			"command": "./conf.d/scripts/verdmelltest.sh 1 0 first",
@@ -30,7 +30,7 @@
 			"depend": ["first","third"]
 		}
 	},
-	"checkgroup": {
+	"checkgroups": {
 		"ordinals": ["first","eleventh"]	
 	}
 }

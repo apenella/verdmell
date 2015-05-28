@@ -11,6 +11,7 @@ package sample
  import (
   "sync"
   "verdmell/environment"
+  "verdmell/utils"
  )
 
 //
@@ -20,11 +21,11 @@ var env *environment.Environment
 //# SampleSystem struct:
 //# SampleSystem defines a map to store the maps
 type SampleSystem struct{
-  Samples map[string]*CheckSampleSync
+  Samples map[string]*CheckSampleSync `json: "samples"`
 }
 
 type CheckSampleSync struct {
-	Sample *CheckSample
+	Sample *CheckSample 
 	mutex sync.RWMutex
 }
 
@@ -84,14 +85,7 @@ func (sys *SampleSystem) DeleteSample(name string) error {
 //
 //# String: converts a SampleSystem object to string
 func (sys *SampleSystem) String() string {
-  str := "{ samples: {"
-  for _,sample := range sys.Samples {
-    sample.mutex.RLock()
-    str += sample.Sample.String()
-    sample.mutex.RUnlock()
-  }
-  str += "} }"
-  return str
+  return utils.ObjectToJsonString(sys)
 }
 
 
