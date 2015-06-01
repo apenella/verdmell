@@ -23,7 +23,7 @@ import (
 //# ServiceSystem struct:
 //# ServiceSystem defines a map to store the maps
 type Services struct{
-  Services map[string] ServiceObject `json: "services"`
+  Services map[string] *ServiceObject `json: "services"`
   checkServiceMapReduce map[string][]string `json:"-"`
 }
 //#
@@ -31,7 +31,7 @@ type Services struct{
 //#---------------------------------------------------------------------
 
 //# SetService: methods sets the Services value for the Services object
-func (ss *Services) SetServices( s map[string] ServiceObject) {
+func (ss *Services) SetServices( s map[string] *ServiceObject) {
   ss.Services = s
 }
 //
@@ -41,7 +41,7 @@ func (s *Services) SetCheckServiceMapReduce(mr map[string] []string) {
 }
 
 //# GetService: methods gets the Services's value for a gived Services object
-func (ss *Services) GetServices() map[string] ServiceObject{
+func (ss *Services) GetServices() map[string] *ServiceObject{
     return ss.Services
 }
 //
@@ -56,10 +56,10 @@ func (s *Services) GetCheckServiceMapReduce() map[string] []string{
 
 //
 //# AddService: method add a new service to be checked
-func (s *Services) AddService(obj *ServiceObject) error {
+func (s *Services) AddServiceObject(obj *ServiceObject) error {
 	name := obj.GetName()
 	if _, exist := s.Services[name]; !exist {
-		s.Services[name] = *obj
+		s.Services[name] = obj
 	} else {
 		env.Output.WriteChWarn("(Services::AddService) The service '"+name+"' is already defined")
 	}
@@ -68,16 +68,16 @@ func (s *Services) AddService(obj *ServiceObject) error {
 
 //
 //# GetService: method returns a ServiceObject
-func (s *Services) GetService(name string) (error, *ServiceObject){
+func (s *Services) GetServiceObject(name string) (error, *ServiceObject){
 	var exist bool
-	var srv ServiceObject
+	var srv *ServiceObject
 
 	if srv, exist = s.Services[name]; !exist {
 		err := errors.New("(Services::GetService) Service '"+name+"' doesn't exist.")
     return err, nil
 	}
 
-	return nil, &srv
+	return nil, srv
 }
 
 //
@@ -113,12 +113,12 @@ func UnmarshalServices(file string) *Services{
 func RetrieveServices(folder string) *Services{
   services := new(Services)
   // checks will contain all the CheckObject definition
-  servicesMap := make(map[string] ServiceObject)
+  servicesMap := make(map[string] *ServiceObject)
   // files is an array with all files found inside the folder
   files := utils.GetFolderFiles(folder)
 
 	// sync channel
-  serviceObjChan := make(chan ServiceObject)
+  serviceObjChan := make(chan *ServiceObject)
   serviceskFileEndChan := make(chan bool)
   allServicesGetChan := make(chan bool)
   done := make(chan *Services)
@@ -135,6 +135,7 @@ func RetrieveServices(folder string) *Services{
     for servicekName, servicekObj := range s.GetServices(){
 
     	servicekObj.SetName(servicekName)
+      servicekObj.SetStatus(-1)
       // sending the CheckObject to be stored
       serviceObjChan <- servicekObj
       env.Output.WriteChInfo("(Services::RetrieveServices) Service '"+servicekName+"' defined")
@@ -166,6 +167,9 @@ func RetrieveServices(folder string) *Services{
           env.Output.WriteChDebug("(Services::RetrieveServices::routine) New service to register '"+srv.GetName()+"'")
           if _,exist := servicesMap[srv.GetName()]; !exist{
             servicesMap[srv.GetName()] = srv
+            go func() {
+              srv.StartServiceObjectSampleChannel()
+            }()
           }
         // ending message
         case allServicesGet = <-allServicesGetChan:
@@ -190,7 +194,7 @@ func (s *Services) ValidateServices() error {
   statusChan := make(chan bool)
 
 	//goroutine to validate each service
-	validation := func(obj ServiceObject) {
+	validation := func(obj *ServiceObject) {
   	env.Output.WriteChDebug("(Services::ValidateServices::routine) Validationg services '"+obj.GetName()+"'")		
 		if err := obj.ValidateServiceObject(); err != nil { 
      	errorChan <- err
@@ -231,7 +235,7 @@ func (s *Services) GenerateCheckServices() error {
 
 	// The Map
 	// map generate a map for each service containing a relationship between the checks and the service
-	generateChecksServiceMap := func (service string, serviceObj ServiceObject) {
+	generateChecksServiceMap := func (service string, serviceObj *ServiceObject) {
 		// map to store
 		csMap := make(map[string] string)
 		env.Output.WriteChDebug("(Services::GenerateCheckServices::generateChecksServiceMap) for service '"+service+"'")

@@ -88,5 +88,19 @@ func (sys *SampleSystem) String() string {
   return utils.ObjectToJsonString(sys)
 }
 
+//
+//# Itoa: method transform a integer to status string
+func Itoa(i int) string {
+  switch(i){
+  case 0:
+    return "OK"
+  case 1:
+    return "WARN"
+  case 2:
+    return "ERROR"
+  default:
+    return "UNKNOWN"
+  }
+}
 
 //#######################################################################################################

@@ -159,16 +159,7 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
         ss.AddSample(checksample)
         //sending sample to service using the output channel
         o <- checksample
-        //Exit codes
-        // OK: 0
-        // WARN: 1
-        // ERROR: 2
-        // UNKNOWN: others (-1)
-        //
-        // exitStatus calculates the task status throughout dependency task execution
-        // if exitStatus < checksample.GetExit(){
-        //   exitStatus =  checksample.GetExit()
-        // }
+       
       case err := <-errChan:
         env.Output.WriteChDebug(err)
         //exitStatus = 2

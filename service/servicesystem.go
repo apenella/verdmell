@@ -98,16 +98,20 @@ func NewServiceSystem(e *environment.Environment) (error, *ServiceSystem){
 //# StartServiceSystem: method prepares the system to wait sample and calculate the results for services
 func (s *ServiceSystem) StartServiceSystemReceiver() error {
   s.inputSampleChan = make(chan *sample.CheckSample)
+  services := s.GetServices()
+
   env.Output.WriteChDebug("(ServiceSystem::StartServiceSystemReceiver) Starting sample receiver")
   go func() {
     defer close (s.inputSampleChan)
     for{
       select{
       case sample := <-s.inputSampleChan:
-        env.Output.WriteChDebug("(ServiceSystem::StartServiceSystemReceiver) New sample received: "+sample.String())
-        _,services := s.GetServicesForCheck(sample.GetCheck())
-        for _,service := range services {
-          env.Output.WriteChDebug("(ServiceSystem::StartServiceSystemReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+service+"'")
+        env.Output.WriteChDebug("(ServiceSystem::StartServiceSystemReceiver) New sample received for '"+sample.GetCheck()+"'")
+        _,servicesCheck := s.GetServicesForCheck(sample.GetCheck())
+        for _,service := range servicesCheck {
+          _,srv := services.GetServiceObject(service)
+          env.Output.WriteChDebug("(ServiceSystem::StartServiceSystemReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
+          go srv.SendToSampleChannel(sample)
         }
       }
     }
@@ -124,7 +128,7 @@ func (s *ServiceSystem) SendSampleToServiceSystem(sample *sample.CheckSample) {
 //
 //# RegisterService: register a new service for ServiceSysem
 func (s *ServiceSystem) RegisterService(name string, desc string, checks []string) error {
-  env.Output.WriteChDebug("(ServiceSystem::RegisterService) Send sample "+name)
+  env.Output.WriteChDebug("(ServiceSystem::RegisterService) New service to register '"+name+"'")
   var serviceObj *ServiceObject
   var err error
 
@@ -133,7 +137,7 @@ func (s *ServiceSystem) RegisterService(name string, desc string, checks []strin
   }
   srv := s.GetServices()
   // add the service for node
-  srv.AddService(serviceObj)
+  srv.AddServiceObject(serviceObj)
   // set the attribute CheckServiceMapReduce
   srv.GenerateCheckServices()
 

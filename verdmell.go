@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"bufio"
 	"strconv"
 	"github.com/apenella/messageOutput"
 	"verdmell/environment"
@@ -90,10 +91,14 @@ func main() {
 				env.Output.WriteChError(err)
 				os.Exit(4)
 			}
-			//output.WriteChDebug("The status is: "+check.Itoa(exitStatus))
 		}
 	}
 
+	ConsoleReader := bufio.NewReader(os.Stdin)
+  message.Write("Press Enter")
+ 	ConsoleReader.ReadString('\n')
+
+	message.Write(srv.String())
 	//message.Write("The status is: "+check.Itoa(exitStatus))
 	os.Exit(exitStatus)
 }
