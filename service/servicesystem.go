@@ -158,6 +158,19 @@ func (s *ServiceSystem) GetServicesForCheck(check string) (error, []string) {
   return nil, services
 }
 
+//
+//# ServicesStatusHuman: converts a SampleSystem object to string
+func (sys *ServiceSystem) ServicesStatusHuman() string {
+  var str string
+  ss := sys.GetServices()
+
+  for _,obj := range ss.GetServices(){
+    str += "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus()) + "\n"
+  }
+
+  return str
+}
+
 //#
 //# Common methods
 //#---------------------------------------------------------------------
