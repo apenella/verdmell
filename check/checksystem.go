@@ -10,7 +10,6 @@ Check system management
 package check
 
 import (
-  "strconv"
   "verdmell/environment"
   "verdmell/sample"
   "verdmell/utils"
@@ -134,11 +133,13 @@ func (c *CheckSystem) GetOutputSampleChan() chan *sample.CheckSample {
 
 //
 //# StartCheckSystem: will determine which kind of check has been required by user and start the checks
-func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
+func (c *CheckSystem) StartCheckSystem(i interface{}) error {
   env.Output.WriteChDebug("(CheckSystem::StartCheckSystem)")
-  exitStatus := -1
-  statusChan := make(chan int)
-  defer close(statusChan)
+
+  endChan := make(chan bool)
+  defer close(endChan)
+  errChan := make(chan error)
+  defer close(errChan)
 
   // the next will be only used during ec or eg
   // check will contain the Check configurations
@@ -155,7 +156,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
     //add the check dependencies
     for _,dependency := range req.GetDepend(){
       if checkObj, err := c.Ck.GetCheckObjectByName(dependency); err != nil {
-        return err,2
+        return err
       } else {
         if _,exist := checks[dependency]; !exist{
           checks[dependency] = *checkObj
@@ -167,12 +168,18 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
 
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan())
-      statusChan <- res
+      if err := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan()); err != nil {
+        errChan <- err
+      }
+      endChan <- true
     }()
-    // waiting the CheckObject result
-    exitStatus = <-statusChan
-    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(exitStatus)+"' done")
+
+    select{
+    case <-endChan:
+      env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) All Pools Finished")
+    case err := <-errChan:
+      return err
+    }
 
   case []string:
     env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Running a Checkgroup")
@@ -182,7 +189,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
       cks := c.GetChecks()
 
       if checkObj, err := cks.GetCheckObjectByName(checkname); err != nil {
-        return err,2
+        return err
       } else {
         if _,exist := checks[checkname]; !exist{
           checks[checkname] = *checkObj
@@ -190,7 +197,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
         //add the check dependencies
         for _,dependency := range checkObj.GetDepend(){
           if checkObjdependency, err := c.Ck.GetCheckObjectByName(dependency); err != nil {
-            return err,2
+            return err
           } else {
             if _,exist := checks[dependency]; !exist{
               checks[dependency] = *checkObjdependency
@@ -202,24 +209,28 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
     check.SetCheck(checks)
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan())
-      statusChan <- res
+      if err := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan()); err != nil{
+        errChan <- err
+      }
+      endChan <- true
     }()
 
-    // waiting the CheckObjects results
-    exitStatus = <-statusChan
-    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Check '"+strconv.Itoa(exitStatus)+"' done")
+    select{
+    case <-endChan:
+      env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) All Pools Finished")
+    case err := <-errChan:
+      return err
+    }
     
   default:
-
-    _,exitStatus = c.GetChecksExitStatus()
+    checks :=  c.GetChecks()
+    if err := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan()); err != nil{
+      return err
+    }
+    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) All Pools Finished")
   }
 
-  if exitStatus < 0 {
-    exitStatus = 3
-  }
-
-  return nil,exitStatus
+  return nil
 }
 
 //
@@ -238,23 +249,24 @@ func (c *CheckSystem) InitCheckRunningQueues() error {
 
 //
 //# GetChecksExitStatus: return the status of all checks
-func (c *CheckSystem) GetChecksExitStatus() (error, int) {
-  env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
-  // Get Checks attribute from CheckSystem
-  checks :=  c.GetChecks()
+// func (c *CheckSystem) GetChecksExitStatus() error {
+//   env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
+//   // Get Checks attribute from CheckSystem
+//   checks :=  c.GetChecks()
 
-  _,exitStatus := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan())
+//   if err := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan()); err != nil{
+//     return err
+//   }
 
-  res := &Result{
-    Exit: exitStatus,
-    Severity: Itoa(exitStatus),
-    Service: env.Setup.Hostname, 
-  }
+//   res := &Result{
+//     Exit: exitStatus,
+//     Severity: Itoa(exitStatus),
+//     Service: env.Setup.Hostname, 
+//   }
 
-
-  env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+utils.ObjectToJsonString(res))
-  return nil, exitStatus
-}
+//   env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+utils.ObjectToJsonString(res))
+//   return nil
+// }
 
 //
 //# GetAllChecks: return all checks

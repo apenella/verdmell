@@ -121,19 +121,17 @@ func (c *Checks) ValidateChecks(i interface{}) error {
 }
 //
 //# StartCheckTaskPools: start a pool for each check. For each pool are generated the check execution tasks
-func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.CheckSample) (error, int){
+func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.CheckSample) error {
   env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Ready to start all pools for checks")
 
   sampleChan := make(chan *sample.CheckSample)
   defer close(sampleChan)
   statusChan := make(chan int)
   defer close(statusChan)
-  doneChan := make(chan int)
+  doneChan := make(chan bool)
   defer close(doneChan)
   errChan := make(chan error)
   defer close(errChan)
-
-  exitStatus := -1
 
   // go over Check attriutes from Checks (map[string]CheckObject)
   for _,check := range c.GetCheck(){
@@ -154,8 +152,6 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
 
   // waiting the CheckObjects results
   go func(){
-    exitStatus := -1
-
     for i:= 0; i<len(c.GetCheck()); i++{
       select{
       case checksample := <-sampleChan:
@@ -170,21 +166,21 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
         // UNKNOWN: others (-1)
         //
         // exitStatus calculates the task status throughout dependency task execution
-        if exitStatus < checksample.GetExit(){
-          exitStatus =  checksample.GetExit()
-        }
+        // if exitStatus < checksample.GetExit(){
+        //   exitStatus =  checksample.GetExit()
+        // }
       case err := <-errChan:
         env.Output.WriteChDebug(err)
-        exitStatus = 2
+        //exitStatus = 2
       }
     }
-    doneChan <- exitStatus
+    doneChan <- true
   }()
 
-  exitStatus = <-doneChan
-  env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Check task pool status: '"+strconv.Itoa(exitStatus)+"'")
+  <-doneChan
+  //env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Check task pool status: '"+strconv.Itoa(exitStatus)+"'")
 
-  return nil, exitStatus
+  return nil
 }
 //
 //# InitCheckTasks: is going to initialize a task for each check and its dependencies. 

@@ -157,6 +157,7 @@ func (c *CheckObject) StartQueue(){
 
   defer close(queue)
 
+  //function to clean the result to enforce that the check could be started again
   sampleExpiration := func() {
       env.Output.WriteChDebug("(CheckObject::StartQueue::sampleExpiration) Countdown for "+c.GetName()+"'s sample") 
       timeout := time.After(time.Duration(c.GetExpirationTime()) * time.Second)

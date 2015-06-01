@@ -66,7 +66,10 @@ func main() {
 				env.Output.WriteChError(err)
 				os.Exit(4)	
 			}	
-			_,exitStatus = cks.StartCheckSystem(checkObj)
+			if err := cks.StartCheckSystem(checkObj); err != nil {
+				env.Output.WriteChError(err)
+				os.Exit(4)
+			}
 		// execute checks from group
 		} else if  context.ExecuteCheckGroup != "" {
 			var checks []string
@@ -76,14 +79,21 @@ func main() {
 				env.Output.WriteChError(err)
 				os.Exit(4)	
 			}
-			_,exitStatus = cks.StartCheckSystem(checks)
+			if err := cks.StartCheckSystem(checks); err != nil {
+				env.Output.WriteChError(err)
+				os.Exit(4)
+			}
+
 		//execute all checks
 		} else {
-			_,exitStatus = cks.StartCheckSystem(nil)
-			output.WriteChDebug("The status is: "+check.Itoa(exitStatus))
+			if err := cks.StartCheckSystem(nil); err != nil {
+				env.Output.WriteChError(err)
+				os.Exit(4)
+			}
+			//output.WriteChDebug("The status is: "+check.Itoa(exitStatus))
 		}
 	}
 
-	message.Write("The status is: "+check.Itoa(exitStatus))
+	//message.Write("The status is: "+check.Itoa(exitStatus))
 	os.Exit(exitStatus)
 }
