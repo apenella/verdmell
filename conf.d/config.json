@@ -1,5 +1,6 @@
 {
-	"checksfolder": "checks",
 	"hostname": "bsmapp14p.bancsabadell.com",
-	"ip": "192.168.1.45"
+	"ip": "192.168.1.45",
+	"checksfolder": "checks",
+	"servicesfolder": "services"
 }

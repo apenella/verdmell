@@ -64,6 +64,12 @@ func (c *Checks) GetCheckNames() []string {
   return names
 }
 //
+//# IsDefined: return if a check is defined
+func (c *Checks) IsDefined(name string) bool {
+  _,exist := c.Check[name]
+  return exist
+}
+//
 //# GetCheckObject: returns a check object gived a name
 func (c *Checks) GetCheckObjectByName(checkname string) (*CheckObject, error) {
   var err bool
@@ -115,7 +121,7 @@ func (c *Checks) ValidateChecks(i interface{}) error {
 }
 //
 //# StartCheckTaskPools: start a pool for each check. For each pool are generated the check execution tasks
-func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem) (error, int){
+func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.CheckSample) (error, int){
   env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Ready to start all pools for checks")
 
   sampleChan := make(chan *sample.CheckSample)
@@ -136,9 +142,9 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem) (error, int){
     // adding the current object into run list
     runGraphList[check.GetName()] = nil
     // each check will run under its own goroutine
-    go func (o CheckObject, rgl map[string]interface{}) {
-      env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing tasks for '"+o.GetName()+"''s pool")
-      if err, checksample := c.InitCheckTasks(o, rgl); err == nil {
+    go func (obj CheckObject, rgl map[string]interface{}) {
+      env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing tasks for '"+obj.GetName()+"''s pool")
+      if err, checksample := c.InitCheckTasks(obj, rgl); err == nil {
         sampleChan <- checksample
       } else {
         errChan <- err
@@ -155,6 +161,8 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem) (error, int){
       case checksample := <-sampleChan:
         env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Check status received: '"+strconv.Itoa(checksample.GetExit())+"'")
         ss.AddSample(checksample)
+        //sending sample to service using the output channel
+        o <- checksample
         //Exit codes
         // OK: 0
         // WARN: 1
@@ -373,7 +381,7 @@ func RetrieveChecks(folder string) *Checks{
       select{
         // get a CheckObject object
         case obj := <- checkObjChan:
-          env.Output.WriteChDebug("(Checks::RetrieveChecks::routine) New check to store: "+obj.GetName())
+          env.Output.WriteChDebug("(Checks::RetrieveChecks::routine) New check to register '"+obj.GetName()+"'")
           if _,exist := checks[obj.GetName()]; !exist{
             checks[obj.GetName()] = obj
           }

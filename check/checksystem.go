@@ -17,6 +17,7 @@ import (
 )
 //
 var env *environment.Environment
+
 //#
 //#
 //# CheckSystem struct
@@ -28,6 +29,8 @@ type CheckSystem struct{
   Cg *Checkgroups  `json:"checkgroups"`
   // Map to storage the samples
   Cs *sample.SampleSystem  `json:"samples"`
+  // Service Channel
+  outputSampleChan chan *sample.CheckSample `json: "-"`
 }
 //
 //# NewCheckSystem: return a Checksystem instance to be run
@@ -53,6 +56,11 @@ func NewCheckSystem(e *environment.Environment) (error, *CheckSystem){
     return err, nil
   }
 
+  // get all check from Checks
+  checkNames := ck.GetCheckNames()
+  // set all checks list to the environment
+  env.SetChecks(checkNames)
+
   // Get defined checks groups
   // validate checks and set the checks into check system
   cg := RetrieveCheckgroups(folder)
@@ -71,6 +79,7 @@ func NewCheckSystem(e *environment.Environment) (error, *CheckSystem){
 
 	return err, cks
 }
+
 //#
 //# Getters and Setters
 //#----------------------------------------------------------------------------------------
@@ -94,6 +103,12 @@ func (c *CheckSystem) SetSampleSystem(cs *sample.SampleSystem) {
   c.Cs = cs
 }
 //
+//# SetOutputSampleChan: methods sets the inputSampleChan's value
+func (c *CheckSystem) SetOutputSampleChan(o chan *sample.CheckSample) {
+  c.outputSampleChan = o
+}
+
+//
 //# Getchecks: attribute from CheckSystem
 func (c *CheckSystem) GetChecks() *Checks{
   env.Output.WriteChDebug("(CheckSystem::GetChecks) Get value")
@@ -111,6 +126,12 @@ func (c *CheckSystem) GetSampleSystem() *sample.SampleSystem{
   env.Output.WriteChDebug("(CheckSystem::SetSampleSystem)")
   return c.Cs
 }
+//
+//# GetOutputSampleChan: methods sets the inputSampleChan's value
+func (c *CheckSystem) GetOutputSampleChan() chan *sample.CheckSample {
+  return c.outputSampleChan
+}
+
 //
 //# StartCheckSystem: will determine which kind of check has been required by user and start the checks
 func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
@@ -146,7 +167,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
 
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := check.StartCheckTaskPools(c.GetSampleSystem())
+      _,res := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan())
       statusChan <- res
     }()
     // waiting the CheckObject result
@@ -181,7 +202,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) (error,int) {
     check.SetCheck(checks)
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      _,res := check.StartCheckTaskPools(c.GetSampleSystem())
+      _,res := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan())
       statusChan <- res
     }()
 
@@ -222,7 +243,7 @@ func (c *CheckSystem) GetChecksExitStatus() (error, int) {
   // Get Checks attribute from CheckSystem
   checks :=  c.GetChecks()
 
-  _,exitStatus := checks.StartCheckTaskPools(c.GetSampleSystem())
+  _,exitStatus := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan())
 
   res := &Result{
     Exit: exitStatus,

@@ -18,6 +18,7 @@ import (
 //struct for setupObject contain the system data required during execution like, folders, hostname or ip.
 type setupObject struct {
 	Checksfolder  string `json:"checksfolder"`
+	Servicesfolder	string `json: "servicesfolder"`
 	Hostname string `json:"hostname"`
 	Ip string `json:"ip"`
 	// output manager
@@ -34,6 +35,8 @@ func newSetupObject(file string, folder string, output *message.Message) (error,
 	utils.LoadJSONFile(file, setup)
 	// Set path to check folder
 	setup.Checksfolder = folder+string(os.PathSeparator)+setup.Checksfolder
+	// Set path to check folder
+	setup.Servicesfolder = folder+string(os.PathSeparator)+setup.Servicesfolder
 
 	output.WriteChDebug(setup.String())
 	return nil, setup
@@ -46,6 +49,7 @@ func newSetupObject(file string, folder string, output *message.Message) (error,
 // validate setup object content
 func (s *setupObject) validateSetupObject() error{
 	if err := s.validateChecksfolder(); os.IsNotExist(err) {return err}
+	if err := s.validateServicesfolder(); os.IsNotExist(err) {return err}
 	if err := s.validateHostInfo(); os.IsNotExist(err) {return err}
 
 	return nil
@@ -61,6 +65,16 @@ func (s *setupObject) validateChecksfolder() error{
 	return nil
 }
 // method to validate Host information
+func (s *setupObject) validateServicesfolder() error{
+	if _, err := os.Stat(s.Servicesfolder); err != nil {
+		err := errors.New("(setupObject::validateServicesfolder) Folder "+s.Servicesfolder+" does not exist.")
+		return err
+
+	}
+	s.output.WriteChDebug("(setupObject::validateServicesfolder) '"+s.Servicesfolder+"'")
+	return nil
+}
+// method to validate Host information
 func (s *setupObject) validateHostInfo() error{
 	s.output.WriteChDebug("(setupObject::validateHostInfo) '"+s.Hostname+"'")
 	//TODO
@@ -73,10 +87,5 @@ func (s *setupObject) validateHostInfo() error{
 
 // String method transform the setupObject to string
 func (s *setupObject) String() string{
-	str := "{"
-	str += " Checksfolder: \""+s.Checksfolder+"\","
-	str += " Hostname: \""+s.Hostname+"\","
-	str += " Ip: \""+s.Ip+"\""
-	str += " }"
-	return str
+	return utils.ObjectToJsonString(s)
 }

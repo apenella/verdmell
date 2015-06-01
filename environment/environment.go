@@ -8,19 +8,24 @@ Environment: manage all data related with the execution and any thing around it.
 package environment
 
 import (
-		"errors" 
-		"github.com/apenella/messageOutput"
+	"errors"
+	"github.com/apenella/messageOutput"
+	"verdmell/utils"
 )
 //
 //Environment data type
 //struct for config item into config json
 type Environment struct{
-		// Current node setup
-		Setup setupObject
-		// Output manager
-		Output *message.Message
-		// Context execution parameters
-		context currentContext
+	// Current node setup
+	Setup setupObject
+	// Output manager
+	Output *message.Message
+	// Context execution parameters
+	context currentContext
+	//Check names
+	Checks []string
+	//Services names
+	Services []string
 }
 //
 // Methods for Environment
@@ -29,23 +34,19 @@ type Environment struct{
 //
 // Constructor for Environment
 func NewEnvironment() (error, *Environment) {
-	//object to dump configuration
-	var env = new(Environment)
+	var err error
 	var context = new(currentContext)
 	var setup = new(setupObject)
 
-	var err error
-
-	// Set the output manager. This will control all the output during the system life
 	output := message.GetInstance(context.Loglevel)
-	env.SetOutput(output)
-
 	if err, context = newcurrentContext(output); err != nil {return err, nil}
-	// Set the context to the environment
-	env.SetContext(context)
-
 	if err, setup = newSetupObject(context.SetupFile, context.ConfigFolder, output); err != nil {return err, nil}
-	env.SetSetup(setup)
+
+	env := &Environment{
+		Setup: *setup,
+		context: *context,
+		Output: output,
+	}
 
 	// Validate Environment
 	if err := env.validateEnvironment(); err != nil {return err, nil}
@@ -54,9 +55,10 @@ func NewEnvironment() (error, *Environment) {
 	return nil,env
 }
 
-//
-// Setters
-//
+//#
+//# Getters and Setters
+//#----------------------------------------------------------------------------------------
+
 // Set setup for the Environment
 func (e *Environment) SetSetup(s *setupObject) {
 	e.Setup = *s
@@ -69,10 +71,15 @@ func (e *Environment) SetOutput(o *message.Message){
 func (e *Environment) SetContext(c *currentContext) {
 	e.context = *c
 }
+// Set the Checks or the Environment
+func (e *Environment) SetChecks(c []string) {
+	e.Checks = c
+}
+// Set the Services for the Environment
+func (e *Environment) SetServices(s []string) {
+	e.Services = s
+}
 
-//
-// Getters
-//
 // Get the setupObject from envirionment
 func (e *Environment) GetSetup() *setupObject{
 		return &e.Setup
@@ -84,6 +91,14 @@ func (e *Environment) GetOutput() *message.Message{
 // Get context from environment
 func (e *Environment) GetContext() *currentContext{
 		return &e.context
+}
+// Get Checks from environment
+func (e *Environment) GetChecks() []string{
+		return e.Checks
+}
+// Get Services from environment
+func (e *Environment) GetServices() []string{
+		return e.Services
 }
 
 //
@@ -110,12 +125,15 @@ func (e *Environment) validateEnvironment() error {
 
 //
 // String method to return the string
-func (e *Environment) String() string{
-		str := "{"
-		s := e.GetSetup()
-		str += s.String()
-		c := e.GetContext()
-		str += c.String()
-		str += "}"
-		return str
+func (e *Environment) String() string {
+	// str := "{"
+	// s := e.GetSetup()
+	// str += s.String()
+	// c := e.GetContext()
+	// str += c.String()
+	// str += "}"
+	// return str
+	return utils.ObjectToJsonString(e)
 }
+
+//####################################################################################################

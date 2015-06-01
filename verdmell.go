@@ -4,8 +4,9 @@ import (
 	"os"
 	"strconv"
 	"github.com/apenella/messageOutput"
-	"verdmell/check"
 	"verdmell/environment"
+	"verdmell/check"
+	"verdmell/service"
 )
 
 //
@@ -16,6 +17,7 @@ func main() {
 	var err error
 	var env *environment.Environment
 	var cks *check.CheckSystem
+	var srv *service.ServiceSystem
 
 	exitStatus := 0
 
@@ -31,11 +33,20 @@ func main() {
 	// preparing to destroy the output system
 	defer output.DestroyInstance()
 	
+
 	// Call to initialize the check system
 	if err, cks = check.NewCheckSystem(env); err != nil {
-		env.Output.WriteChError(err)
+		message.WriteError(err)
 		os.Exit(4)
 	}
+	// Call to initialize the ServiceSystem
+	if err,srv = service.NewServiceSystem(env); err != nil {
+		message.WriteError(err)
+		os.Exit(4)
+	}
+	// Set the output sample channel for checks as the input's service one
+	cks.SetOutputSampleChan(srv.GetInputSampleChan())
+
 
 	switch(context.ExecutionMode){
 	case "cluster":
