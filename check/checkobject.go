@@ -117,15 +117,6 @@ func (c *CheckObject) GetSampleChan() chan *sample.CheckSample{
 // }
 
 //#
-//# Common methods
-//#----------------------------------------------------------------------------------------
-
-//# String: converts a CheckObject object to string
-func (c *CheckObject) String() string {
-  return utils.ObjectToJsonString(c)
-}
-
-//#
 //# Specific methods
 //#----------------------------------------------------------------------------------------
 
@@ -249,4 +240,14 @@ func (c *CheckObject) GenerateCheckSample(e int, o string, elapsedtime time.Dura
 
   return nil,cs
 }
+
+//#
+//# Common methods
+//#----------------------------------------------------------------------------------------
+
+//# String: converts a CheckObject object to string
+func (c *CheckObject) String() string {
+  return utils.ObjectToJsonString(c)
+}
+
 //#######################################################################################################

@@ -56,15 +56,14 @@ func main() {
 		break
 	case "standalone":
 		message.Write("")
-		message.Write(" # That's Verdmell #\n\tstandalone mode")
+		message.Write("\t# That's Verdmell in standalone mode #")
 		message.Write("")
 
 		checkObj := new(check.CheckObject)
 		
 		//execute an isolated check
 		if context.ExecuteCheck != "" {
-			checks := cks.GetChecks()
-			if checkObj, err = checks.GetCheckObjectByName(context.ExecuteCheck); err != nil {
+			if err, checkObj = cks.GetCheckObjectByName(context.ExecuteCheck); err != nil {
 				env.Output.WriteChError(err)
 				os.Exit(4)	
 			}	
@@ -74,10 +73,8 @@ func main() {
 			}
 		// execute checks from group
 		} else if  context.ExecuteCheckGroup != "" {
-			var checks []string
-			groups := cks.GetCheckgroups()
-			 
-			if checks, err = groups.GetCheckgroupByName(context.ExecuteCheckGroup); err != nil {
+			var checks []string 
+			if err, checks = cks.GetCheckgroupByName(context.ExecuteCheckGroup); err != nil {
 				env.Output.WriteChError(err)
 				os.Exit(4)	
 			}
@@ -107,8 +104,6 @@ func main() {
 		message.Write(hummanstatus)
 
 	}//end switch
-
-
 
 	os.Exit(exitStatus)
 }

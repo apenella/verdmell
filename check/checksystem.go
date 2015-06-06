@@ -56,7 +56,7 @@ func NewCheckSystem(e *environment.Environment) (error, *CheckSystem){
   }
 
   // get all check from Checks
-  checkNames := ck.GetCheckNames()
+  checkNames := ck.ListCheckNames()
   // set all checks list to the environment
   env.SetChecks(checkNames)
 
@@ -131,6 +131,10 @@ func (c *CheckSystem) GetOutputSampleChan() chan *sample.CheckSample {
   return c.outputSampleChan
 }
 
+//#
+//# Specific methods
+//#---------------------------------------------------------------------
+
 //
 //# StartCheckSystem: will determine which kind of check has been required by user and start the checks
 func (c *CheckSystem) StartCheckSystem(i interface{}) error {
@@ -145,21 +149,21 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
   // check will contain the Check configurations
   check := new(Checks)
   // checks will contain all the CheckObject definition
-  checks := make(map[string]CheckObject)
+  checks := make(map[string]*CheckObject)
   //
 
   switch req := i.(type){
   case *CheckObject:
     env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Starting the check '"+req.String()+"'")
     //add the check to be executed
-    checks[req.GetName()] = *req
+    checks[req.GetName()] = req
     //add the check dependencies
     for _,dependency := range req.GetDepend(){
-      if checkObj, err := c.Ck.GetCheckObjectByName(dependency); err != nil {
+      if err, checkObj := c.Ck.GetCheckObjectByName(dependency); err != nil {
         return err
       } else {
         if _,exist := checks[dependency]; !exist{
-          checks[dependency] = *checkObj
+          checks[dependency] = checkObj
         }
       }
     }
@@ -188,19 +192,19 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
       env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Preparing the check '"+checkname+"'")
       cks := c.GetChecks()
 
-      if checkObj, err := cks.GetCheckObjectByName(checkname); err != nil {
+      if err, checkObj := cks.GetCheckObjectByName(checkname); err != nil {
         return err
       } else {
         if _,exist := checks[checkname]; !exist{
-          checks[checkname] = *checkObj
+          checks[checkname] = checkObj
         }
         //add the check dependencies
         for _,dependency := range checkObj.GetDepend(){
-          if checkObjdependency, err := c.Ck.GetCheckObjectByName(dependency); err != nil {
+          if err, checkObjdependency := c.Ck.GetCheckObjectByName(dependency); err != nil {
             return err
           } else {
             if _,exist := checks[dependency]; !exist{
-              checks[dependency] = *checkObjdependency
+              checks[dependency] = checkObjdependency
             }
           }
         }
@@ -232,42 +236,47 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
 
   return nil
 }
-
 //
 //# InitCheckRunningQueues: prepares each checkobject to be run
 func (c *CheckSystem) InitCheckRunningQueues() error {
   cs := c.GetChecks()
 
   for _,obj := range cs.GetCheck() {
-      go func(checkObj CheckObject) {
+      go func(checkObj *CheckObject) {
         env.Output.WriteChDebug("(CheckSystem::InitCheckRunningQueues) CheckQueue for '"+checkObj.GetName()+"'") 
         checkObj.StartQueue()
       }(obj)
   }
   return nil
 }
-
 //
-//# GetChecksExitStatus: return the status of all checks
-// func (c *CheckSystem) GetChecksExitStatus() error {
-//   env.Output.WriteChDebug("(CheckSystem::GetChecksExitStatus) Running all checks")
-//   // Get Checks attribute from CheckSystem
-//   checks :=  c.GetChecks()
-
-//   if err := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan()); err != nil{
-//     return err
-//   }
-
-//   res := &Result{
-//     Exit: exitStatus,
-//     Severity: Itoa(exitStatus),
-//     Service: env.Setup.Hostname, 
-//   }
-
-//   env.Output.WriteChDebug("(CheckSystem::GetChecksSamples) "+utils.ObjectToJsonString(res))
-//   return nil
-// }
-
+//# AddCheck: method add a new check to the Checks struct
+func (c *CheckSystem) AddCheck(obj *CheckObject) error {
+  if err := c.Ck.AddCheck(obj); err != nil {
+    return err
+  }
+  return nil
+}
+//
+//# ListCheckNames: returns an array with the check namess defined on Checks object 
+func (c *CheckSystem) ListCheckNames() []string {
+  return c.Ck.ListCheckNames()
+}
+//
+//# IsDefined: return if a check is defined
+func (c *CheckSystem) IsDefined(name string) bool {
+  return c.Ck.IsDefined(name)
+}
+//
+//# GetCheckObjectByName: returns a check object gived a name
+func (c *CheckSystem) GetCheckObjectByName(checkname string) (error, *CheckObject) {
+  return c.Ck.GetCheckObjectByName(checkname)
+}
+//
+//# GetCheckgroupByName: returns a check object gived a name
+func (c *CheckSystem) GetCheckgroupByName(checkgroupname string) (error, []string) {
+  return c.Cg.GetCheckgroupByName(checkgroupname)
+}
 //
 //# GetAllChecks: return all checks
 func (c *CheckSystem) GetAllChecks() string {
@@ -277,7 +286,6 @@ func (c *CheckSystem) GetAllChecks() string {
 
   return checks.String()
 }
-
 //
 //# GetCheck: return a checks
 func (c *CheckSystem) GetCheck(check string) string {
@@ -290,7 +298,6 @@ func (c *CheckSystem) GetCheck(check string) string {
   obj := ck[check]
   return obj.String()
 }
-
 //
 //# GetAllCheckgroups: return all checks
 func (c *CheckSystem) GetAllCheckgroups() string {
@@ -300,7 +307,6 @@ func (c *CheckSystem) GetAllCheckgroups() string {
 
   return groups.String()
 }
-
 //
 //# GetCheckgroup: return a checks
 func (c *CheckSystem) GetCheckgroup(group string) string {
@@ -345,16 +351,4 @@ func (c *CheckSystem) String() string {
   return utils.ObjectToJsonString(c)
 }
 
-//#######################################################################################################
-
-
-//#
-//#
-//# Result struct
-//# The struct for Result summarizes the healh status
-type Result struct{
-  Exit int  `json:"exit"`
-  Severity string `json:"severity"`
-  Service string  `json:"service"`
-}
 //#######################################################################################################

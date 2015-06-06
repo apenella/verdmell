@@ -44,7 +44,7 @@ func (c *Checkgroups) GetCheckgroup() map[string] []string {
 //#---------------------------------------------------------------------
 
 //# GetCheckgroupByName: returns a check object gived a name
-func (c *Checkgroups) GetCheckgroupByName(checkgroupname string) ([]string, error) {
+func (c *Checkgroups) GetCheckgroupByName(checkgroupname string) (error, []string) {
   env.Output.WriteChDebug("(Checkgroups::GetCheckObject) Looking for the checkgroup '"+checkgroupname+"'")
 
   var err bool
@@ -52,10 +52,10 @@ func (c *Checkgroups) GetCheckgroupByName(checkgroupname string) ([]string, erro
   checkgroups := c.GetCheckgroup()
 
   if checkgroup, err = checkgroups[checkgroupname]; err == false {
-    return nil, errors.New("(Checkgroups::GetCheckgroupByName) The check group '"+checkgroupname+"' has never been load before.")
+    return errors.New("(Checkgroups::GetCheckgroupByName) The check group '"+checkgroupname+"' has never been load before."),nil
   }
 
-  return checkgroup, nil
+  return nil, checkgroup
 }
 
 //

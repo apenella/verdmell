@@ -23,18 +23,18 @@ import (
 //# Checks struct: 
 //# Checks is an struct where the checks are stored
 type Checks struct{
-  Check map[string] CheckObject `json:"checks"`
+  Check map[string] *CheckObject `json:"checks"`
 }
 //#
 //# Getters/Setters methods for Checks object
 //#---------------------------------------------------------------------
 
 //# SetCheck: methods sets the Check value for the Check object
-func (c *Checks) SetCheck( ck map[string]CheckObject) {
+func (c *Checks) SetCheck( ck map[string]*CheckObject) {
   c.Check = ck
 }
 //# GetCheck: methods gets the Check's value for a gived Check object
-func (c *Checks) GetCheck() map[string]CheckObject{
+func (c *Checks) GetCheck() map[string]*CheckObject{
     return c.Check
 }
 
@@ -44,7 +44,7 @@ func (c *Checks) GetCheck() map[string]CheckObject{
 
 //
 //# AddCheck: method add a new check to the Checks struct
-func (c *Checks) AddCheck(obj CheckObject) error { 
+func (c *Checks) AddCheck(obj *CheckObject) error { 
   if _,exist := c.Check[obj.GetName()]; !exist{
     env.Output.WriteChDebug("(Checks::AddCheck) New Check '"+obj.GetName()+"'")
     c.Check[obj.GetName()] = obj
@@ -53,11 +53,11 @@ func (c *Checks) AddCheck(obj CheckObject) error {
 }
 
 //
-//# GetCheckNames: returns an array with the check namess defined on Checks object 
-func (c *Checks) GetCheckNames() []string {
+//# ListCheckNames: returns an array with the check namess defined on Checks object 
+func (c *Checks) ListCheckNames() []string {
   var names []string
   for checkname, _ := range c.Check {
-    env.Output.WriteChDebug("(Checks::GetCheckNames) check name: "+checkname)
+    env.Output.WriteChDebug("(Checks::ListCheckNames) check name: "+checkname)
     // append each check name to names array
     names = append(names, checkname)
   }
@@ -70,19 +70,19 @@ func (c *Checks) IsDefined(name string) bool {
   return exist
 }
 //
-//# GetCheckObject: returns a check object gived a name
-func (c *Checks) GetCheckObjectByName(checkname string) (*CheckObject, error) {
+//# GetCheckObjectByName: returns a check object gived a name
+func (c *Checks) GetCheckObjectByName(checkname string) (error,*CheckObject) {
   var err bool
   checkObj := new(CheckObject)
   check := c.GetCheck()
 
   env.Output.WriteChDebug("(Checks::GetCheckObject) Looking for the check '"+checkname+"'")
 
-  if *checkObj, err = check[checkname]; err == false {
-    return nil, errors.New("(Checks::GetCheckObject) The checkname '"+checkname+"' has never been load before.")
+  if checkObj, err = check[checkname]; err == false {
+    return errors.New("(Checks::GetCheckObject) The checkname '"+checkname+"' has never been load before."),nil
   }
 
-  return checkObj, nil
+  return nil,checkObj
 }
 //
 //# ValidateChecks: ensures that all the CheckObject from the Checks object have been defined correctly. 
@@ -91,7 +91,7 @@ func (c *Checks) ValidateChecks(i interface{}) error {
   statusChan := make(chan bool)
 
   // validation is a goroutine that will validate one CheckObjet and will write the status into a channel
-  validation := func(c CheckObject) {
+  validation := func(c *CheckObject) {
       if err := c.ValidateCheckObject(); err != nil { 
         errorChan <- err
       } else {
@@ -140,9 +140,9 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
     // adding the current object into run list
     runGraphList[check.GetName()] = nil
     // each check will run under its own goroutine
-    go func (obj CheckObject, rgl map[string]interface{}) {
+    go func (obj *CheckObject, rgl map[string]interface{}) {
       env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing tasks for '"+obj.GetName()+"''s pool")
-      if err, checksample := c.InitCheckTasks(obj, rgl); err == nil {
+      if err, checksample := c.InitCheckTasks(*obj, rgl); err == nil {
         sampleChan <- checksample
       } else {
         errChan <- err
@@ -156,9 +156,17 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
       select{
       case checksample := <-sampleChan:
         env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Check status received: '"+strconv.Itoa(checksample.GetExit())+"'")
+        if err,sam := ss.GetSample(checksample.GetCheck()); err != nil {
+          //sending sample to service using the output channel
+          o <- checksample
+        } else {
+          // the sample will not send to service system unless it has modified it exit status
+          if sam.GetExit() != checksample.GetExit() {
+            //sending sample to service using the output channel
+            o <- checksample
+          }
+        }  
         ss.AddSample(checksample)
-        //sending sample to service using the output channel
-        o <- checksample
        
       case err := <-errChan:
         env.Output.WriteChDebug(err)
@@ -212,7 +220,7 @@ func (c *Checks) InitCheckTasks(checkObj CheckObject, runGraphList map[string]in
 
       } else {
         // get a CheckObject by its name
-        if co, err := c.GetCheckObjectByName(d); err == nil {
+        if err,co := c.GetCheckObjectByName(d); err == nil {
           env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has a dependency to '"+d+"'")
           // runGraph for each object an wait for its response
           go func (o CheckObject) {
@@ -308,11 +316,11 @@ func UnmarshalCheck(file string) *Checks{
 func RetrieveChecks(folder string) *Checks{
   check := new(Checks)
   // checks will contain all the CheckObject definition
-  checks := make(map[string]CheckObject)
+  checks := make(map[string]*CheckObject)
   // files is an array with all files found inside the folder
   files := utils.GetFolderFiles(folder)
   // sync channel
-  checkObjChan := make(chan CheckObject)
+  checkObjChan := make(chan *CheckObject)
   checkFileEndChan := make(chan bool)
   allChecksGetChan := make(chan bool)
   done := make(chan *Checks)
@@ -362,7 +370,7 @@ func RetrieveChecks(folder string) *Checks{
   }()
   // store all CheckObjects sent. Once the allChecksGetChan channel gets a message the goroutine will assume that all CheckOjects has been sent
   go func() {
-    var check Checks
+    check := new(Checks)
     allChecksGet := false
     for ;!allChecksGet;{
       select{
@@ -375,7 +383,7 @@ func RetrieveChecks(folder string) *Checks{
         // ending message
         case allChecksGet = <-allChecksGetChan:
           check.SetCheck(checks)
-          done <-&check
+          done <-check
           defer close(checkObjChan)
           defer close(allChecksGetChan)
       }
