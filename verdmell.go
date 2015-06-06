@@ -10,12 +10,6 @@ import (
 	"verdmell/service"
 )
 
-type Environmenter interface{
-	GetChecks() []string
-	GetServices() []string
-	String() string
-}
-
 //
 // main
 //---------------------------------------------------
@@ -33,8 +27,7 @@ func main() {
 		message.WriteError(err)
 		os.Exit(4)
 	}
-	a := Environmenter(env)
-	message.Write(a.String())
+
 	// get the environment attributes
 	//setup := env.GetSetup()
 	context := env.GetContext()
