@@ -2,12 +2,19 @@ package main
 
 import (
 	"os"
+	"bufio"
 	"strconv"
 	"github.com/apenella/messageOutput"
 	"verdmell/environment"
 	"verdmell/check"
 	"verdmell/service"
 )
+
+type Environmenter interface{
+	GetChecks() []string
+	GetServices() []string
+	String() string
+}
 
 //
 // main
@@ -26,6 +33,8 @@ func main() {
 		message.WriteError(err)
 		os.Exit(4)
 	}
+	a := Environmenter(env)
+	message.Write(a.String())
 	// get the environment attributes
 	//setup := env.GetSetup()
 	context := env.GetContext()
@@ -66,7 +75,7 @@ func main() {
 				env.Output.WriteChError(err)
 				os.Exit(4)	
 			}	
-			if err := cks.StartCheckSystem(checkObj); err != nil {
+			if err = cks.StartCheckSystem(checkObj); err != nil {
 				env.Output.WriteChError(err)
 				os.Exit(4)
 			}
@@ -79,20 +88,34 @@ func main() {
 				env.Output.WriteChError(err)
 				os.Exit(4)	
 			}
-			if err := cks.StartCheckSystem(checks); err != nil {
+			if err = cks.StartCheckSystem(checks); err != nil {
 				env.Output.WriteChError(err)
 				os.Exit(4)
 			}
 
 		//execute all checks
 		} else {
-			if err := cks.StartCheckSystem(nil); err != nil {
+			if err = cks.StartCheckSystem(nil); err != nil {
 				env.Output.WriteChError(err)
 				os.Exit(4)
 			}
 		}
-	}
 
-	message.Write(srv.ServicesStatusHuman())
+		message.WriteInfo("Press Enter...")
+		ConsoleReader := bufio.NewReader(os.Stdin)
+		ConsoleReader.ReadString('\n')
+
+		// achive required status
+		if err, exitStatus = srv.GetServiceStatus(env.Context.Service); err != nil{
+			env.Output.WriteChError(err)
+			os.Exit(4)
+		}
+		_,hummanstatus := srv.GetServicesStatusHuman(env.Context.Service)
+		message.Write(hummanstatus)
+
+	}//end switch
+
+
+
 	os.Exit(exitStatus)
 }

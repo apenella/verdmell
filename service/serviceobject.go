@@ -22,11 +22,12 @@ import (
 //# Service struct:
 //# Service defines a map to store the maps
 type ServiceObject struct{
-	Name string `json: "name"`
+	Name string `json:"name"`
   Description string `json:"description"`
   Checks []string `json:"checks"`
   Status int `json:"status"`
   inputSampleChan chan *sample.CheckSample `json:"-"`
+  checksStatusCache map[string] int
 }
 
 func NewServiceObject(name string, desc string, checks []string) (error,*ServiceObject) {
@@ -130,14 +131,17 @@ func (s *ServiceObject) ValidateServiceObject() error {
 func (s *ServiceObject) StartServiceObjectSampleChannel(){
 	sampleChan := make(chan *sample.CheckSample)
 	defer close(sampleChan)
+	checksStatusCache := make(map[string] int)
+
 	s.inputSampleChan = sampleChan
+	s.checksStatusCache = checksStatusCache
 	
 	env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) Waiting samles for service '"+s.GetName()+"'")
 	for {
 		select{
 		case sam := <- s.inputSampleChan:
 			env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) New sample arrived for '"+sam.GetCheck()+"' to service '"+s.GetName()+"'")
-			s.CalculateStatusForService(sam.GetExit())
+			s.CalculateStatusForService(sam)
 		}
 	}
 }
@@ -151,7 +155,7 @@ func (s *ServiceObject) SendToSampleChannel(sample *sample.CheckSample){
 
 //
 //# SendToSampleChannel: method sends a sample to the sample channel
-func (s *ServiceObject) CalculateStatusForService(newStatus int){
+func (s *ServiceObject) CalculateStatusForService(sam *sample.CheckSample){
 	//Exit codes
   // OK: 0
   // WARN: 1
@@ -159,11 +163,17 @@ func (s *ServiceObject) CalculateStatusForService(newStatus int){
   // UNKNOWN: others (-1)
   //
 	currentStatus := s.GetStatus()
-	//exitStatus calculates the task status throughout dependency task execution
-  if currentStatus < newStatus {
-  	env.Output.WriteChDebug("(ServiceObject::CalculateStatusForService) Service '"+s.GetName()+"' has changed its status to '"+sample.Itoa(newStatus)+"'")
-		s.SetStatus(newStatus)
-  }
+
+	s.checksStatusCache[sam.GetCheck()] = sam.GetExit()
+
+	for _,status := range s.checksStatusCache {
+		//exitStatus calculates the task status throughout dependency task execution
+  	if currentStatus < status {
+  		currentStatus = status
+  		env.Output.WriteChDebug("(ServiceObject::CalculateStatusForService) Service '"+s.GetName()+"' has changed its status to '"+sample.Itoa(status)+"'")
+  	}
+	}
+	s.SetStatus(currentStatus)
 }
 
 

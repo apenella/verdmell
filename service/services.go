@@ -23,7 +23,7 @@ import (
 //# ServiceSystem struct:
 //# ServiceSystem defines a map to store the maps
 type Services struct{
-  Services map[string] *ServiceObject `json: "services"`
+  Services map[string] *ServiceObject `json:"services"`
   checkServiceMapReduce map[string][]string `json:"-"`
 }
 //#

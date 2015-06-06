@@ -25,7 +25,7 @@ var env *environment.Environment
 //# ServiceSystem struct:
 //# ServiceSystem defines a map to store the maps
 type ServiceSystem struct{
-  Ss *Services `json: ""`
+  Ss *Services `json:"servicesroot"`
   inputSampleChan chan *sample.CheckSample `json:"-"`
 }
 
@@ -154,21 +154,38 @@ func (s *ServiceSystem) GetServicesForCheck(check string) (error, []string) {
   if err, services = ss.GetServicesForCheck(check); err != nil {
     return err, nil
   }
-
   return nil, services
 }
-
 //
-//# ServicesStatusHuman: converts a SampleSystem object to string
-func (sys *ServiceSystem) ServicesStatusHuman() string {
+//# GetAllServicesStatusHuman: converts a SampleSystem object to string
+func (sys *ServiceSystem) GetAllServicesStatusHuman() string {
   var str string
   ss := sys.GetServices()
 
   for _,obj := range ss.GetServices(){
-    str += "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus()) + "\n"
+    str += "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus())
   }
-
   return str
+}
+//
+//# GetServicesStatusHuman: converts a SampleSystem object to string
+func (sys *ServiceSystem) GetServicesStatusHuman(service string) (error ,string) {
+  ss := sys.GetServices()
+  if err, obj := ss.GetServiceObject(service); err != nil {
+    return err, ""
+  } else {
+    return nil, "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus()) + "\n"    
+  }
+}
+//
+//# GetServiceExitStatus: return the status for a service object to string
+func (sys *ServiceSystem) GetServiceStatus(service string) (error , int) {
+  ss := sys.GetServices()
+  if err, obj := ss.GetServiceObject(service); err != nil {
+    return err, -1
+  } else {
+    return nil, obj.GetStatus()    
+  }
 }
 
 //#
@@ -178,7 +195,7 @@ func (sys *ServiceSystem) ServicesStatusHuman() string {
 //
 //# String: converts a SampleSystem object to string
 func (sys *ServiceSystem) String() string {
-  return utils.ObjectToJsonString(sys)
+  return utils.ObjectToJsonString(sys.GetServices())
 }
 
 

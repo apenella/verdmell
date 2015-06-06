@@ -17,11 +17,11 @@ import (
 //struct for config item into config json
 type Environment struct{
 	// Current node setup
-	Setup setupObject
+	Setup *setupObject
 	// Output manager
 	Output *message.Message
 	// Context execution parameters
-	context currentContext
+	Context *currentContext
 	//Check names
 	Checks []string
 	//Services names
@@ -43,9 +43,13 @@ func NewEnvironment() (error, *Environment) {
 	if err, setup = newSetupObject(context.SetupFile, context.ConfigFolder, output); err != nil {return err, nil}
 
 	env := &Environment{
-		Setup: *setup,
-		context: *context,
+		Setup: setup,
+		Context: context,
 		Output: output,
+	}
+	
+	if env.Context.Service == "" {
+		env.Context.Service = env.Setup.Hostname
 	}
 
 	// Validate Environment
@@ -61,7 +65,7 @@ func NewEnvironment() (error, *Environment) {
 
 // Set setup for the Environment
 func (e *Environment) SetSetup(s *setupObject) {
-	e.Setup = *s
+	e.Setup = s
 }
 // Set output for the Environment
 func (e *Environment) SetOutput(o *message.Message){
@@ -69,7 +73,7 @@ func (e *Environment) SetOutput(o *message.Message){
 }
 // Set the context for the Environment
 func (e *Environment) SetContext(c *currentContext) {
-	e.context = *c
+	e.Context = c
 }
 // Set the Checks or the Environment
 func (e *Environment) SetChecks(c []string) {
@@ -82,7 +86,7 @@ func (e *Environment) SetServices(s []string) {
 
 // Get the setupObject from envirionment
 func (e *Environment) GetSetup() *setupObject{
-		return &e.Setup
+		return e.Setup
 }
 // Get output from environment
 func (e *Environment) GetOutput() *message.Message{
@@ -90,7 +94,7 @@ func (e *Environment) GetOutput() *message.Message{
 }
 // Get context from environment
 func (e *Environment) GetContext() *currentContext{
-		return &e.context
+		return e.Context
 }
 // Get Checks from environment
 func (e *Environment) GetChecks() []string{
@@ -126,13 +130,6 @@ func (e *Environment) validateEnvironment() error {
 //
 // String method to return the string
 func (e *Environment) String() string {
-	// str := "{"
-	// s := e.GetSetup()
-	// str += s.String()
-	// c := e.GetContext()
-	// str += c.String()
-	// str += "}"
-	// return str
 	return utils.ObjectToJsonString(e)
 }
 

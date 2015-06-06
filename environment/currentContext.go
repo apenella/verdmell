@@ -23,6 +23,8 @@ type currentContext struct{
 	ConfigFolder string
 	// configuration file
 	SetupFile string
+	// service to get information for
+	Service string
 	// execute the indicated check
 	ExecuteCheck string
 	// execute the indicated checkgroup
@@ -55,6 +57,7 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 	var loglevel int
 	var configFolder string
 	var setupFile string
+	var service string
 	var executeCheck string
 	var executeCheckGroup string
 	var executionMode string
@@ -64,6 +67,7 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 	flag.IntVar(&loglevel,"l",0,"Loglevel definition\n\t0 - info\n\t1 - warn\n\t2 - error\n\t3 - debug.")  
 	flag.StringVar(&configFolder,"d","./conf.d","Root configuration folder.")
 	flag.StringVar(&setupFile,"c","config.json","Configuration file.")
+	flag.StringVar(&service,"s","","Specific service which you ask its status for")
 	flag.StringVar(&executeCheck,"ec","","Execute the indicated check.")
 	flag.StringVar(&executeCheckGroup,"eg","","Execute the indicated check group.")
 	flag.StringVar(&executionMode,"m","standalone","Execution mode indicates how to run verdmell.\n\t-standalone: return the health status ondemand\n\t-cluster: start a service which is listening for health status requests")
@@ -76,6 +80,7 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 	context = &currentContext{
 		ConfigFolder: configFolder,
 		SetupFile: setupFile,
+		Service: service,
 		ExecuteCheck: executeCheck,
 		ExecuteCheckGroup: executeCheckGroup,
 		Loglevel: loglevel,
@@ -84,7 +89,6 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 		Port: port,
 		output: output,
 	}
-
 
 	err := context.validatecurrentContext()
 
@@ -99,6 +103,7 @@ func (c *currentContext) validatecurrentContext() error {
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) configFolder: "+c.ConfigFolder)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) configFile: "+c.SetupFile)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execution mode: "+c.ExecutionMode)
+	c.output.WriteChDebug("(currentContext::validatecurrentContext) service: "+c.Service)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute check: "+c.ExecuteCheck)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute checkgroup: "+c.ExecuteCheckGroup)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute IP: "+c.Host)
