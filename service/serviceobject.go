@@ -8,11 +8,14 @@ The package 'service' is used by verdmell to manage the definied services.
 -ServiceSystem
 -Services
 -ServiceObject
+-ServiceResult
 */
 package service
 
 import (
+	"time"
 	"errors"
+	"strconv"
 	"verdmell/sample"
   "verdmell/utils"
 )
@@ -102,6 +105,51 @@ func (s *ServiceObject) GetStatus() int{
 //#---------------------------------------------------------------------
 
 //
+//#WaitAllSamples: method waits that all checks send at least one sample
+func (s *ServiceObject) WaitAllSamples(seconds int) *ServiceObject {
+	env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) Waiting "+time.Duration(seconds).String())
+	
+	arrived := make(chan bool)
+  defer close(arrived)
+  expired := make(chan bool)
+  defer close(expired)
+ 	timeout := time.After(time.Duration(seconds) * time.Second)
+
+  go func(){
+  	select{
+      case <-timeout:
+      	expired <- true
+    }
+  }()
+
+	go func(){
+    allArrived := (len(s.GetChecks()) == len(s.checksStatusCache))
+    for;!allArrived;{
+      if len(s.GetChecks()) == len(s.checksStatusCache) {
+      	env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) all arrived") 
+        allArrived = true
+      }
+    }
+    arrived <- true
+  }()
+
+  // wait for all sample arrived. There is a timeout to avoid long wait...  
+	for {
+		select{
+		case <-arrived:
+			env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) all sample arrived...")
+			return s
+		case <-expired:
+			env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) timeout...") 
+			env.Output.WriteChWarn("(ServiceObject::WaitAllSamples) Samples for '"+s.GetName()+"' has not already arrived after "+strconv.Itoa(seconds)+" seconds")
+			return s
+		}
+	}
+
+  return s
+}
+
+//
 //#ValidateServiceObject: validates SericeObject
 func (s *ServiceObject) ValidateServiceObject() error {
 	checkMap := make(map[string] interface{})
@@ -175,7 +223,6 @@ func (s *ServiceObject) CalculateStatusForService(sam *sample.CheckSample){
 	}
 	s.SetStatus(currentStatus)
 }
-
 
 //#
 //# Common methods

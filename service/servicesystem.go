@@ -8,6 +8,7 @@ The package 'service' is used by verdmell to manage the definied services.
 -ServiceSystem
 -Services
 -ServiceObject
+-ServiceResult
 */
 package service
 
@@ -29,38 +30,12 @@ type ServiceSystem struct{
   inputSampleChan chan *sample.CheckSample `json:"-"`
 }
 
-//#
-//# Getters/Setters methods for ServiceSystem object
-//#---------------------------------------------------------------------
-
-//
-//# SetServices: methods sets the Services' value
-func (s *ServiceSystem) SetServices(ss *Services) {
-  s.Ss = ss
-}
-//
-//# SetInputSampleChan: methods sets the inputSampleChan's value
-func (s *ServiceSystem) SetInputSampleChan(c chan *sample.CheckSample) {
-  s.inputSampleChan = c
-}
-
-//
-//# GetServices: methods gets the Services' value
-func (s *ServiceSystem) GetServices() *Services {
-  return s.Ss
-}
-//
-//# GetInputSampleChan: methods sets the inputSampleChan's value
-func (s *ServiceSystem) GetInputSampleChan() chan *sample.CheckSample {
-  return s.inputSampleChan
-}
-
 //
 //# NewCheckSystem: return a Checksystem instance to be run
 func NewServiceSystem(e *environment.Environment) (error, *ServiceSystem){
   e.Output.WriteChDebug("(ServiceSystem::NewServiceSystem)")
   sys := new(ServiceSystem)
-
+  
   // set the environment attribute
   env = e
 
@@ -88,6 +63,32 @@ func NewServiceSystem(e *environment.Environment) (error, *ServiceSystem){
   sys.StartServiceSystemReceiver()
 
   return nil, sys
+}
+
+//#
+//# Getters/Setters methods for ServiceSystem object
+//#---------------------------------------------------------------------
+
+//
+//# SetServices: methods sets the Services' value
+func (s *ServiceSystem) SetServices(ss *Services) {
+  s.Ss = ss
+}
+//
+//# SetInputSampleChan: methods sets the inputSampleChan's value
+func (s *ServiceSystem) SetInputSampleChan(c chan *sample.CheckSample) {
+  s.inputSampleChan = c
+}
+
+//
+//# GetServices: methods gets the Services' value
+func (s *ServiceSystem) GetServices() *Services {
+  return s.Ss
+}
+//
+//# GetInputSampleChan: methods sets the inputSampleChan's value
+func (s *ServiceSystem) GetInputSampleChan() chan *sample.CheckSample {
+  return s.inputSampleChan
 }
 
 //#
@@ -124,7 +125,6 @@ func (s *ServiceSystem) SendSampleToServiceSystem(sample *sample.CheckSample) {
   env.Output.WriteChDebug("(ServiceSystem::SendSampleToServiceSystem) Send sample "+sample.String())
   s.inputSampleChan <- sample
 }
-
 //
 //# RegisterService: register a new service for ServiceSysem
 func (s *ServiceSystem) RegisterService(name string, desc string, checks []string) error {
@@ -145,36 +145,42 @@ func (s *ServiceSystem) RegisterService(name string, desc string, checks []strin
 }
 
 //
-//# GetServiceForCheck: method returns the services that a check is defined to
-func (s *ServiceSystem) GetServicesForCheck(check string) (error, []string) {
-  var err error
-  var services []string
-
-  ss := s.GetServices()
-  if err, services = ss.GetServicesForCheck(check); err != nil {
-    return err, nil
-  }
-  return nil, services
-}
-//
 //# GetAllServicesStatusHuman: converts a SampleSystem object to string
-func (sys *ServiceSystem) GetAllServicesStatusHuman() string {
+func (sys *ServiceSystem) GetAllServicesStatusHuman() (error, string) {
+  env.Output.WriteChDebug("(ServiceSystem::GetAllServicesStatusHuman)")
   var str string
+  var substr string
+  var err error
+
   ss := sys.GetServices()
 
   for _,obj := range ss.GetServices(){
-    str += "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus())
+    if err, substr = sys.GetServicesStatusHuman(obj.GetName()); err != nil {
+      return err, substr
+    }
+    str += substr
   }
-  return str
+  return nil, str
 }
 //
 //# GetServicesStatusHuman: converts a SampleSystem object to string
 func (sys *ServiceSystem) GetServicesStatusHuman(service string) (error ,string) {
+  env.Output.WriteChDebug("(ServiceSystem::GetServicesStatusHuman) Get status for '"+service+"'")
+  var obj *ServiceObject
+  var err error
+
   ss := sys.GetServices()
-  if err, obj := ss.GetServiceObject(service); err != nil {
+  if err, obj = ss.GetServiceObject(service); err != nil {
     return err, ""
   } else {
-    return nil, "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus()) + "\n"    
+    // If vermell is runningin standalone mode, all the sample have to arrived from check system to service system.
+    // to ensure that, you could compare the checkStatusCache's length to the Checks one
+    // that will work because in standalone mode the GetServicesStatusHuman is launch once all checks has been executed.
+    if env.Context.ExecutionMode == "standalone" {
+      obj = obj.WaitAllSamples(10)
+      //env.Output.WriteChDebug(obj)
+    }
+    return nil, "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus())
   }
 }
 //
@@ -187,6 +193,24 @@ func (sys *ServiceSystem) GetServiceStatus(service string) (error , int) {
     return nil, obj.GetStatus()    
   }
 }
+//
+//# AddService: method add a new service to be checked
+func (s *ServiceSystem) AddServiceObject(obj *ServiceObject) error {
+  if err := s.Ss.AddServiceObject(obj); err != nil {
+    return err
+  }
+  return nil
+}
+//
+//# GetService: method returns a ServiceObject
+func (s *ServiceSystem) GetServiceObject(name string) (error, *ServiceObject){
+  return s.Ss.GetServiceObject(name)
+}
+//
+//# GetServiceForCheck: method returns the services that a check is defined to
+func (s *ServiceSystem) GetServicesForCheck(check string) (error, []string) {
+  return s.Ss.GetServicesForCheck(check)
+}
 
 //#
 //# Common methods
@@ -197,6 +221,5 @@ func (sys *ServiceSystem) GetServiceStatus(service string) (error , int) {
 func (sys *ServiceSystem) String() string {
   return utils.ObjectToJsonString(sys.GetServices())
 }
-
 
 //#######################################################################################################

@@ -91,17 +91,17 @@ func main() {
 			}
 		}
 
-		message.WriteInfo("Press Enter...")
-		ConsoleReader := bufio.NewReader(os.Stdin)
-		ConsoleReader.ReadString('\n')
-
-		// achive required status
+		// achieve required status
 		if err, exitStatus = srv.GetServiceStatus(env.Context.Service); err != nil{
 			env.Output.WriteChError(err)
 			os.Exit(4)
 		}
 		_,hummanstatus := srv.GetServicesStatusHuman(env.Context.Service)
 		message.Write(hummanstatus)
+
+		message.WriteInfo("Press Enter...")
+		ConsoleReader := bufio.NewReader(os.Stdin)
+		ConsoleReader.ReadString('\n')
 
 	}//end switch
 

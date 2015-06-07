@@ -8,6 +8,7 @@ The package 'service' is used by verdmell to manage the definied services.
 -ServiceSystem
 -Services
 -ServiceObject
+-ServiceResult
 */
 package service
 
@@ -55,7 +56,7 @@ func (s *Services) GetCheckServiceMapReduce() map[string] []string{
 //#---------------------------------------------------------------------
 
 //
-//# AddService: method add a new service to be checked
+//# AddServiceObject: method add a new service to be checked
 func (s *Services) AddServiceObject(obj *ServiceObject) error {
 	name := obj.GetName()
 	if _, exist := s.Services[name]; !exist {
@@ -67,7 +68,7 @@ func (s *Services) AddServiceObject(obj *ServiceObject) error {
 }
 
 //
-//# GetService: method returns a ServiceObject
+//# GetServiceObject: method returns a ServiceObject
 func (s *Services) GetServiceObject(name string) (error, *ServiceObject){
 	var exist bool
 	var srv *ServiceObject
