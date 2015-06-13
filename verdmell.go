@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"bufio"
 	"strconv"
 	"github.com/apenella/messageOutput"
 	"verdmell/environment"
@@ -98,10 +97,6 @@ func main() {
 		}
 		_,hummanstatus := srv.GetServicesStatusHuman(env.Context.Service)
 		message.Write(hummanstatus)
-
-		message.WriteInfo("Press Enter...")
-		ConsoleReader := bufio.NewReader(os.Stdin)
-		ConsoleReader.ReadString('\n')
 
 	}//end switch
 

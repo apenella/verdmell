@@ -1,4 +1,3 @@
-
 /*
 Environment: manage all data related with the execution and any thing around it.
 

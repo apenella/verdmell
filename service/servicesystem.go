@@ -168,17 +168,19 @@ func (sys *ServiceSystem) GetServicesStatusHuman(service string) (error ,string)
   env.Output.WriteChDebug("(ServiceSystem::GetServicesStatusHuman) Get status for '"+service+"'")
   var obj *ServiceObject
   var err error
+  srvChan := make(chan *ServiceObject)
+  defer close(srvChan)
 
   ss := sys.GetServices()
   if err, obj = ss.GetServiceObject(service); err != nil {
     return err, ""
   } else {
-    // If vermell is runningin standalone mode, all the sample have to arrived from check system to service system.
+    // If vermell is running as standalone mode, all the sample have to arrived from check system to service system.
     // to ensure that, you could compare the checkStatusCache's length to the Checks one
     // that will work because in standalone mode the GetServicesStatusHuman is launch once all checks has been executed.
     if env.Context.ExecutionMode == "standalone" {
-      obj = obj.WaitAllSamples(10)
-      //env.Output.WriteChDebug(obj)
+      obj = obj.WaitAllSamples(5)
+      env.Output.WriteChDebug("(ServiceSystem::GetServicesStatusHuman) The waiting has end")
     }
     return nil, "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus())
   }
@@ -190,6 +192,13 @@ func (sys *ServiceSystem) GetServiceStatus(service string) (error , int) {
   if err, obj := ss.GetServiceObject(service); err != nil {
     return err, -1
   } else {
+    // If vermell is running as standalone mode, all the sample have to arrived from check system to service system.
+    // to ensure that, you could compare the checkStatusCache's length to the Checks one
+    // that will work because in standalone mode the GetServicesStatusHuman is launch once all checks has been executed.
+    if env.Context.ExecutionMode == "standalone" {
+      obj = obj.WaitAllSamples(5)
+      env.Output.WriteChDebug("(ServiceSystem::GetServicesStatusHuman) The waiting has end")
+    }
     return nil, obj.GetStatus()    
   }
 }
