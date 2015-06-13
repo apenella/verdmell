@@ -1,2 +1,2 @@
 # verdmell
-Vermell is a monitoring tool which goal is to report a server status, based on the result of execution of user-defined scripts.
+Verdmell is a lightweight monitoring tool which its main goal is to shoot a photograph to the system to achieve its services' current health status. Each service's health status is based on a set of user-defined scripts' results.
