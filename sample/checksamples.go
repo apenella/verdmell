@@ -24,6 +24,7 @@ type CheckSample struct{
   SampleTime time.Time `json:"sampletime"`
   ExpirationTime time.Duration `json:"expirationtime"`
   ElapsedTime time.Duration `json:"elapsedtime"`
+  Timestamp int64 `json:"timestamp"`
 }
 
 //#
@@ -59,6 +60,11 @@ func (s *CheckSample) SetSampletime(t time.Time){
   s.SampleTime = t
 }
 //
+//# SetTimestamp: method sets the value for the CheckObject object sample
+func (s *CheckSample) SetTimestamp(t int64){
+  s.Timestamp = t
+}
+//
 //# GetCheck: method sets the Name value for the CheckObject object sample
 func (s *CheckSample) GetCheck() string{
     return s.Check
@@ -87,6 +93,11 @@ func (s *CheckSample) GetElapsedTime() time.Duration {
 //# GetSampletime: method sets the value for the CheckObject object sample
 func (s *CheckSample) GetSampletime() time.Time {
   return s.SampleTime
+}
+//
+//# GetTimestamp: method sets the value for the CheckObject object sample
+func (s *CheckSample) GetTimestamp() int64 {
+  return s.Timestamp
 }
 
 //
