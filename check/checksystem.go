@@ -28,6 +28,8 @@ type CheckSystem struct{
   Cg *Checkgroups  `json:"checkgroups"`
   // Map to storage the samples
   Cs *sample.SampleSystem  `json:"samples"`
+  // Timestamp
+  Timestamp int64 `json:"timestamp"`
   // Service Channel
   outputSampleChan chan *sample.CheckSample `json: "-"`
 }
@@ -75,6 +77,8 @@ func NewCheckSystem(e *environment.Environment) (error, *CheckSystem){
   } else {
    return err, nil
   }
+  // Initialize the first timestamp to 0
+  cks.SetTimestamp(0)
 
 	return err, cks
 }
@@ -102,6 +106,12 @@ func (c *CheckSystem) SetSampleSystem(cs *sample.SampleSystem) {
   c.Cs = cs
 }
 //
+//# SetTimestamp: attribute from CheckSystem
+func (c *CheckSystem) SetTimestamp(t int64) {
+  env.Output.WriteChDebug("(CheckSystem::SetTimestamp)")
+  c.Timestamp = t
+}
+//
 //# SetOutputSampleChan: methods sets the inputSampleChan's value
 func (c *CheckSystem) SetOutputSampleChan(o chan *sample.CheckSample) {
   c.outputSampleChan = o
@@ -124,6 +134,12 @@ func (c *CheckSystem) GetCheckgroups() *Checkgroups{
 func (c *CheckSystem) GetSampleSystem() *sample.SampleSystem{
   env.Output.WriteChDebug("(CheckSystem::SetSampleSystem)")
   return c.Cs
+}
+//
+//# GetTimestamp: attribute from CheckSystem
+func (c *CheckSystem) GetTimestamp() int64 {
+  env.Output.WriteChDebug("(CheckSystem::GetTimestamp)")
+  return c.Timestamp
 }
 //
 //# GetOutputSampleChan: methods sets the inputSampleChan's value
@@ -150,7 +166,9 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
   check := new(Checks)
   // checks will contain all the CheckObject definition
   checks := make(map[string]*CheckObject)
-  //
+  
+  //Increase the timestamp
+  c.SetTimestamp(c.GetTimestamp()+1)
 
   switch req := i.(type){
   case *CheckObject:
@@ -167,12 +185,11 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
         }
       }
     }
-
     check.SetCheck(checks)
-
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      if err := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan()); err != nil {
+      // startCheckTaskPools requiere the SAmple system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
+      if err := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil {
         errChan <- err
       }
       endChan <- true
@@ -213,7 +230,8 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
     check.SetCheck(checks)
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
-      if err := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan()); err != nil{
+      // startCheckTaskPools requiere the SAmple system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
+      if err := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil{
         errChan <- err
       }
       endChan <- true
@@ -228,7 +246,8 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
     
   default:
     checks :=  c.GetChecks()
-    if err := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan()); err != nil{
+    // startCheckTaskPools requiere the SAmple system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
+    if err := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil{
       return err
     }
     env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) All Pools Finished")

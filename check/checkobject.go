@@ -139,7 +139,6 @@ func (c *CheckObject) ValidateCheckObject() error {
 //
 //# StartQueue: method starts a queue for receive check
 func (c *CheckObject) StartQueue(){
-
   env.Output.WriteChDebug("(CheckObject::StartQueue) Starting queue for check '"+c.GetName()+"'")
   expired := make(chan bool)
   result := -1
@@ -148,7 +147,7 @@ func (c *CheckObject) StartQueue(){
 
   defer close(queue)
 
-  //function to clean the result to enforce that the check could be started again
+  //function to clean up the result to enforce that the check is not started while the sample is already valid
   sampleExpiration := func() {
       env.Output.WriteChDebug("(CheckObject::StartQueue::sampleExpiration) Countdown for "+c.GetName()+"'s sample") 
       timeout := time.After(time.Duration(c.GetExpirationTime()) * time.Second)
@@ -160,6 +159,7 @@ func (c *CheckObject) StartQueue(){
       }
   }
 
+  // waiting for task to be queued by EnqueueCheckObject
   for{
     select{
     case checkObj := <-queue:
@@ -172,6 +172,7 @@ func (c *CheckObject) StartQueue(){
         go sampleExpiration()
         env.Output.WriteChDebug("(CheckObject::StartQueue) ObjectTask finished. The exit code for '"+checkObj.GetName()+"' is '"+strconv.Itoa(result)+"'")
       }
+      //Send sample to check object sampleChan.
       checkObj.SampleChan <- sample
     case <-expired:
       env.Output.WriteChDebug("(CheckObject::StartQueue) Sample for "+c.GetName()+" has expired")

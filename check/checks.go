@@ -121,7 +121,7 @@ func (c *Checks) ValidateChecks(i interface{}) error {
 }
 //
 //# StartCheckTaskPools: start a pool for each check. For each pool are generated the check execution tasks
-func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.CheckSample) error {
+func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.CheckSample, timestamp int64) error {
   env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Ready to start all pools for checks")
 
   sampleChan := make(chan *sample.CheckSample)
@@ -143,6 +143,7 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
     go func (obj *CheckObject, rgl map[string]interface{}) {
       env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing tasks for '"+obj.GetName()+"''s pool")
       if err, checksample := c.InitCheckTasks(*obj, rgl); err == nil {
+        checksample.SetTimestamp(timestamp)
         sampleChan <- checksample
       } else {
         errChan <- err
@@ -155,17 +156,17 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
     for i:= 0; i<len(c.GetCheck()); i++{
       select{
       case checksample := <-sampleChan:
-        env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Check status received: '"+strconv.Itoa(checksample.GetExit())+"'")
+        env.Output.WriteChDebug("(Checks::StartCheckTaskPools::goroutine) Check status received: '"+strconv.Itoa(checksample.GetExit())+"'")
         if err,sam := ss.GetSample(checksample.GetCheck()); err != nil {
           //sending sample to service using the output channel
           o <- checksample
         } else {
           // the sample will not send to service system unless it has modified it exit status
-          if sam.GetExit() != checksample.GetExit() {
+          if sam.GetTimestamp() < checksample.GetTimestamp() {
             //sending sample to service using the output channel
             o <- checksample
           }
-        }  
+        }
         ss.AddSample(checksample)
        
       case err := <-errChan:
@@ -213,11 +214,12 @@ func (c *Checks) InitCheckTasks(checkObj CheckObject, runGraphList map[string]in
     for _,d := range checkObj.GetDepend(){  
       // validate that the check doesn't already exist into list
       if _,exist := runGraphList[d]; exist {
+        
         // if it exist an error is launch for this execution branch
         go func() {
+          env.Output.WriteChError(append([]interface{}{"(Checks::InitCheckTasks) ",d,checkObj.GetName()},runGraphList))
           jumpDueErrChan <- errors.New("(Checks::InitCheckTasks) Your defined check has a cycle dependency for '"+d+"'. Detected while running '"+checkObj.GetName()+"'.")
         }()
-
       } else {
         // get a CheckObject by its name
         if err,co := c.GetCheckObjectByName(d); err == nil {
@@ -225,7 +227,7 @@ func (c *Checks) InitCheckTasks(checkObj CheckObject, runGraphList map[string]in
           // runGraph for each object an wait for its response
           go func (o CheckObject) {
             // the current check must be marked into runGraphList
-            runGraphList[d] = nil 
+            runGraphList[d] = nil
             if err, sampleDedend := c.InitCheckTasks(o, runGraphList); err != nil {
               errChan <- err
             } else {
@@ -272,13 +274,18 @@ func (c *Checks) InitCheckTasks(checkObj CheckObject, runGraphList map[string]in
 
     // once all dependent checks have been executed the current object is executed
     if exitStatus != 2 {
+      env.Output.WriteChDebug("(Checks::InitCheckTasks) The '"+checkObj.GetName()+"''s dependencies has been already executed")
+      // delete the check to runGraphList
+      delete(runGraphList,checkObj.GetName())
+      // queue the object to be run
       checkObj.EnqueueCheckObject()
+      // Once the task are queued and executed the result is sent using the CheckObject's SampleChan
       checksample = <-checkObj.SampleChan
       exitStatus = checksample.GetExit()
-      env.Output.WriteChDebug("(Checks::runCheckGraph) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
+      env.Output.WriteChDebug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
     }else{
       outputMessage := "Wrong status for '"+checkObj.GetName()+"' due dependency issue. Dependency status: '"+strconv.Itoa(exitStatus)+"'"
-      env.Output.WriteChDebug("(Checks::runCheckGraph) "+outputMessage)
+      env.Output.WriteChWarn("(Checks::InitCheckTasks) "+outputMessage)
       _,checksample = checkObj.GenerateCheckSample(-1,outputMessage,time.Duration(0)*time.Second, time.Duration(0)*time.Second)
       //exitStatus = checksample.GetExit()
     }
@@ -286,14 +293,15 @@ func (c *Checks) InitCheckTasks(checkObj CheckObject, runGraphList map[string]in
     //
     // recursive ending condition: No dependency is found
     //
-    env.Output.WriteChDebug("(Checks::runCheckGraph) The check '"+checkObj.GetName()+"' hasn't dependencies")
+    env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' hasn't dependencies")
     // delete the check to runGraphList
     delete(runGraphList,checkObj.GetName())
-    //run the check
+    // queue the object to be run
     checkObj.EnqueueCheckObject()
+    // Once the task are queued and executed the result is sent using the CheckObject's SampleChan
     checksample = <-checkObj.SampleChan
     exitStatus = checksample.GetExit() 
-    env.Output.WriteChDebug("(Checks::runCheckGraph) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
+    env.Output.WriteChDebug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
   }
 
   return nil, checksample
