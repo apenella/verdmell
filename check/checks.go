@@ -142,7 +142,7 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
     // each check will run under its own goroutine
     go func (obj *CheckObject, rgl map[string]interface{}) {
       env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing tasks for '"+obj.GetName()+"''s pool")
-      if err, checksample := c.InitCheckTasks(*obj, rgl); err == nil {
+      if err, checksample := c.InitCheckTasks(obj, rgl); err == nil {
         checksample.SetTimestamp(timestamp)
         sampleChan <- checksample
       } else {
@@ -177,15 +177,15 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleSystem, o chan *sample.Che
     doneChan <- true
   }()
 
+  // All checks had send its sample
   <-doneChan
-  //env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Check task pool status: '"+strconv.Itoa(exitStatus)+"'")
 
   return nil
 }
 //
 //# InitCheckTasks: is going to initialize a task for each check and its dependencies. 
 //#  The task enqueu the check to be check but it has dependencies they have to be enqueued befor
-func (c *Checks) InitCheckTasks(checkObj CheckObject, runGraphList map[string]interface{}) (error, *sample.CheckSample) {
+func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]interface{}) (error, *sample.CheckSample) {
   env.Output.WriteChDebug("(Checks::InitCheckTasks) Initializing the tasks for the check '"+checkObj.GetName()+"'")
 
   var err error
@@ -211,37 +211,33 @@ func (c *Checks) InitCheckTasks(checkObj CheckObject, runGraphList map[string]in
     // Add to the runGraphList all CheckObjects to be run before the current object
     // If the object has already exist into the runGraphList then exist a cycle dependency. 
     // The current object couldn't exist to it's dependency graph
-    for _,d := range checkObj.GetDepend(){  
-      // validate that the check doesn't already exist into list
-      if _,exist := runGraphList[d]; exist {
-        
-        // if it exist an error is launch for this execution branch
-        go func() {
+    for _,d := range checkObj.GetDepend(){
+      go func(){  
+        // validate that the check doesn't already exist into list
+        if _,exist := runGraphList[d]; exist {        
+          // if it exist an error is launch for this execution branch
           env.Output.WriteChError(append([]interface{}{"(Checks::InitCheckTasks) ",d,checkObj.GetName()},runGraphList))
           jumpDueErrChan <- errors.New("(Checks::InitCheckTasks) Your defined check has a cycle dependency for '"+d+"'. Detected while running '"+checkObj.GetName()+"'.")
-        }()
-      } else {
-        // get a CheckObject by its name
-        if err,co := c.GetCheckObjectByName(d); err == nil {
-          env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has a dependency to '"+d+"'")
-          // runGraph for each object an wait for its response
-          go func (o CheckObject) {
+        } else {
+          // get a CheckObject by its name
+          if err,co := c.GetCheckObjectByName(d); err == nil {
+            env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has a dependency to '"+d+"'")        
             // the current check must be marked into runGraphList
             runGraphList[d] = nil
-            if err, sampleDedend := c.InitCheckTasks(o, runGraphList); err != nil {
+            if err, sampleDedend := c.InitCheckTasks(co, runGraphList); err != nil {
               errChan <- err
             } else {
               sampleChan <- sampleDedend
             }
-          }(*co)
-        } else {
-          // return the error in case the GetCHeckObjectByName returns an error
-          // if an undefined CheckObject is defined such a dependency one, jump it
-          go func() { jumpDueErrChan <- err }()
+          } else {
+            // return the error in case the GetCHeckObjectByName returns an error
+            // if an undefined CheckObject is defined such a dependency one, jump it
+            jumpDueErrChan <- err
+          }
         }
-      }
+      }()        
     }
-
+  
     // gather the results for the depended check
     go func(){
       exitStatus := -1

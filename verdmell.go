@@ -99,6 +99,5 @@ func main() {
 		message.Write(hummanstatus)
 
 	}//end switch
-
 	os.Exit(exitStatus)
 }
