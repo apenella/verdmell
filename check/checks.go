@@ -212,19 +212,19 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
     // If the object has already exist into the runGraphList then exist a cycle dependency. 
     // The current object couldn't exist to it's dependency graph
     for _,d := range checkObj.GetDepend(){
-      go func(){  
+      go func(dep string, rgl map[string]interface{}){
         // validate that the check doesn't already exist into list
-        if _,exist := runGraphList[d]; exist {        
+        if _,exist := rgl[dep]; exist {        
           // if it exist an error is launch for this execution branch
-          env.Output.WriteChError(append([]interface{}{"(Checks::InitCheckTasks) ",d,checkObj.GetName()},runGraphList))
-          jumpDueErrChan <- errors.New("(Checks::InitCheckTasks) Your defined check has a cycle dependency for '"+d+"'. Detected while running '"+checkObj.GetName()+"'.")
+          //env.Output.WriteChError(append([]interface{}{"(Checks::InitCheckTasks) ",dep,checkObj.GetName()},rgl))         
+          jumpDueErrChan <- errors.New("(Checks::InitCheckTasks) Your defined check has a cycle dependency for '"+dep+"'. Detected while running '"+checkObj.GetName()+"'.")
         } else {
           // get a CheckObject by its name
-          if err,co := c.GetCheckObjectByName(d); err == nil {
-            env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has a dependency to '"+d+"'")        
+          if err,obj := c.GetCheckObjectByName(dep); err == nil {
+            env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has a dependency to '"+dep+"'")        
             // the current check must be marked into runGraphList
-            runGraphList[d] = nil
-            if err, sampleDedend := c.InitCheckTasks(co, runGraphList); err != nil {
+            rgl[d] = nil
+            if err, sampleDedend := c.InitCheckTasks(obj, rgl); err != nil {
               errChan <- err
             } else {
               sampleChan <- sampleDedend
@@ -235,9 +235,9 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
             jumpDueErrChan <- err
           }
         }
-      }()        
+      }(d,runGraphList)
     }
-  
+
     // gather the results for the depended check
     go func(){
       exitStatus := -1

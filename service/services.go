@@ -196,7 +196,7 @@ func (s *Services) ValidateServices() error {
 
 	//goroutine to validate each service
 	validation := func(obj *ServiceObject) {
-  	env.Output.WriteChDebug("(Services::ValidateServices::routine) Validationg services '"+obj.GetName()+"'")		
+  	env.Output.WriteChDebug("(Services::ValidateServices::routine) Validating services '"+obj.GetName()+"'")		
 		if err := obj.ValidateServiceObject(); err != nil { 
      	errorChan <- err
     } else {

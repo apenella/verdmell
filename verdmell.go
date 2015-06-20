@@ -7,6 +7,7 @@ import (
 	"verdmell/environment"
 	"verdmell/check"
 	"verdmell/service"
+	"verdmell/api"
 )
 
 //
@@ -33,13 +34,18 @@ func main() {
 	output := env.GetOutput()
 	// preparing to destroy the output system
 	defer output.DestroyInstance()
-	
+
+	// creat a new objects api to store all process data
+	objBox := api.NewObjectsBox()
 
 	// Call to initialize the check system
 	if err, cks = check.NewCheckSystem(env); err != nil {
 		message.WriteError(err)
 		os.Exit(4)
 	}
+	// Add the Checks System object into the box
+	objBox.AddObject("CHECKSYSTEM",cks)
+
 	// Call to initialize the ServiceSystem
 	if err,srv = service.NewServiceSystem(env); err != nil {
 		message.WriteError(err)
@@ -48,18 +54,17 @@ func main() {
 	// Set the output sample channel for checks as the input's service one
 	cks.SetOutputSampleChan(srv.GetInputSampleChan())
 
+	// Add the Service System objecto into the box
+	objBox.AddObject("SERVICESYSTEM",srv)
 
 	switch(context.ExecutionMode){
 	case "cluster":
 		env.Output.WriteChInfo("Welcome to Verdmell's server mode. I'm waiting your request on http://"+context.Host+":"+strconv.Itoa(context.Port))
 		break
 	case "standalone":
-		message.Write("")
-		message.Write("\t# That's Verdmell in standalone mode #")
-		message.Write("")
+		message.Write("\t# That's Verdmell in standalone mode #\n")
 
 		checkObj := new(check.CheckObject)
-		
 		//execute an isolated check
 		if context.ExecuteCheck != "" {
 			if err, checkObj = cks.GetCheckObjectByName(context.ExecuteCheck); err != nil {
@@ -99,5 +104,6 @@ func main() {
 		message.Write(hummanstatus)
 
 	}//end switch
+
 	os.Exit(exitStatus)
 }
