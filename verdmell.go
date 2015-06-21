@@ -67,6 +67,11 @@ func main() {
 		// creat a new Api System
 		apisys := api.NewApiSystem(env,objBox)
 
+		if err = cks.StartCheckSystem(nil); err != nil {
+			env.Output.WriteChError(err)
+			os.Exit(4)
+		}
+
 		webconsole := ui.NewUI(listenaddr)
 		webconsole.AddRoutes(apisys.GetRoutes())
 		webconsole.StartUI()

@@ -146,22 +146,22 @@ func (s *ServiceSystem) RegisterService(name string, desc string, checks []strin
 
 //
 //# GetAllServices: return information for all services
-func (sys *ServiceSystem) GetAllServices() string {
+func (sys *ServiceSystem) GetAllServices() []byte {
   env.Output.WriteChDebug("(ServiceSystem::GetAllServices)")
-
   ss := sys.GetServices()
 
-  return ss.String()
+  //return ss.String()
+  return utils.ObjectToJsonByte(ss)
 }
 //
 //# GetServices: return all information about a service
-func (sys *ServiceSystem) GetService(service string) string {
+func (sys *ServiceSystem) GetService(service string) []byte {
   env.Output.WriteChDebug("(ServiceSystem::GetService)")
-
   ss := sys.GetServices()
   s := ss.GetServices()
 
-  return s[service].String()
+  //return s[service].String()
+  return utils.ObjectToJsonByte(s[service])
 }
 
 

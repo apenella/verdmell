@@ -296,68 +296,56 @@ func (c *CheckSystem) GetCheckObjectByName(checkname string) (error, *CheckObjec
 func (c *CheckSystem) GetCheckgroupByName(checkgroupname string) (error, []string) {
   return c.Cg.GetCheckgroupByName(checkgroupname)
 }
+
+
+
 //
 //# GetAllChecks: return all checks
-func (c *CheckSystem) GetAllChecks() string {
+func (c *CheckSystem) GetAllChecks() []byte {
   env.Output.WriteChDebug("(CheckSystem::GetAllChecks)")
-  // Get Checks attribute from CheckSystem
-  checks := c.GetChecks()
-
-  return checks.String()
+  return utils.ObjectToJsonByte(c.GetChecks())
 }
 //
 //# GetCheck: return a checks
-func (c *CheckSystem) GetCheck(check string) string {
+func (c *CheckSystem) GetCheck(check string) []byte {
   env.Output.WriteChDebug("(CheckSystem::GetCheck)")
   // Get Checks attribute from CheckSystem
   cks := c.GetChecks()
   // Get Check map from Checks
   ck := cks.GetCheck()
-  // Get CheckObject
-  obj := ck[check]
-  return obj.String()
+  return utils.ObjectToJsonByte(ck[check])
 }
 //
 //# GetAllCheckgroups: return all checks
-func (c *CheckSystem) GetAllCheckgroups() string {
+func (c *CheckSystem) GetAllCheckgroups() []byte {
   env.Output.WriteChDebug("(CheckSystem::GetAllCheckgroups)")
-  // Get Checkgroups attribute from CheckSystem
-  groups := c.GetCheckgroups()
-
-  return groups.String()
+  return utils.ObjectToJsonByte(c.GetCheckgroups())
 }
 //
 //# GetCheckgroup: return a checks
-func (c *CheckSystem) GetCheckgroup(group string) string {
+func (c *CheckSystem) GetCheckgroup(group string) []byte {
   env.Output.WriteChDebug("(CheckSystem::GetCheckgroup)")
   // Get Checkgroupss attribute from CheckSystem
   cgs := c.GetCheckgroups()
   // Get Check map from Checks
   cg := cgs.GetCheckgroup()
-  // Get CheckObject
-  g := cg[group]
-  return utils.ObjectToJsonString(g)
+  return utils.ObjectToJsonByte(cg[group])
 }
 
 //
 //# GetAllSamples: return the status of all checks
-func (c *CheckSystem) GetAllSamples() string {
+func (c *CheckSystem) GetAllSamples() []byte {
   env.Output.WriteChDebug("(CheckSystem::GetAllSamples)")
-  // Get Samplesystem attribute from CheckSystem
-  samplesystem := c.GetSampleSystem()
-
-  return samplesystem.String()
+  return utils.ObjectToJsonByte(c.GetSampleSystem()) 
 }
 
 //
 //# GetSampleForCheck: return the status of all checks
-func (c *CheckSystem) GetSampleForCheck(check string) string {
+func (c *CheckSystem) GetSampleForCheck(check string) []byte {
   env.Output.WriteChDebug("(CheckSystem::GetSampleForCheck)")
-  
   samplesystem := c.GetSampleSystem()
   _,s := samplesystem.GetSample(check)
-
-  return s.String()
+  return utils.ObjectToJsonByte(s)
 }
 
 

@@ -30,7 +30,7 @@ type ServiceObject struct{
   Checks []string `json:"checks"`
   Status int `json:"status"`
   inputSampleChan chan *sample.CheckSample `json:"-"`
-  checksStatusCache map[string] int
+  checksStatusCache map[string] int  `json:"-"`
 }
 
 func NewServiceObject(name string, desc string, checks []string) (error,*ServiceObject) {

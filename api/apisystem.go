@@ -104,8 +104,11 @@ func (a *ApiSystem) GetSampleSystem() *sample.SampleSystem {
 func (a* ApiSystem) GenerateAPIRoutes() {
 	env.Output.WriteChDebug("(ApiSystem::GenerateAPIRoutes)")
 	a.AddRoute(ui.GenerateRoute("Index","GET","/api",Index))
+	a.AddRoute(ui.GenerateRoute("startchecksystem","GET","/api/run",StartCheckSystem))
+
 	a.GenerateAPIRoutesForCheck()
 	a.GenerateAPIRoutesForService()
+	a.GenerateAPIRoutesForSamples()
 }
 //
 //# AddRoute: for include a new route to API Routes
@@ -114,16 +117,24 @@ func (a* ApiSystem) AddRoute(route *ui.Route){
 	a.Routes = append(a.Routes, route)
 }
 //
-//# GenerateAPIRoutes: generate a set of routes to serve
+//# GenerateAPIRoutesForCheck: generate a set of routes to serve
 func (a* ApiSystem) GenerateAPIRoutesForCheck() {
 	env.Output.WriteChDebug("(ApiSystem::GenerateAPIRoutesForCheck)")
-	a.AddRoute(ui.GenerateRoute("checks","GET","/api/checks",GetAllChecks))
+	a.AddRoute(ui.GenerateRoute("allchecks","GET","/api/checks",GetAllChecks))
 	a.AddRoute(ui.GenerateRoute("check","GET","/api/checks/{check}",GetCheck))
 }
 //
-//# GenerateAPIRoutes: generate a set of routes to serve
+//# GenerateAPIRoutesForService: generate a set of routes to serve
 func (a* ApiSystem) GenerateAPIRoutesForService() {
 	env.Output.WriteChDebug("(ApiSystem::GenerateAPIRoutesForService)")
-	a.AddRoute(ui.GenerateRoute("checks","GET","/api/services",GetAllServices))
-	a.AddRoute(ui.GenerateRoute("check","GET","/api/services/{service}",GetService))
+	a.AddRoute(ui.GenerateRoute("allservices","GET","/api/services",GetAllServices))
+	a.AddRoute(ui.GenerateRoute("service","GET","/api/services/{service}",GetService))
 }
+//
+//# GenerateAPIRoutesForSamples: generate a set of routes to serve
+func (a* ApiSystem) GenerateAPIRoutesForSamples() {
+	env.Output.WriteChDebug("(ApiSystem::GenerateAPIRoutesForSamples)")
+	a.AddRoute(ui.GenerateRoute("allservices","GET","/api/samples",GetAllSamples))
+	a.AddRoute(ui.GenerateRoute("service","GET","/api/samples/{sample}",GetSample))
+}
+

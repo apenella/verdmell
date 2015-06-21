@@ -59,10 +59,12 @@ func (sys *SampleSystem) AddSample(cs *CheckSample) error {
   name := cs.GetCheck()
   env.Output.WriteChDebug("(SampleSystem::AddSample) '"+name+"'")
   
-  //If now sample exist for this check, initialize the it
+  //If now sample exist for this check, initialize it
   if _, exist = sys.Samples[name]; !exist{
   	sam = new(CheckSampleSync)
   	sys.Samples[name] = sam
+  } else {
+    sam = sys.Samples[name]
   }
 
   //write lock
@@ -75,12 +77,15 @@ func (sys *SampleSystem) AddSample(cs *CheckSample) error {
 //
 //# GetSample: method returns the CheckSample object for a CheckObject
 func (sys *SampleSystem) GetSample(name string) (error,*CheckSample) {
+  env.Output.WriteChDebug("(SampleSystem::GetSample) '"+name+"'")
   var sam *CheckSampleSync
   var exist bool
 
   // if no sample for the check, an error is thrown
   if sam, exist = sys.Samples[name]; !exist {
     return errors.New("(SampleSystem::GetSample) There is no sample for this check"),nil
+  } else {
+    sam = sys.Samples[name]
   }
 
   //read lock
