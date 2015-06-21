@@ -8,6 +8,7 @@ import (
 	"verdmell/check"
 	"verdmell/service"
 	"verdmell/api"
+	"verdmell/ui"
 )
 
 //
@@ -52,24 +53,23 @@ func main() {
 	switch(context.ExecutionMode){
 	case "cluster":
 		env.Output.WriteChInfo("Welcome to Verdmell's server mode. I'm waiting your request on http://"+context.Host+":"+strconv.Itoa(context.Port))
-		// creat a new Api System
-		apisys := api.NewApiSystem(env)
-		// creat a new objects api to store all process data
-		objBox := api.NewObjectsBox()	// Add the Checks System object into the box
+		// prepare listen address for cluster node
+		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
 		
+		// creat a new objects api to store all process data
+		objBox := api.NewObjectsBox()
 		// Add the Check System object into the box		
 		objBox.AddObject(api.CHECKS,cks)
 		// Add the Sample System object into the box		
 		objBox.AddObject(api.SAMPLES,cks.GetSampleSystem())
 		// Add the Service System object into the box
 		objBox.AddObject(api.SERVICES,srv)
+		// creat a new Api System
+		apisys := api.NewApiSystem(env,objBox)
 
-		// Set object box for the api
-		apisys.SetObjectBox(objBox)
-
-		message.Write(apisys.GetCheckSystem().String())
-		message.Write(apisys.GetServiceSystem().String())
-		message.Write(apisys.GetSampleSystem().String())
+		webconsole := ui.NewUI(listenaddr)
+		webconsole.AddRoutes(apisys.GetRoutes())
+		webconsole.StartUI()
 
 		break
 	case "standalone":

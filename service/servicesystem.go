@@ -145,6 +145,28 @@ func (s *ServiceSystem) RegisterService(name string, desc string, checks []strin
 }
 
 //
+//# GetAllServices: return information for all services
+func (sys *ServiceSystem) GetAllServices() string {
+  env.Output.WriteChDebug("(ServiceSystem::GetAllServices)")
+
+  ss := sys.GetServices()
+
+  return ss.String()
+}
+//
+//# GetServices: return all information about a service
+func (sys *ServiceSystem) GetService(service string) string {
+  env.Output.WriteChDebug("(ServiceSystem::GetService)")
+
+  ss := sys.GetServices()
+  s := ss.GetServices()
+
+  return s[service].String()
+}
+
+
+
+//
 //# GetAllServicesStatusHuman: converts a SampleSystem object to string
 func (sys *ServiceSystem) GetAllServicesStatusHuman() (error, string) {
   env.Output.WriteChDebug("(ServiceSystem::GetAllServicesStatusHuman)")
