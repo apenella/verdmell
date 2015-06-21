@@ -132,7 +132,7 @@ func (c *CheckSystem) GetCheckgroups() *Checkgroups{
 //
 //# GetChecksamplesmap: attribute from CheckSystem
 func (c *CheckSystem) GetSampleSystem() *sample.SampleSystem{
-  env.Output.WriteChDebug("(CheckSystem::SetSampleSystem)")
+  env.Output.WriteChDebug("(CheckSystem::GetSampleSystem)")
   return c.Cs
 }
 //

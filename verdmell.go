@@ -35,16 +35,11 @@ func main() {
 	// preparing to destroy the output system
 	defer output.DestroyInstance()
 
-	// creat a new objects api to store all process data
-	objBox := api.NewObjectsBox()
-
 	// Call to initialize the check system
 	if err, cks = check.NewCheckSystem(env); err != nil {
 		message.WriteError(err)
 		os.Exit(4)
 	}
-	// Add the Checks System object into the box
-	objBox.AddObject("CHECKSYSTEM",cks)
 
 	// Call to initialize the ServiceSystem
 	if err,srv = service.NewServiceSystem(env); err != nil {
@@ -54,12 +49,28 @@ func main() {
 	// Set the output sample channel for checks as the input's service one
 	cks.SetOutputSampleChan(srv.GetInputSampleChan())
 
-	// Add the Service System objecto into the box
-	objBox.AddObject("SERVICESYSTEM",srv)
-
 	switch(context.ExecutionMode){
 	case "cluster":
 		env.Output.WriteChInfo("Welcome to Verdmell's server mode. I'm waiting your request on http://"+context.Host+":"+strconv.Itoa(context.Port))
+		// creat a new Api System
+		apisys := api.NewApiSystem(env)
+		// creat a new objects api to store all process data
+		objBox := api.NewObjectsBox()	// Add the Checks System object into the box
+		
+		// Add the Check System object into the box		
+		objBox.AddObject(api.CHECKS,cks)
+		// Add the Sample System object into the box		
+		objBox.AddObject(api.SAMPLES,cks.GetSampleSystem())
+		// Add the Service System object into the box
+		objBox.AddObject(api.SERVICES,srv)
+
+		// Set object box for the api
+		apisys.SetObjectBox(objBox)
+
+		message.Write(apisys.GetCheckSystem().String())
+		message.Write(apisys.GetServiceSystem().String())
+		message.Write(apisys.GetSampleSystem().String())
+
 		break
 	case "standalone":
 		message.Write("\t# That's Verdmell in standalone mode #\n")
