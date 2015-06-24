@@ -280,7 +280,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
       exitStatus = checksample.GetExit()
       env.Output.WriteChDebug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
     }else{
-      outputMessage := "Wrong status for '"+checkObj.GetName()+"' due dependency issue. Dependency status: '"+strconv.Itoa(exitStatus)+"'"
+      outputMessage := "Wrong status for '"+checkObj.GetName()+"' because it depends to another check with "+sample.Itoa(exitStatus)+" status"
       env.Output.WriteChWarn("(Checks::InitCheckTasks) "+outputMessage)
       _,checksample = checkObj.GenerateCheckSample(-1,outputMessage,time.Duration(0)*time.Second, time.Duration(0)*time.Second)
       //exitStatus = checksample.GetExit()
