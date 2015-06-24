@@ -17,7 +17,7 @@ import (
 	"errors"
 	"strconv"
 	"verdmell/sample"
-  "verdmell/utils"
+	"verdmell/utils"
 )
 
 //#
@@ -26,11 +26,11 @@ import (
 //# Service defines a map to store the maps
 type ServiceObject struct{
 	Name string `json:"name"`
-  Description string `json:"description"`
-  Checks []string `json:"checks"`
-  Status int `json:"status"`
-  inputSampleChan chan *sample.CheckSample `json:"-"`
-  checksStatusCache map[string] int  `json:"-"`
+	Description string `json:"description"`
+	Checks []string `json:"checks"`
+	Status int `json:"status"`
+	inputSampleChan chan *sample.CheckSample `json:"-"`
+	checksStatusCache map[string] int	`json:"-"`
 }
 
 func NewServiceObject(name string, desc string, checks []string) (error,*ServiceObject) {
@@ -61,43 +61,43 @@ func NewServiceObject(name string, desc string, checks []string) (error,*Service
 //
 //# SetName: method sets the Name value for the ServiceObject
 func (s *ServiceObject) SetName(n string){
-  s.Name = n
+	s.Name = n
 }
 //
 //# SetChecks: method sets the Checks value for the ServiceObject
 func (s *ServiceObject) SetChecks(c []string){
-  s.Checks = c
+	s.Checks = c
 }
 //
 //# SetDescription: method sets the description value for the ServiceObject
 func (s *ServiceObject) SetDescription(d string){
-  s.Description = d
+	s.Description = d
 }
 //
 //# SetStatus: method sets the Status value for the ServiceObject
 func (s *ServiceObject) SetStatus(status int){
-  s.Status = status
+	s.Status = status
 }
 
 //
 //# GetName: method return the Name value for the ServiceObject
 func (s *ServiceObject) GetName() string{
-  return s.Name
+	return s.Name
 }
 //
 //# GetCheck: method return the Checks value for the ServiceObject
 func (s *ServiceObject) GetChecks() []string{
-  return s.Checks
+	return s.Checks
 }
 //
 //# GetDescription: method return the description value for the ServiceObject
 func (s *ServiceObject) GetDescription() string {
-  return s.Description
+	return s.Description
 }
 //
 //# SetStatus: method sets the Status value for the ServiceObject
 func (s *ServiceObject) GetStatus() int{
-  return s.Status
+	return s.Status
 }
 
 //#
@@ -110,7 +110,7 @@ func (s *ServiceObject) WaitAllSamples(seconds int) *ServiceObject {
 	env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) Waiting "+strconv.Itoa(seconds)+"s")
 
 	arrived := make(chan bool)
-  defer close(arrived)
+	defer close(arrived)
 
 	go func() {
 		allArrived := (len(s.GetChecks()) == len(s.checksStatusCache))
@@ -118,15 +118,15 @@ func (s *ServiceObject) WaitAllSamples(seconds int) *ServiceObject {
 
 		for;!allArrived;{
 			env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) "+strconv.Itoa(len(s.checksStatusCache))+ " samples arrived from "+ strconv.Itoa(len(s.GetChecks())) )
-		  if len(s.GetChecks()) == len(s.checksStatusCache) {
-		  	env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) all arrived")
+			if len(s.GetChecks()) == len(s.checksStatusCache) {
+				env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) all arrived")
 				allArrived = (len(s.GetChecks()) == len(s.checksStatusCache))
-		    arrived <- allArrived
-		  }
+				arrived <- allArrived
+			}
 		}
-  }()
+	}()
 
-  // There is a timeout to avoid long wait...
+	// There is a timeout to avoid long wait...
 	timeout := time.After(time.Duration(seconds) * time.Second)
 	select{
 	case <-arrived:
@@ -135,7 +135,7 @@ func (s *ServiceObject) WaitAllSamples(seconds int) *ServiceObject {
 		env.Output.WriteChWarn("(ServiceObject::WaitAllSamples) Samples for '"+s.GetName()+"' has not already arrived after "+strconv.Itoa(seconds)+" seconds")
 	}
 
-  return s
+	return s
 }
 
 //
@@ -145,7 +145,7 @@ func (s *ServiceObject) ValidateServiceObject() error {
 
 	if len(s.GetChecks()) < 1 {
 		err := errors.New("(ServiceObject::ValidateServiceObject) Service '"+s.GetName()+"' must have a defined check")
-    return err
+		return err
 	}
 
 	// transform the []string to a map to optimize the search during validation
@@ -156,7 +156,7 @@ func (s *ServiceObject) ValidateServiceObject() error {
 	for _,check := range s.GetChecks(){
 		if _,exist := checkMap[check]; !exist{
 			err := errors.New("(ServiceObject::ValidateServiceObject) Service '"+s.GetName()+"' requires the undefined check '"+check+"'")
-    	return err
+			return err
 		}
 	}
 
@@ -178,7 +178,10 @@ func (s *ServiceObject) StartServiceObjectSampleChannel(){
 		select{
 		case sam := <- s.inputSampleChan:
 			env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) New sample arrived for '"+sam.GetCheck()+"' to service '"+s.GetName()+"'")
-			s.CalculateStatusForService(sam)
+			if s.checksStatusCache[sam.GetCheck()] != sam.GetExit() {
+				env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) The '"+sam.GetCheck()+"' status has changed, and service status have to be calculated.")
+				s.CalculateStatusForService(sam)
+			}
 		}
 	}
 }
@@ -193,22 +196,23 @@ func (s *ServiceObject) SendToSampleChannel(sample *sample.CheckSample){
 //
 //# SendToSampleChannel: method sends a sample to the sample channel
 func (s *ServiceObject) CalculateStatusForService(sam *sample.CheckSample){
+	env.Output.WriteChDebug("(ServiceObject::CalculateStatusForService) Calculating '"+sam.GetCheck()+"' status to service '"+s.GetName()+"'")
 	//Exit codes
-  // OK: 0
-  // WARN: 1
-  // ERROR: 2
-  // UNKNOWN: others (-1)
-  //
+	// OK: 0
+	// WARN: 1
+	// ERROR: 2
+	// UNKNOWN: others (-1)
+	//
 	currentStatus := s.GetStatus()
 
 	s.checksStatusCache[sam.GetCheck()] = sam.GetExit()
 
 	for _,status := range s.checksStatusCache {
 		//exitStatus calculates the task status throughout dependency task execution
-  	if currentStatus < status {
-  		currentStatus = status
-  		env.Output.WriteChDebug("(ServiceObject::CalculateStatusForService) Service '"+s.GetName()+"' has changed its status to '"+sample.Itoa(status)+"'")
-  	}
+		if currentStatus < status {
+			currentStatus = status
+			env.Output.WriteChDebug("(ServiceObject::CalculateStatusForService) Service '"+s.GetName()+"' has changed its status to '"+sample.Itoa(status)+"'")
+		}
 	}
 	s.SetStatus(currentStatus)
 }
@@ -220,6 +224,6 @@ func (s *ServiceObject) CalculateStatusForService(sam *sample.CheckSample){
 //
 //# String: method converts a ServiceObject to string
 func (s *ServiceObject) String() string {
-  return utils.ObjectToJsonString(s)
+	return utils.ObjectToJsonString(s)
 }
 //#######################################################################################################
