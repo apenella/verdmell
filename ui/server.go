@@ -21,7 +21,7 @@ func NewUI(listenaddr string) *UI {
 }
 
 func (u *UI) StartUI(){
-	u.router.HandleFunc("/", Index)
+	u.GenerateRoutes()
 	log.Fatal(http.ListenAndServe(u.listenaddr, u.router))
 }
 
