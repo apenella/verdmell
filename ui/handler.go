@@ -12,10 +12,12 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 func WebUI(w http.ResponseWriter, r *http.Request){
 
-	layout := path.Join("ui","templates", "layout.html")
 	index := path.Join("ui","templates", "index.html")
+	header := path.Join("ui","templates", "header.html")
+	content := path.Join("ui","templates", "content.html")
+	footer := path.Join("ui","templates", "footer.html")
 
- 	tmpl, err := template.ParseFiles(layout, index)
+ 	tmpl, err := template.ParseFiles(index,header,content,footer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
