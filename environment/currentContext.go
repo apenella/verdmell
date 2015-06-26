@@ -12,6 +12,7 @@ import (
 	"errors" 
 	"flag"
 	"strconv"
+	"strings"
 	"github.com/apenella/messageOutput"
 	"verdmell/utils"
 )
@@ -43,8 +44,8 @@ type currentContext struct{
 	*/
 	ExecutionMode string
 
-	// 
-	Cluster bool
+	// nodes that belongs to cluster
+	Nodes []string
 	// host to anchor to server mode
 	Host string
 	// port to anchor to server mode
@@ -53,7 +54,7 @@ type currentContext struct{
 	output *message.Message
 }
 
-func newcurrentContext(output *message.Message) (error, *currentContext) {
+func newCurrentContext(output *message.Message) (error, *currentContext) {
 	context := new(currentContext)
 
 	var loglevel int
@@ -65,9 +66,9 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 	var executionMode string
 	var port int
 	var host string
-	var cluster *bool
+	var nodesstr string
 
-	cluster = flag.Bool("cluster",false,"Execute in cluster mode")
+	flag.StringVar(&nodesstr,"nodes","","List of nodes that belongs to the cluster. The nodes have to be defined as <FIRST_NODE_NAME|IP>:<PORT>,<SECOND_NODE_NAME|IP>:<PORT>,...")
 	flag.IntVar(&loglevel,"l",0,"Loglevel definition\n\t0 - info\n\t1 - warn\n\t2 - error\n\t3 - debug.")  
 	flag.StringVar(&configFolder,"d","./conf.d","Root configuration folder.")
 	flag.StringVar(&setupFile,"c","config.json","Configuration file.")
@@ -81,6 +82,8 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 
 	output.SetLogLevel(loglevel)
 
+	nodes := strings.Split(nodesstr,",")
+
 	context = &currentContext{
 		ConfigFolder: configFolder,
 		SetupFile: setupFile,
@@ -89,7 +92,7 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 		ExecuteCheckGroup: executeCheckGroup,
 		Loglevel: loglevel,
 		ExecutionMode: executionMode,
-		Cluster: *cluster,
+		Nodes: nodes,
 		Host: host,
 		Port: port,
 		output: output,
@@ -111,7 +114,8 @@ func (c *currentContext) validatecurrentContext() error {
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) service: "+c.Service)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute check: "+c.ExecuteCheck)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute checkgroup: "+c.ExecuteCheckGroup)
-	c.output.WriteChDebug("(currentContext::validatecurrentContext) cluster: "+strconv.FormatBool(c.Cluster))
+	c.output.WriteChDebug("(currentContext::validatecurrentContext) Nodes: ")
+	c.output.WriteChDebug(c.Nodes)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute IP: "+c.Host)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute port: "+strconv.Itoa(c.Port))
 
@@ -126,6 +130,8 @@ func (c *currentContext) validatecurrentContext() error {
 	if c.Loglevel < 0 || c.Loglevel > 3 {return errors.New("Undefined loglevel mode")}
 	// execution mode
 	if c.ExecutionMode != "standalone" && c.ExecutionMode != "cluster" { return errors.New("The execution mode chosen is unknown by Verdmell")}
+	// nodes only take sense in cluster mode
+	if c.ExecutionMode == "standalone" && len(c.Nodes) > 0 {return errors.New("The node only have sense on cluster's execution mode")}
 	// host to anchor to server mode
 	if err := utils.IsLocalIPAddress(c.Host); err != nil {return err}
 	// port to anchor to server mode
@@ -143,3 +149,5 @@ func (c *currentContext) String() string{
 	str += "}"
 	return str
 }
+
+//#####################################################################################################

@@ -8,6 +8,7 @@ Environment: manage all data related with the execution and any thing around it.
 package environment
 
 import (
+	"strconv"
 	"errors"
 	"github.com/apenella/messageOutput"
 	"verdmell/utils"
@@ -39,7 +40,7 @@ func NewEnvironment() (error, *Environment) {
 	var setup = new(setupObject)
 
 	output := message.GetInstance(context.Loglevel)
-	if err, context = newcurrentContext(output); err != nil {return err, nil}
+	if err, context = newCurrentContext(output); err != nil {return err, nil}
 	if err, setup = newSetupObject(context.SetupFile, context.ConfigFolder, output); err != nil {return err, nil}
 
 	env := &Environment{
@@ -50,6 +51,21 @@ func NewEnvironment() (error, *Environment) {
 	
 	if env.Context.Service == "" {
 		env.Context.Service = env.Setup.Hostname
+	}
+
+	if len(env.Context.Nodes) > 0 {
+		env.Output.WriteChDebug("(Environment::NewEnvironment) Connect to cluster nodes to populate cluster information...")
+		currentnode := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
+
+		for _,node := range env.Context.Nodes{
+			go func(node string) {
+				env.Output.WriteChDebug("(Environment::NewEnvironment) Connecting to '"+node+"'")
+				if node == currentnode {
+					env.Output.WriteChDebug("(Environment::NewEnvironment) The current node '"+node+"' has been defined as a node and won't be consulted")
+				}
+			}(node)
+		}
+		
 	}
 
 	// Validate Environment
