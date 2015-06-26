@@ -30,7 +30,7 @@ type currentContext struct{
 	ExecuteCheckGroup string
 	// loglevel definition
 	/*
-		0: info
+		0: information
 		1: warn
 		2: error
 		3: debug
@@ -39,9 +39,12 @@ type currentContext struct{
 	// execution mode
 	/*
 		standalone
-		server
+		cluster
 	*/
 	ExecutionMode string
+
+	// 
+	Cluster bool
 	// host to anchor to server mode
 	Host string
 	// port to anchor to server mode
@@ -62,7 +65,9 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 	var executionMode string
 	var port int
 	var host string
+	var cluster *bool
 
+	cluster = flag.Bool("cluster",false,"Execute in cluster mode")
 	flag.IntVar(&loglevel,"l",0,"Loglevel definition\n\t0 - info\n\t1 - warn\n\t2 - error\n\t3 - debug.")  
 	flag.StringVar(&configFolder,"d","./conf.d","Root configuration folder.")
 	flag.StringVar(&setupFile,"c","config.json","Configuration file.")
@@ -84,6 +89,7 @@ func newcurrentContext(output *message.Message) (error, *currentContext) {
 		ExecuteCheckGroup: executeCheckGroup,
 		Loglevel: loglevel,
 		ExecutionMode: executionMode,
+		Cluster: *cluster,
 		Host: host,
 		Port: port,
 		output: output,
@@ -105,6 +111,7 @@ func (c *currentContext) validatecurrentContext() error {
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) service: "+c.Service)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute check: "+c.ExecuteCheck)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute checkgroup: "+c.ExecuteCheckGroup)
+	c.output.WriteChDebug("(currentContext::validatecurrentContext) cluster: "+strconv.FormatBool(c.Cluster))
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute IP: "+c.Host)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute port: "+strconv.Itoa(c.Port))
 

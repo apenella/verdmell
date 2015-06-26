@@ -21,6 +21,7 @@ type setupObject struct {
 	Servicesfolder	string `json: "servicesfolder"`
 	Hostname string `json:"hostname"`
 	Ip string `json:"ip"`
+	Cluster []string `json:"cluster"`
 	// output manager
 	output *message.Message
 }
