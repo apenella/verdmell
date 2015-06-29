@@ -82,6 +82,25 @@ func (s *setupObject) validateHostInfo() error{
 	return nil
 }
 
+func (s *setupObject) AddNodeToCluster(node string) bool {
+	s.output.WriteChDebug("(setupObject::AddNodeToCluster) Adding node to cluster '"+node+"'")
+	exist := false
+
+	for i:=0; i < len(s.Cluster) && !exist ; i++ {
+		if node == s.Cluster[i] {
+			s.output.WriteChDebug("(setupObject::AddNodeToCluster) The node '"+node+"' has already exist into the cluster")
+			exist = true
+		}
+	}
+
+	if !exist {
+		s.Cluster = append(s.Cluster, node)
+		s.output.WriteChDebug("(setupObject::AddNodeToCluster) The node '"+node+"' added as a cluster node")
+	}
+
+	return exist
+}
+
 //
 // Common methods
 //---------------------------------------------------------------------

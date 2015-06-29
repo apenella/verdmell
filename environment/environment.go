@@ -8,7 +8,6 @@ Environment: manage all data related with the execution and any thing around it.
 package environment
 
 import (
-	"strconv"
 	"errors"
 	"github.com/apenella/messageOutput"
 	"verdmell/utils"
@@ -43,6 +42,16 @@ func NewEnvironment() (error, *Environment) {
 	if err, context = newCurrentContext(output); err != nil {return err, nil}
 	if err, setup = newSetupObject(context.SetupFile, context.ConfigFolder, output); err != nil {return err, nil}
 
+	if len(context.Nodes) > 0 {
+		output.WriteChDebug("(Environment::NewEnvironment) Create cluster nodes.")
+
+		for _,node := range context.Nodes {
+			if setup.AddNodeToCluster(node) {
+				output.WriteChWarn("(Environment::NewEnvironment) The node '"+node+"' is already defined into cluster")
+			}
+		}
+	}
+
 	env := &Environment{
 		Setup: setup,
 		Context: context,
@@ -51,21 +60,6 @@ func NewEnvironment() (error, *Environment) {
 	
 	if env.Context.Service == "" {
 		env.Context.Service = env.Setup.Hostname
-	}
-
-	if len(env.Context.Nodes) > 0 {
-		env.Output.WriteChDebug("(Environment::NewEnvironment) Connect to cluster nodes to populate cluster information...")
-		currentnode := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
-
-		for _,node := range env.Context.Nodes{
-			go func(node string) {
-				env.Output.WriteChDebug("(Environment::NewEnvironment) Connecting to '"+node+"'")
-				if node == currentnode {
-					env.Output.WriteChDebug("(Environment::NewEnvironment) The current node '"+node+"' has been defined as a node and won't be consulted")
-				}
-			}(node)
-		}
-		
 	}
 
 	// Validate Environment
@@ -126,7 +120,7 @@ func (e *Environment) GetServices() []string{
 //---------------------------------------------------------------------
 
 //
-// method to validate configuration objecte
+//# validateEnvironment: method to validate configuration objecte
 func (e *Environment) validateEnvironment() error {
 		if e == nil {
 				err := errors.New("(Environment::validateEnvironment) Configuration object is empty due to error on configuration file")
@@ -137,6 +131,15 @@ func (e *Environment) validateEnvironment() error {
 		if err := s.validateSetupObject(); err == nil {return err}
 
 		return nil
+}
+
+//
+//# GetCluster return all cluster nodes
+func (e *Environment) GetCluster() []byte{
+	cluster := make(map[string] []string)
+
+	cluster["cluster"] = e.Setup.Cluster
+	return utils.ObjectToJsonByte(cluster)
 }
 
 //
