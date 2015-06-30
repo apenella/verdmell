@@ -72,7 +72,7 @@ func main() {
 			os.Exit(4)
 		}
 
-		webconsole := ui.NewUI(listenaddr)
+		webconsole := ui.NewUI(listenaddr, env.Setup.Cluster)
 		webconsole.AddRoutes(apisys.GetRoutes())
 		webconsole.StartUI()
 

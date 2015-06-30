@@ -12,6 +12,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 func WebUI(w http.ResponseWriter, r *http.Request){
 
+	webui := GetUI()
+	cluster := webui.nodes
+
 	index := path.Join("ui","templates", "index.html")
 	header := path.Join("ui","templates", "header.html")
 	content := path.Join("ui","templates", "content.html")
@@ -23,9 +26,10 @@ func WebUI(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	if err := tmpl.Execute(w, nil); err != nil {
+	if err := tmpl.Execute(w, cluster); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
+
 
 //#######################################################################################################

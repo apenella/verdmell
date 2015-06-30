@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 {{ define "content" }}
-	<div>
-		<p>There is nothing to show...</p>
-	</div>
-{{ end }}
 
+	{{ range $node,$url := . }}
+		<div>
+			<li><strong>{{$node}}</strong></li>
+		</div>
+	{{ end }}
+
+{{ end }}
