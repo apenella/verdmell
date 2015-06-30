@@ -42,16 +42,6 @@ func NewEnvironment() (error, *Environment) {
 	if err, context = newCurrentContext(output); err != nil {return err, nil}
 	if err, setup = newSetupObject(context.SetupFile, context.ConfigFolder, output); err != nil {return err, nil}
 
-	if len(context.Nodes) > 0 {
-		output.WriteChDebug("(Environment::NewEnvironment) Create cluster nodes.")
-
-		for _,node := range context.Nodes {
-			if setup.AddNodeToCluster(node) {
-				output.WriteChWarn("(Environment::NewEnvironment) The node '"+node+"' is already defined into cluster")
-			}
-		}
-	}
-
 	env := &Environment{
 		Setup: setup,
 		Context: context,
@@ -136,10 +126,7 @@ func (e *Environment) validateEnvironment() error {
 //
 //# GetCluster return all cluster nodes
 func (e *Environment) GetCluster() []byte{
-	cluster := make(map[string] []string)
-
-	cluster["cluster"] = e.Setup.Cluster
-	return utils.ObjectToJsonByte(cluster)
+	return utils.ObjectToJsonByte(e.Setup.Cluster)
 }
 
 //

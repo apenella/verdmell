@@ -12,7 +12,6 @@ import (
 	"errors" 
 	"flag"
 	"strconv"
-	"strings"
 	"github.com/apenella/messageOutput"
 	"verdmell/utils"
 )
@@ -66,9 +65,7 @@ func newCurrentContext(output *message.Message) (error, *currentContext) {
 	var executionMode string
 	var port int
 	var host string
-	var nodesstr string
 
-	flag.StringVar(&nodesstr,"nodes","","List of nodes that belongs to the cluster. The nodes have to be defined as <FIRST_NODE_NAME|IP>:<PORT>,<SECOND_NODE_NAME|IP>:<PORT>,...")
 	flag.IntVar(&loglevel,"l",0,"Loglevel definition\n\t0 - info\n\t1 - warn\n\t2 - error\n\t3 - debug.")  
 	flag.StringVar(&configFolder,"d","./conf.d","Root configuration folder.")
 	flag.StringVar(&setupFile,"c","config.json","Configuration file.")
@@ -82,8 +79,6 @@ func newCurrentContext(output *message.Message) (error, *currentContext) {
 
 	output.SetLogLevel(loglevel)
 
-	nodes := strings.Split(nodesstr,",")
-
 	context = &currentContext{
 		ConfigFolder: configFolder,
 		SetupFile: setupFile,
@@ -92,7 +87,6 @@ func newCurrentContext(output *message.Message) (error, *currentContext) {
 		ExecuteCheckGroup: executeCheckGroup,
 		Loglevel: loglevel,
 		ExecutionMode: executionMode,
-		Nodes: nodes,
 		Host: host,
 		Port: port,
 		output: output,
@@ -114,8 +108,6 @@ func (c *currentContext) validatecurrentContext() error {
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) service: "+c.Service)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute check: "+c.ExecuteCheck)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute checkgroup: "+c.ExecuteCheckGroup)
-	c.output.WriteChDebug("(currentContext::validatecurrentContext) Nodes: ")
-	c.output.WriteChDebug(c.Nodes)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute IP: "+c.Host)
 	c.output.WriteChDebug("(currentContext::validatecurrentContext) execute port: "+strconv.Itoa(c.Port))
 
@@ -145,9 +137,7 @@ func (c *currentContext) validatecurrentContext() error {
 
 // method to transform the currentContext to string
 func (c *currentContext) String() string{
-	str := "{"
-	str += "}"
-	return str
+	return utils.ObjectToJsonString(c)
 }
 
 //#####################################################################################################

@@ -21,7 +21,7 @@ type setupObject struct {
 	Servicesfolder	string `json: "servicesfolder"`
 	Hostname string `json:"hostname"`
 	Ip string `json:"ip"`
-	Cluster []string `json:"cluster"`
+	Cluster map[string] string `json:"cluster"`
 	// output manager
 	output *message.Message
 }
@@ -82,20 +82,14 @@ func (s *setupObject) validateHostInfo() error{
 	return nil
 }
 
-func (s *setupObject) AddNodeToCluster(node string) bool {
-	s.output.WriteChDebug("(setupObject::AddNodeToCluster) Adding node to cluster '"+node+"'")
-	exist := false
+func (s *setupObject) AddNodeToCluster(node string, url string) bool {
+	s.output.WriteChDebug("(setupObject::AddNodeToCluster) Adding node to cluster '"+node+"' with url "+url)
+	var exist bool
 
-	for i:=0; i < len(s.Cluster) && !exist ; i++ {
-		if node == s.Cluster[i] {
-			s.output.WriteChDebug("(setupObject::AddNodeToCluster) The node '"+node+"' has already exist into the cluster")
-			exist = true
-		}
-	}
-
-	if !exist {
-		s.Cluster = append(s.Cluster, node)
-		s.output.WriteChDebug("(setupObject::AddNodeToCluster) The node '"+node+"' added as a cluster node")
+	if _,exist = s.Cluster[node]; !exist {
+		s.Cluster[node] = url
+	} else {
+		s.output.WriteChDebug("(setupObject::AddNodeToCluster) The node '"+node+"' has already exist into the cluster")		
 	}
 
 	return exist
