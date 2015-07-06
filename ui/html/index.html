@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+{{ define "title" }}Verdmell{{ end }}
+
+<html>
+	<head>
+		<title>{{ template "title" . }}</title>
+		<link rel="stylesheet" href="style/verdmell.css">
+		<style>
+			{{template "style" . }}
+		</style>
+
+ 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+ 		<script type="text/javascript">
+ 			{{template "scripts" . }}
+ 		</script>
+	</head>
+
+	<body>
+		{{ template "header" . }}
+		{{ template "content" . }}
+		{{ template "footer" . }}
+	</body>
+</html>

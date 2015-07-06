@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+{{ define "content" }}
+	<div class="datacontainer">
+		<div class="clusterlist">
+		{{ range $node,$url := . }}
+			<div url="{{$url}}" class="clusternode">
+				<strong>{{$node}}</strong>
+			</div>
+		{{ end }}
+		</div>
+
+		<div class= "clusternodedetails">
+		</div>
+	</div>
+{{ end }}

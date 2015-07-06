@@ -15,12 +15,15 @@ func WebUI(w http.ResponseWriter, r *http.Request){
 	webui := GetUI()
 	cluster := webui.nodes
 
-	index := path.Join("ui","templates", "index.html")
-	header := path.Join("ui","templates", "header.html")
-	content := path.Join("ui","templates", "content.html")
-	footer := path.Join("ui","templates", "footer.html")
+	index := path.Join("ui","html", "index.html")
+	scripts := path.Join("ui","scripts", "scripts.js")
+	style := path.Join("ui","style", "verdmell.css")
+	header := path.Join("ui","html", "header.html")
+	content := path.Join("ui","html", "content.html")
+	footer := path.Join("ui","html", "footer.html")
 
- 	tmpl, err := template.ParseFiles(index,header,content,footer)
+
+ 	tmpl, err := template.ParseFiles(index,scripts,style,header,content,footer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

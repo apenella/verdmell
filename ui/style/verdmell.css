@@ -1,7 +1,93 @@
-body {
-    background-color: #006600;
-}
+{{ define "style" }}
 
-header {
-    background-color: #d0e4fe;	
-}
+	body {
+		margin: 0;
+
+		background-color: #f7f6f4;
+		font-family: Arial, Helvetica, sans-serif;
+	}
+
+	header {
+		padding: 0.25em;
+		box-shadow:0em 0.01em 0.25em grey;
+		border-bottom: 0.01em solid grey;
+											
+		background-color: #ecebe9;
+
+		color: #000000;
+		font-weight: bold;
+		font-size: 2em;
+	}
+
+	footer {
+		bottom: 0;
+		clear:both;
+		width: 100%;
+		height: 2em;
+		padding: 0.5em;
+		border-top: 0.01em solid grey;
+
+		color: #000000;
+		background-color: #ecebe9;
+	}
+
+	.datacontainer {
+		position:relative;
+		min-height: 100%;
+		margin-left: 8%;
+		margin-right: 8%;
+	}
+
+	.clusterlist {
+		float:left;
+		width: 25%;
+	}
+
+	.clusternode {
+		border-radius: 0.25em;
+		border-width: 0.25em;
+		border-style: solid;
+		border-color: grey;
+
+		padding: 0.5em;
+		margin: 0.5em;
+	}
+
+	.clusternodedetails {
+		float:right;
+		width: 75%;
+	}
+
+	.servicesdetail{
+		padding:1em;
+	}
+	.servicedetail{		
+		margin: 1em;
+		min-height: 100%;
+		border-radius: 0.25em;
+		border-width: 0.1em;
+		border-style: solid;
+		border-color: grey;
+
+		clear:left;
+	}
+	.servicename{
+		padding: 0.5em;
+		border-bottom: 0.1em solid grey;
+	}
+	.servicechecks{
+		padding: 0.5em;
+		background-color: green;
+	}
+
+	.servicecheck {
+		padding: 0.5em;
+		margin: 0.5em;
+		border-radius: 0.25em;		
+		border-width: 0.1em;
+		border-style: solid;
+		border-color: grey;
+		float:left;
+	}
+
+{{end}}
