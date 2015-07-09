@@ -1,7 +1,5 @@
 {{ define "scripts" }}
 
-	generateServicesDetails = 
-
 	$(document).ready(function(){
 
 		$(".clusternode").click(function () {
@@ -14,16 +12,16 @@
 						servicesinfo += '<div class="servicename">';
 						servicesinfo += service.name;
 						servicesinfo += '</div>';					
-						servicesinfo += '<div class="servicechecks">';
+						servicesinfo += '<div service="'+service.name+'" class="servicechecks">';
 							for ( c in service.checks) {
-								servicesinfo += '<div class="servicecheck" url="'+baseUrl+'" name="'+service.checks[c]+'">'+service.checks[c]+'</div>'
+								servicesinfo += '<div class="servicecheck" url="'+baseUrl+'" name="'+service.checks[c]+'" status="-1">'+service.checks[c]+'</div>'
 							}
 						servicesinfo += '<div style="clear:both;"></div>';
 						servicesinfo += '<div class="servicecheckdetails"></div>';
 						servicesinfo += '<div class="servicechecksampledetails"></div>';
 						servicesinfo += '<div style="clear:both;"></div>';
 						servicesinfo += '</div>';
-					servicesinfo += '</div>';			
+						servicesinfo += '</div>';			
 				});
 				servicesinfo += '</div>';
 
@@ -44,15 +42,19 @@
 			var checkUrl = baseUrl+"/api/checks/"+check;
 			var sampleUrl = baseUrl+"/api/samples/"+check;
 
+			var parent = $(this).parent().attr("service");
+			
+
 			$.getJSON(checkUrl, function(check) {
 				var checkinfo = '<div class="checkinfo" id="checkname">'+check.name+'</div>';
 				checkinfo += '<div class="checkinfo" id="checkdescription">'+check.description+'</div>';
 				checkinfo += '<div class="checkinfo" id="checkcommand">'+check.command+'</div>';
-				$(".servicecheckdetails").html(checkinfo);
+				$("div[service="+parent+"] .servicecheckdetails").html(checkinfo);
 			//end getJSON
 			});
 
 			$.getJSON(sampleUrl, function(sample) {
+				
 				var sampleinfo = '<div class="sampleinfo" id="sampletime">'+sample.sampletime+'</div>';
 				sampleinfo += '<div class="sampleinfo" id="elapsedtime">'+sample.elapsedtime+'</div>';
 				sampleinfo += '<div class="sampleinfo" id="expirationtime">'+sample.expirationtime+'</div>';
