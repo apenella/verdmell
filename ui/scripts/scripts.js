@@ -8,9 +8,9 @@
 			var serviceUrl = $(this).attr('url')+"/api/services"
 
 			$.getJSON(serviceUrl, function(services) {
-				var servicesinfo = '<div class="servicesdetail">';
+				var servicesinfo = '<div class="servicesdetails">';
 				$.each(services.services, function(key, service) {
-					servicesinfo += '<div id="'+service.name+'" class="servicedetail">';
+					servicesinfo += '<div id="'+service.name+'" class="servicedetail" status="'+service.status+'">';
 						servicesinfo += '<div class="servicename">';
 							servicesinfo += service.name;
 						servicesinfo += '</div>';					

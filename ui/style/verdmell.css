@@ -62,7 +62,7 @@
 		width: 75%;
 	}
 
-	.servicesdetail{
+	.servicesdetails{
 		padding:1em;
 	}
 	.servicedetail{		
@@ -72,12 +72,43 @@
 		border-width: 0.1em;
 		border-style: solid;
 		border-color: grey;
-
 	}
+
+	.servicedetail[status="-1"]{
+		border-color: blue;
+		border-width: 0.25em;
+	}
+	.servicedetail[status="0"]{
+		border-color: green;
+		border-width: 0.25em;
+	}
+	.servicedetail[status="1"]{
+		border-color: orange;
+		border-width: 0.25em;
+	}
+	.servicedetail[status="2"]{
+		border-color: red;
+		border-width: 0.25em;
+	}
+
 	.servicename{
 		padding: 0.5em;
 		border-bottom: 0.1em solid grey;
 	}
+
+	.servicedetail[status="-1"] > .servicename {
+		background-color: #6666ff;
+	}
+	.servicedetail[status="0"] .servicename {
+		background-color: #00cc66;
+	}
+	.servicedetail[status="1"] .servicename {
+		background-color: #ffcc66;
+	}
+	.servicedetail[status="2"] .servicename {
+		background-color: #ff6666;
+	}
+
 	.servicechecks{
 		padding: 0.5em;		
 	}
