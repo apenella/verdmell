@@ -4,7 +4,7 @@
 		<div class="clusterlist">
 		{{ range $node,$url := . }}
 			<div url="{{$url}}" class="clusternode">
-				<strong>{{$node}}</strong>
+				{{$node}}
 			</div>
 		{{ end }}
 		</div>

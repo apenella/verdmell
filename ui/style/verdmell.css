@@ -8,27 +8,28 @@
 	}
 
 	header {
-		width: 100%;
-		padding: 0.25em;
-
+		width: 99%;
+		padding: 1%;
+		margin-bottom: 1%;
 		border-bottom: 0.01em solid grey;
 		box-shadow:0em 0.01em 0.25em grey;											
 		background-color: #ecebe9;
+		
 		color: #000000;
-
 		font-weight: bold;
 		font-size: 2em;
 	}
 
 	footer {
 		bottom: 0;
-		clear:both;
-		width: 100%;
+		clear: both;
+		width: 99%;
 		height: 2em;
-		padding: 0.5em;
+		padding: 1%;
 		border-top: 0.01em solid grey;
+		text-align: center;
 
-		color: #000000;
+		color: grey;
 		background-color: #ecebe9;
 	}
 
@@ -37,24 +38,34 @@
 		min-height: 100%;
 		margin-left: 8%;
 		margin-right: 8%;
+
+		font-size: 1.05em;
 	}
 
 	.clusterlist {
 		float:left;
 		width: 25%;
+
+		color: #f7f6f4;
 	}
 
 	.clusternode {
-		border-radius: 0.25em;
-		border-width: 0.25em;
+		/*border-radius: 0.25em;*/
+		border-width: 0.1em;
 		border-style: solid;
 		border-color: grey;
+		background-color: grey;
+		
+		color: #f7f6f4;
 
 		padding: 0.5em;
 		margin: 0.5em;
 	}
 	.clusternode:hover {
-		border-color: orange;		
+		border-color: grey;
+		background-color: #f7f6f4;
+		
+		color: grey;
 	}
 
 	.clusternodedetails {
@@ -68,73 +79,133 @@
 	.servicedetail{		
 		margin: 1em;
 		min-height: 100%;
-		border-radius: 0.25em;
+		/*border-radius: 0.25em;*/
 		border-width: 0.1em;
 		border-style: solid;
 		border-color: grey;
 	}
 
 	.servicedetail[status="-1"]{
-		border-color: blue;
-		border-width: 0.25em;
+		/*Unknown status: blue*/
+		border-color: #2196f3;
+		border-width: 0.1em;
 	}
 	.servicedetail[status="0"]{
-		border-color: green;
-		border-width: 0.25em;
+		/*OK status: green*/
+		border-color: #4caf50;
+		border-width: 0.1em;
 	}
 	.servicedetail[status="1"]{
-		border-color: orange;
-		border-width: 0.25em;
+		/*WARN status: ambar*/
+		border-color: #ffc107;
+		border-width: 0.1em;
 	}
 	.servicedetail[status="2"]{
-		border-color: red;
-		border-width: 0.25em;
+		/*ERROR status: red*/
+		border-color: #f44336;
+		border-width: 0.1em;
 	}
 
 	.servicename{
 		padding: 0.5em;
-		border-bottom: 0.1em solid grey;
+
+		color: #f7f6f4;
 	}
 
 	.servicedetail[status="-1"] > .servicename {
-		background-color: #6666ff;
+		/*Unknown status: blue*/
+		background-color: #2196f3;
 	}
 	.servicedetail[status="0"] .servicename {
-		background-color: #00cc66;
+		/*OK status: green*/
+		background-color: #4caf50;
 	}
 	.servicedetail[status="1"] .servicename {
-		background-color: #ffcc66;
+		/*WARN status: ambar*/
+		background-color: #ffc107;
 	}
 	.servicedetail[status="2"] .servicename {
-		background-color: #ff6666;
+		/*ERROR status: red*/
+		background-color: #f44336;
 	}
 
 	.servicechecks{
-		padding: 0.5em;		
+		padding: 0.5em;
+
+		color: #f7f6f4;
 	}
 
 	.servicecheck {
 		padding: 0.5em;
 		margin: 0.5em;
 		float:left;
-		border-radius: 0.25em;		
+		/*border-radius: 0.25em;*/		
+		border-width: 0.1em;
+		border-style: solid;
+		border-color: grey;
+		background-color: grey;
+	}
+
+	.servicecheck[status="-1"] {
+		/*Unknown status: blue*/
+		border-color:  #2196f3;
+		background-color: #2196f3;
+	}
+	.servicecheck[status="0"] {
+		/*OK status: green*/
+		border-color:  #4caf50;
+		background-color: #4caf50;
+	}
+	.servicecheck[status="1"] {
+		/*WARN status: ambar*/
+		border-color:  #ffc107;
+		background-color: #ffc107;
+	}
+	.servicecheck[status="2"] {
+		/*ERROR status: red*/
+		border-color:  #f44336;
+		background-color: #f44336;
+	}
+	
+	.servicecheck:hover {
+		background-color: #f7f6f4;
 		border-width: 0.1em;
 		border-style: solid;
 		border-color: grey;
 
-	}
-	.servicecheck:hover {
-		border-color: orange;		
+		color: grey;		
 	}
 
 	.servicecheckdetails {
 		width: 50%;
 		float:left;
+
+		color: grey;
+	}
+	.checkinfotitle {
+		font-weight: bold;
+	}
+	.checkinfo {
+		margin-left: 0.25em;
+		margin-bottom: 0.25em;
+
+		font-style: italic;
 	}
 
 	.servicechecksampledetails{
 		width: 50%;
 		float:left;
+
+		color: grey;
+	}
+	.sampleinfotitle {
+		font-weight: bold;
+	}
+	.sampleinfo {
+		margin-left: 0.25em;
+		margin-bottom: 0.25em;
+
+		font-style: italic;
 	}
 
 {{end}}
