@@ -203,7 +203,8 @@ func (s *ServiceObject) CalculateStatusForService(sam *sample.CheckSample){
 	// ERROR: 2
 	// UNKNOWN: others (-1)
 	//
-	currentStatus := s.GetStatus()
+	//currentStatus := s.GetStatus()
+	currentStatus := -1
 
 	s.checksStatusCache[sam.GetCheck()] = sam.GetExit()
 
