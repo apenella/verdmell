@@ -61,6 +61,28 @@
 		padding: 0.5em;
 		margin: 0.5em;
 	}
+
+	.clusternode[status="-1"]{
+		/*Unknown status: blue*/
+		border-color:  #2196f3;
+		background-color: #2196f3;
+	}
+	.clusternode[status="0"]{
+		/*OK status: green*/
+		border-color:  #4caf50;
+		background-color: #4caf50;
+	}
+	.clusternode[status="1"]{
+		/*WARN status: ambar*/
+		border-color:  #ffc107;
+		background-color: #ffc107;
+	}
+	.clusternode[status="2"]{
+		/*ERROR status: red*/
+		border-color:  #f44336;
+		background-color: #f44336;
+	}
+
 	.clusternode:hover {
 		border-color: grey;
 		background-color: #f7f6f4;

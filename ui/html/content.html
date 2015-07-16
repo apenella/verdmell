@@ -3,7 +3,7 @@
 	<div class="datacontainer">
 		<div class="clusterlist">
 		{{ range $node,$url := . }}
-			<div url="{{$url}}" class="clusternode">
+			<div name="{{$node}}" url="{{$url}}" class="clusternode" status="">
 				{{$node}}
 			</div>
 		{{ end }}

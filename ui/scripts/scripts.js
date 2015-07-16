@@ -1,5 +1,17 @@
 {{ define "scripts" }}
 
+	function loadClusterNodeStatus() {
+		$(".clusternode").each(function() {
+			baseUrl = $(this).attr("url");
+			nodeUrl = baseUrl+"/api/node/status";
+			
+			$.getJSON(nodeUrl, function(node) {
+				console.log($(".clusternode[url='"+baseUrl+"']").attr("url"));
+				$(".clusternode[url='"+baseUrl+"']").attr("status",node.status);	
+			});
+		});
+	}
+
 	function loadChecksData(url) {
 		this.url = url;
 		this.data;
@@ -14,7 +26,6 @@
 			for (c in this.data){
 				console.log(this.data[c].name);
 			}
-
 		});
 	};
 
@@ -35,8 +46,8 @@
 		});
 	};
 
-
 	$(document).ready(function(){
+		loadClusterNodeStatus();
 
 		$(".clusternode").click(function () {
 			var checkUrl
@@ -67,6 +78,7 @@
 							servicesinfo += '<div style="clear:both;"></div>';
 						servicesinfo += '</div>';
 					servicesinfo += '</div>';			
+				//end each
 				});
 				servicesinfo += '</div>';
 

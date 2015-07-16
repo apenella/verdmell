@@ -7,7 +7,7 @@ import(
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "https://github.com/apenella/verdmell", http.StatusFound)
+	http.Redirect(w, r, "/ui", http.StatusFound)
 }
 
 func WebUI(w http.ResponseWriter, r *http.Request){
