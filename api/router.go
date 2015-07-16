@@ -16,12 +16,11 @@ func (a* ApiSystem) GenerateAPIRoutes() {
 	env.Output.WriteChDebug("(ApiSystem::GenerateAPIRoutes)")
 	a.AddRoute(ui.GenerateRoute("Index","GET","/api",Index))
 	a.AddRoute(ui.GenerateRoute("Cluster","GET","/api/cluster",GetCluster))
-	a.AddRoute(ui.GenerateRoute("startchecksystem","GET","/api/run",StartCheckSystem))
-
 
 	a.GenerateAPIRoutesForCheck()
 	a.GenerateAPIRoutesForService()
 	a.GenerateAPIRoutesForSamples()
+	a.GenerateAPIRoutesForNode()
 }
 
 //#######################################################################################################
