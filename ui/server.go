@@ -31,6 +31,9 @@ func GetUI() *UI {
 
 func (u *UI) StartUI(){
 	u.GenerateRoutes()
+
+	u.router.Handle("/images/{img}",http.StripPrefix("/images/", http.FileServer(http.Dir("./ui/images/"))))
+
 	log.Fatal(http.ListenAndServe(u.listenaddr, u.router))
 }
 
