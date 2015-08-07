@@ -4,16 +4,6 @@
 	"checksfolder": "checks",
 	"servicesfolder": "services",
 	"cluster": {
-		"apenella.verdmell": "http://localhost:5497",
-		"apenella.verdmell1": "http://localhost:5497",
-		"apenella.verdmell2": "http://localhost:5497",
-		"apenella.verdmell3": "http://localhost:5497",
-		"apenella.verdmell4": "http://localhost:5497",
-		"apenella.verdmell5": "http://localhost:5497",
-		"apenella.verdmell6": "http://localhost:5497",
-		"apenella.verdmell7": "http://localhost:5497",
-		"apenella.verdmell8": "http://localhost:5497",
-		"apenella.verdmell9": "http://localhost:5497",	
-		"apenella.verdmell10": "http://localhost:5497"
+		"apenella.verdmell": "http://localhost:5497"
 	}
 }

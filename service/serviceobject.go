@@ -178,7 +178,10 @@ func (s *ServiceObject) StartServiceObjectSampleChannel(){
 		select{
 		case sam := <- s.inputSampleChan:
 			env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) New sample arrived for '"+sam.GetCheck()+"' to service '"+s.GetName()+"'")
-			if s.checksStatusCache[sam.GetCheck()] != sam.GetExit() {
+
+			statusCachedValue, exist := s.checksStatusCache[sam.GetCheck()]
+
+			if !exist || statusCachedValue != sam.GetExit() {
 				env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) The '"+sam.GetCheck()+"' status has changed, and service status have to be calculated.")
 				s.CalculateStatusForService(sam)
 			}
