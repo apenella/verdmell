@@ -26,9 +26,9 @@ Select Case InfoType
 		WScript.Echo "The service status is " & status
 
 		if status = "OK" Then
-			WScript.Quit(2)
-		Else
 			WScript.Quit(0)
+		Else
+			WScript.Quit(2)
 		End if
 
 	Case "startmode"

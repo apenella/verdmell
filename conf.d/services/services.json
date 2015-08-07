@@ -1,12 +1,8 @@
 {
 "services" : {
-	"units": {
-		"description": "Numbers from 0-9",
-		"checks": ["first","second","third","forth"]
-	},
-	"dozens": {
-		"description": "Numbers from 10-99",
-		"checks": ["eleventh"]
+	"Windows services": {
+		"description": "Windows services",
+		"checks": ["eventlog"]
 	}
 }
 }
