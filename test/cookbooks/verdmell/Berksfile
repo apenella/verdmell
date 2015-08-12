@@ -1,0 +1,7 @@
+source "https://supermarket.chef.io"
+
+metadata
+
+cookbook 'git', '~> 4.3.3'
+cookbook 'github', '~> 0.3.2'
+cookbook 'golang', '~> 1.5.1'

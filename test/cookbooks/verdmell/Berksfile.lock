@@ -1,0 +1,31 @@
+DEPENDENCIES
+  git
+  github (~> 0.3.2)
+  golang (~> 1.5.1)
+  verdmell
+    path: .
+    metadata: true
+
+GRAPH
+  apt (2.7.0)
+  build-essential (2.2.3)
+  chef_handler (1.2.0)
+  dmg (2.2.2)
+  git (4.3.3)
+    build-essential (>= 0.0.0)
+    dmg (>= 0.0.0)
+    windows (>= 0.0.0)
+    yum-epel (>= 0.0.0)
+  github (0.3.2)
+    libarchive (>= 0.0.0)
+  golang (1.5.1)
+  libarchive (0.6.1)
+    apt (~> 2.5)
+    yum-epel (~> 0.6)
+  verdmell (0.1.0)
+    git (>= 0.0.0)
+  windows (1.38.1)
+    chef_handler (>= 0.0.0)
+  yum (3.6.3)
+  yum-epel (0.6.2)
+    yum (~> 3.2)
