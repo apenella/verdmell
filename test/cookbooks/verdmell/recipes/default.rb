@@ -7,5 +7,5 @@
 # All rights reserved - Do Not Redistribute
 #
 
-include_recipe 'git'
-include_recipe 'golang'
+include_recipe 'git::default'
+include_recipe 'golang::default'

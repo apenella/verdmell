@@ -17,6 +17,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
 		verdmell.vm.provision :chef_solo do |chef|
 			chef.cookbooks_path = ["cookbooks","cookbooks/verdmell/berks-cookbooks"]
+			chef.add_recipe "git"
+			chef.add_recipe "golang"
 			chef.add_recipe "verdmell"
 		end
 	end
