@@ -28,7 +28,7 @@ type CheckEngine struct{
   // Map to storage the checkgroups
   Cg *Checkgroups  `json:"checkgroups"`
   // Map to storage the samples
-  Cs *sample.SampleSystem  `json:"samples"`
+  Cs *sample.SampleEngine  `json:"samples"`
   // Timestamp
   Timestamp int64 `json:"timestamp"`
   // Service Channel
@@ -39,7 +39,7 @@ type CheckEngine struct{
 func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
   e.Output.WriteChDebug("(CheckEngine::NewCheckEngine)")
   cks := new(CheckEngine)
-  ss := new(sample.SampleSystem)
+  ss := new(sample.SampleEngine)
   var err error
 
   // get the environment attributes
@@ -73,8 +73,8 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
   }  
   
   // starting sample system
-  if err, ss = sample.NewSampleSystem(env); err == nil {
-   cks.SetSampleSystem(ss)
+  if err, ss = sample.NewSampleEngine(env); err == nil {
+   cks.SetSampleEngine(ss)
   } else {
    return err, nil
   }
@@ -102,8 +102,8 @@ func (c *CheckEngine) SetCheckgroups(cg *Checkgroups) {
 }
 //
 //# SetChecksamplesmap: attribute from CheckEngine
-func (c *CheckEngine) SetSampleSystem(cs *sample.SampleSystem) {
-  env.Output.WriteChDebug("(CheckEngine::SetSampleSystem)")
+func (c *CheckEngine) SetSampleEngine(cs *sample.SampleEngine) {
+  env.Output.WriteChDebug("(CheckEngine::SetSampleEngine)")
   c.Cs = cs
 }
 //
@@ -132,8 +132,8 @@ func (c *CheckEngine) GetCheckgroups() *Checkgroups{
 }
 //
 //# GetChecksamplesmap: attribute from CheckEngine
-func (c *CheckEngine) GetSampleSystem() *sample.SampleSystem{
-  env.Output.WriteChDebug("(CheckEngine::GetSampleSystem)")
+func (c *CheckEngine) GetSampleEngine() *sample.SampleEngine{
+  env.Output.WriteChDebug("(CheckEngine::GetSampleEngine)")
   return c.Cs
 }
 //
@@ -190,7 +190,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
       // startCheckTaskPools requiere the SAmple system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
-      if err := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil {
+      if err := check.StartCheckTaskPools(c.GetSampleEngine(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil {
         errChan <- err
       }
       endChan <- true
@@ -232,7 +232,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
       // startCheckTaskPools requiere the SAmple system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
-      if err := check.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil{
+      if err := check.StartCheckTaskPools(c.GetSampleEngine(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil{
         errChan <- err
       }
       endChan <- true
@@ -248,7 +248,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
   default:
     checks :=  c.GetChecks()
     // startCheckTaskPools requiere the SAmple system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
-    if err := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil{
+    if err := checks.StartCheckTaskPools(c.GetSampleEngine(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil{
       return err
     }
     env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) All Pools Finished")
@@ -337,15 +337,15 @@ func (c *CheckEngine) GetCheckgroup(group string) []byte {
 //# GetAllSamples: return the status of all checks
 func (c *CheckEngine) GetAllSamples() []byte {
   env.Output.WriteChDebug("(CheckEngine::GetAllSamples)")
-  return utils.ObjectToJsonByte(c.GetSampleSystem()) 
+  return utils.ObjectToJsonByte(c.GetSampleEngine()) 
 }
 
 //
 //# GetSampleForCheck: return the status of all checks
 func (c *CheckEngine) GetSampleForCheck(check string) []byte {
   env.Output.WriteChDebug("(CheckEngine::GetSampleForCheck)")
-  samplesystem := c.GetSampleSystem()
-  _,s := samplesystem.GetSample(check)
+  SampleEngine := c.GetSampleEngine()
+  _,s := SampleEngine.GetSample(check)
   return utils.ObjectToJsonByte(s)
 }
 

@@ -92,12 +92,12 @@ func (a *ApiSystem) GetServiceSystem() *service.ServiceSystem {
 	return nil
 }
 //
-//# GetSampleSystem: return CHECKS from obect box
-func (a *ApiSystem) GetSampleSystem() *sample.SampleSystem {
+//# GetSampleEngine: return CHECKS from obect box
+func (a *ApiSystem) GetSampleEngine() *sample.SampleEngine {
 	if obj := box.GetObject(SAMPLES); obj != nil{
-		return obj.(*sample.SampleSystem)
+		return obj.(*sample.SampleEngine)
 	}
-	env.Output.WriteChDebug("(ApiSystem::GetSampleSystem) There is no object for "+SAMPLES)
+	env.Output.WriteChDebug("(ApiSystem::GetSampleEngine) There is no object for "+SAMPLES)
 	return nil
 }
 

@@ -61,7 +61,7 @@ func main() {
 		// Add the Check System object into the box		
 		objBox.AddObject(api.CHECKS,cks)
 		// Add the Sample System object into the box		
-		objBox.AddObject(api.SAMPLES,cks.GetSampleSystem())
+		objBox.AddObject(api.SAMPLES,cks.GetSampleEngine())
 		// Add the Service System object into the box
 		objBox.AddObject(api.SERVICES,srv)
 		// creat a new Api System
