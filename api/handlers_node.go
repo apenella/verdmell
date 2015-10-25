@@ -24,7 +24,7 @@ func StartCheckEngine(w http.ResponseWriter, r *http.Request) {
 //# GetNodeStatus: write the specific service's data to response writer
 func GetNodeStatus(w http.ResponseWriter, r *http.Request) {
 	env.Output.WriteChDebug("(ApiSystem::GetService)")
-	services := box.GetObject(SERVICES).(*service.ServiceSystem)
+	services := box.GetObject(SERVICES).(*service.ServiceEngine)
 	
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)

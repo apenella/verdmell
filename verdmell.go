@@ -19,7 +19,7 @@ func main() {
 	var err error
 	var env *environment.Environment
 	var cks *check.CheckEngine
-	var srv *service.ServiceSystem
+	var srv *service.ServiceEngine
 
 	exitStatus := 0
 
@@ -42,8 +42,8 @@ func main() {
 		os.Exit(4)
 	}
 
-	// Call to initialize the ServiceSystem
-	if err,srv = service.NewServiceSystem(env); err != nil {
+	// Call to initialize the ServiceEngine
+	if err,srv = service.NewServiceEngine(env); err != nil {
 		message.WriteError(err)
 		os.Exit(4)
 	}

@@ -5,7 +5,7 @@ The package 'service' is used by verdmell to manage the definied services.
 
 => Is known as a service a set of checks. By default the same node is a service compound by all defined checks.
 
--ServiceSystem
+-ServiceEngine
 -Services
 -ServiceObject
 -ServiceResult

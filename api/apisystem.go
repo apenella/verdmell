@@ -83,12 +83,12 @@ func (a *ApiSystem) GetCheckEngine() *check.CheckEngine {
 	return nil
 }
 //
-//# GetServiceSystem: return CHECKS from obect box
-func (a *ApiSystem) GetServiceSystem() *service.ServiceSystem {
+//# GetServiceEngine: return CHECKS from obect box
+func (a *ApiSystem) GetServiceEngine() *service.ServiceEngine {
 	if obj := box.GetObject(SERVICES); obj != nil{
-		return obj.(*service.ServiceSystem)
+		return obj.(*service.ServiceEngine)
 	}
-	env.Output.WriteChDebug("(ApiSystem::GetServiceSystem) There is no object for "+SERVICES)
+	env.Output.WriteChDebug("(ApiSystem::GetServiceEngine) There is no object for "+SERVICES)
 	return nil
 }
 //

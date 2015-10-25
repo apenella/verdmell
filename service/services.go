@@ -5,7 +5,7 @@ The package 'service' is used by verdmell to manage the definied services.
 
 => Is known as a service a set of checks. By default the same node is a service compound by all defined checks.
 
--ServiceSystem
+-ServiceEngine
 -Services
 -ServiceObject
 -ServiceResult
@@ -21,8 +21,8 @@ import (
 
 //#
 //#
-//# ServiceSystem struct:
-//# ServiceSystem defines a map to store the maps
+//# ServiceEngine struct:
+//# ServiceEngine defines a map to store the maps
 type Services struct{
 	Services map[string] *ServiceObject `json:"services"`
 	checkServiceMapReduce map[string][]string `json:"-"`

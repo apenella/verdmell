@@ -5,7 +5,7 @@ The package 'service' is used by verdmell to manage the definied services.
 
 => Is known as a service a set of checks. By default the same node is a service compound by all defined checks.
 
--ServiceSystem
+-ServiceEngine
 -Services
 -ServiceObject
 -ServiceResult
@@ -23,18 +23,18 @@ var env *environment.Environment
 
 //#
 //#
-//# ServiceSystem struct:
-//# ServiceSystem defines a map to store the maps
-type ServiceSystem struct{
+//# ServiceEngine struct:
+//# ServiceEngine defines a map to store the maps
+type ServiceEngine struct{
 	Ss *Services `json:"servicesroot"`
 	inputSampleChan chan *sample.CheckSample `json:"-"`
 }
 
 //
 //# NewCheckSystem: return a Checksystem instance to be run
-func NewServiceSystem(e *environment.Environment) (error, *ServiceSystem){
-	e.Output.WriteChDebug("(ServiceSystem::NewServiceSystem)")
-	sys := new(ServiceSystem)
+func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
+	e.Output.WriteChDebug("(ServiceEngine::NewServiceEngine)")
+	sys := new(ServiceEngine)
 	
 	// set the environment attribute
 	env = e
@@ -60,34 +60,34 @@ func NewServiceSystem(e *environment.Environment) (error, *ServiceSystem){
 	}
 
 	// start the sample receiver
-	sys.StartServiceSystemReceiver()
+	sys.StartServiceEngineReceiver()
 
 	return nil, sys
 }
 
 //#
-//# Getters/Setters methods for ServiceSystem object
+//# Getters/Setters methods for ServiceEngine object
 //#---------------------------------------------------------------------
 
 //
 //# SetServices: methods sets the Services' value
-func (s *ServiceSystem) SetServices(ss *Services) {
+func (s *ServiceEngine) SetServices(ss *Services) {
 	s.Ss = ss
 }
 //
 //# SetInputSampleChan: methods sets the inputSampleChan's value
-func (s *ServiceSystem) SetInputSampleChan(c chan *sample.CheckSample) {
+func (s *ServiceEngine) SetInputSampleChan(c chan *sample.CheckSample) {
 	s.inputSampleChan = c
 }
 
 //
 //# GetServices: methods gets the Services' value
-func (s *ServiceSystem) GetServices() *Services {
+func (s *ServiceEngine) GetServices() *Services {
 	return s.Ss
 }
 //
 //# GetInputSampleChan: methods sets the inputSampleChan's value
-func (s *ServiceSystem) GetInputSampleChan() chan *sample.CheckSample {
+func (s *ServiceEngine) GetInputSampleChan() chan *sample.CheckSample {
 	return s.inputSampleChan
 }
 
@@ -96,22 +96,22 @@ func (s *ServiceSystem) GetInputSampleChan() chan *sample.CheckSample {
 //#---------------------------------------------------------------------
 
 //
-//# StartServiceSystem: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceSystem) StartServiceSystemReceiver() error {
+//# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
+func (s *ServiceEngine) StartServiceEngineReceiver() error {
 	s.inputSampleChan = make(chan *sample.CheckSample)
 	services := s.GetServices()
 
-	env.Output.WriteChDebug("(ServiceSystem::StartServiceSystemReceiver) Starting sample receiver")
+	env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineReceiver) Starting sample receiver")
 	go func() {
 		defer close (s.inputSampleChan)
 		for{
 			select{
 			case sample := <-s.inputSampleChan:
-				env.Output.WriteChDebug("(ServiceSystem::StartServiceSystemReceiver) New sample received for '"+sample.GetCheck()+"'")
+				env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineReceiver) New sample received for '"+sample.GetCheck()+"'")
 				_,servicesCheck := s.GetServicesForCheck(sample.GetCheck())
 				for _,service := range servicesCheck {
 					_,srv := services.GetServiceObject(service)
-					env.Output.WriteChDebug("(ServiceSystem::StartServiceSystemReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
+					env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
 					go srv.SendToSampleChannel(sample)
 				}
 			}
@@ -120,15 +120,15 @@ func (s *ServiceSystem) StartServiceSystemReceiver() error {
 	return nil
 }
 //
-//# SendSampleToServiceSystem: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceSystem) SendSampleToServiceSystem(sample *sample.CheckSample) {
-	env.Output.WriteChDebug("(ServiceSystem::SendSampleToServiceSystem) Send sample "+sample.String())
+//# SendSampleToServiceEngine: method prepares the system to wait sample and calculate the results for services
+func (s *ServiceEngine) SendSampleToServiceEngine(sample *sample.CheckSample) {
+	env.Output.WriteChDebug("(ServiceEngine::SendSampleToServiceEngine) Send sample "+sample.String())
 	s.inputSampleChan <- sample
 }
 //
 //# RegisterService: register a new service for ServiceSysem
-func (s *ServiceSystem) RegisterService(name string, desc string, checks []string) error {
-	env.Output.WriteChDebug("(ServiceSystem::RegisterService) New service to register '"+name+"'")
+func (s *ServiceEngine) RegisterService(name string, desc string, checks []string) error {
+	env.Output.WriteChDebug("(ServiceEngine::RegisterService) New service to register '"+name+"'")
 	var serviceObj *ServiceObject
 	var err error
 
@@ -146,8 +146,8 @@ func (s *ServiceSystem) RegisterService(name string, desc string, checks []strin
 
 //
 //# GetAllServices: return information for all services
-func (sys *ServiceSystem) GetAllServices() []byte {
-	env.Output.WriteChDebug("(ServiceSystem::GetAllServices)")
+func (sys *ServiceEngine) GetAllServices() []byte {
+	env.Output.WriteChDebug("(ServiceEngine::GetAllServices)")
 	ss := sys.GetServices()
 
 	//return ss.String()
@@ -155,8 +155,8 @@ func (sys *ServiceSystem) GetAllServices() []byte {
 }
 //
 //# GetServices: return all information about a service
-func (sys *ServiceSystem) GetService(service string) []byte {
-	env.Output.WriteChDebug("(ServiceSystem::GetService)")
+func (sys *ServiceEngine) GetService(service string) []byte {
+	env.Output.WriteChDebug("(ServiceEngine::GetService)")
 	ss := sys.GetServices()
 	s := ss.GetServices()
 
@@ -168,8 +168,8 @@ func (sys *ServiceSystem) GetService(service string) []byte {
 
 //
 //# GetAllServicesStatusHuman: converts a SampleSystem object to string
-func (sys *ServiceSystem) GetAllServicesStatusHuman() (error, string) {
-	env.Output.WriteChDebug("(ServiceSystem::GetAllServicesStatusHuman)")
+func (sys *ServiceEngine) GetAllServicesStatusHuman() (error, string) {
+	env.Output.WriteChDebug("(ServiceEngine::GetAllServicesStatusHuman)")
 	var str string
 	var substr string
 	var err error
@@ -186,8 +186,8 @@ func (sys *ServiceSystem) GetAllServicesStatusHuman() (error, string) {
 }
 //
 //# GetServicesStatusHuman: converts a SampleSystem object to string
-func (sys *ServiceSystem) GetServicesStatusHuman(service string) (error ,string) {
-	env.Output.WriteChDebug("(ServiceSystem::GetServicesStatusHuman) Get status for '"+service+"'")
+func (sys *ServiceEngine) GetServicesStatusHuman(service string) (error ,string) {
+	env.Output.WriteChDebug("(ServiceEngine::GetServicesStatusHuman) Get status for '"+service+"'")
 	var obj *ServiceObject
 	var err error
 	srvChan := make(chan *ServiceObject)
@@ -202,14 +202,14 @@ func (sys *ServiceSystem) GetServicesStatusHuman(service string) (error ,string)
 		// that will work because in standalone mode the GetServicesStatusHuman is launch once all checks has been executed.
 		if env.Context.ExecutionMode == "standalone" {
 			obj = obj.WaitAllSamples(5)
-			env.Output.WriteChDebug("(ServiceSystem::GetServicesStatusHuman) The waiting has end")
+			env.Output.WriteChDebug("(ServiceEngine::GetServicesStatusHuman) The waiting has end")
 		}
 		return nil, "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus())
 	}
 }
 //
 //# GetServiceExitStatus: return the status for a service object to string
-func (sys *ServiceSystem) GetServiceStatus(service string) (error , int) {
+func (sys *ServiceEngine) GetServiceStatus(service string) (error , int) {
 	ss := sys.GetServices()
 	if err, obj := ss.GetServiceObject(service); err != nil {
 		return err, -1
@@ -219,14 +219,14 @@ func (sys *ServiceSystem) GetServiceStatus(service string) (error , int) {
 		// that will work because in standalone mode the GetServicesStatusHuman is launch once all checks has been executed.
 		if env.Context.ExecutionMode == "standalone" {
 			obj = obj.WaitAllSamples(5)
-			env.Output.WriteChDebug("(ServiceSystem::GetServicesStatusHuman) The waiting has end")
+			env.Output.WriteChDebug("(ServiceEngine::GetServicesStatusHuman) The waiting has end")
 		}
 		return nil, obj.GetStatus()		
 	}
 }
 //
 //# AddService: method add a new service to be checked
-func (s *ServiceSystem) AddServiceObject(obj *ServiceObject) error {
+func (s *ServiceEngine) AddServiceObject(obj *ServiceObject) error {
 	if err := s.Ss.AddServiceObject(obj); err != nil {
 		return err
 	}
@@ -234,12 +234,12 @@ func (s *ServiceSystem) AddServiceObject(obj *ServiceObject) error {
 }
 //
 //# GetService: method returns a ServiceObject
-func (s *ServiceSystem) GetServiceObject(name string) (error, *ServiceObject){
+func (s *ServiceEngine) GetServiceObject(name string) (error, *ServiceObject){
 	return s.Ss.GetServiceObject(name)
 }
 //
 //# GetServiceForCheck: method returns the services that a check is defined to
-func (s *ServiceSystem) GetServicesForCheck(check string) (error, []string) {
+func (s *ServiceEngine) GetServicesForCheck(check string) (error, []string) {
 	return s.Ss.GetServicesForCheck(check)
 }
 
@@ -249,7 +249,7 @@ func (s *ServiceSystem) GetServicesForCheck(check string) (error, []string) {
 
 //
 //# String: converts a SampleSystem object to string
-func (sys *ServiceSystem) String() string {
+func (sys *ServiceEngine) String() string {
 	return utils.ObjectToJsonString(sys.GetServices())
 }
 
