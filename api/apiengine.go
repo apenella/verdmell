@@ -19,18 +19,18 @@ const(
 	SAMPLES = "samples"
 )
 
-type ApiSystem struct {
+type ApiEngine struct {
 	Box *ObjectsBox
 	Routes []*ui.Route
 }
 
 //#
 //#
-//# ApiSystem struct:
-//# ApiSystem defines all informataion required for API
-func NewApiSystem(e *environment.Environment, b *ObjectsBox) *ApiSystem {
-	e.Output.WriteChDebug("(ApiSystem::NewApiSystem)")
-  sys := new(ApiSystem)
+//# ApiEngine struct:
+//# ApiEngine defines all informataion required for API
+func NewApiEngine(e *environment.Environment, b *ObjectsBox) *ApiEngine {	
+  e.Output.WriteChDebug("(ApiEngine::NewApiEngine)")
+  sys := new(ApiEngine)
   
   // set the environment attribute
   env = e
@@ -42,24 +42,24 @@ func NewApiSystem(e *environment.Environment, b *ObjectsBox) *ApiSystem {
 }
 
 //# SetObjectBox: set objects for API
-// func (a *ApiSystem) SetObjectBox(box *ObjectsBox){
-// 	env.Output.WriteChDebug("(ApiSystem::SetObjectBox)")
+// func (a *ApiEngine) SetObjectBox(box *ObjectsBox){
+// 	env.Output.WriteChDebug("(ApiEngine::SetObjectBox)")
 // 	a.Box = box
 // }
 //# SetRoutes: set routes for API
-func (a *ApiSystem) SetRoutes(routes []*ui.Route){
-	env.Output.WriteChDebug("(ApiSystem::SetRoutes)")
+func (a *ApiEngine) SetRoutes(routes []*ui.Route){
+	env.Output.WriteChDebug("(ApiEngine::SetRoutes)")
 	a.Routes = routes
 }
 
 //# GetObjectBox: get objects from API
-// func (a *ApiSystem) GetObjectBox() *ObjectsBox {
-// 	env.Output.WriteChDebug("(ApiSystem::GetObjectBox)")
+// func (a *ApiEngine) GetObjectBox() *ObjectsBox {
+// 	env.Output.WriteChDebug("(ApiEngine::GetObjectBox)")
 // 	return a.Box
 // }
 //# GetRoutes: set routes for API
-func (a *ApiSystem) GetRoutes() []*ui.Route{
-	env.Output.WriteChDebug("(ApiSystem::GetRoutes)")
+func (a *ApiEngine) GetRoutes() []*ui.Route{
+	env.Output.WriteChDebug("(ApiEngine::GetRoutes)")
 	return a.Routes
 }
 
@@ -69,35 +69,35 @@ func (a *ApiSystem) GetRoutes() []*ui.Route{
 
 //
 //# AddRoute: for include a new route to API Routes
-func (a* ApiSystem) AddRoute(route *ui.Route){
-	env.Output.WriteChDebug("(ApiSystem::AddRoute) Add new route")
+func (a* ApiEngine) AddRoute(route *ui.Route){
+	env.Output.WriteChDebug("(ApiEngine::AddRoute) Add new route")
 	a.Routes = append(a.Routes, route)
 }
 //
 //# GetCheckEngine: return CHECKS from obect box
-func (a *ApiSystem) GetCheckEngine() *check.CheckEngine {
+func (a *ApiEngine) GetCheckEngine() *check.CheckEngine {
 	if obj := box.GetObject(CHECKS); obj != nil{
 		return obj.(*check.CheckEngine)
 	}
-	env.Output.WriteChDebug("(ApiSystem::GetCheckEngine) There is no object for "+CHECKS)
+	env.Output.WriteChDebug("(ApiEngine::GetCheckEngine) There is no object for "+CHECKS)
 	return nil
 }
 //
 //# GetServiceEngine: return CHECKS from obect box
-func (a *ApiSystem) GetServiceEngine() *service.ServiceEngine {
+func (a *ApiEngine) GetServiceEngine() *service.ServiceEngine {
 	if obj := box.GetObject(SERVICES); obj != nil{
 		return obj.(*service.ServiceEngine)
 	}
-	env.Output.WriteChDebug("(ApiSystem::GetServiceEngine) There is no object for "+SERVICES)
+	env.Output.WriteChDebug("(ApiEngine::GetServiceEngine) There is no object for "+SERVICES)
 	return nil
 }
 //
 //# GetSampleEngine: return CHECKS from obect box
-func (a *ApiSystem) GetSampleEngine() *sample.SampleEngine {
+func (a *ApiEngine) GetSampleEngine() *sample.SampleEngine {
 	if obj := box.GetObject(SAMPLES); obj != nil{
 		return obj.(*sample.SampleEngine)
 	}
-	env.Output.WriteChDebug("(ApiSystem::GetSampleEngine) There is no object for "+SAMPLES)
+	env.Output.WriteChDebug("(ApiEngine::GetSampleEngine) There is no object for "+SAMPLES)
 	return nil
 }
 

@@ -12,8 +12,8 @@ import (
 
 //
 //# GenerateAPIRoutesForService: generate a set of routes to serve
-func (a* ApiSystem) GenerateAPIRoutesForService() {
-	env.Output.WriteChDebug("(ApiSystem::GenerateAPIRoutesForService)")
+func (a* ApiEngine) GenerateAPIRoutesForService() {
+	env.Output.WriteChDebug("(ApiEngine::GenerateAPIRoutesForService)")
 	a.AddRoute(ui.GenerateRoute("allservices","GET","/api/services",GetAllServices))
 	a.AddRoute(ui.GenerateRoute("service","GET","/api/services/{service}",GetService))
 }

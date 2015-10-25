@@ -12,8 +12,8 @@ import (
 
 //
 //# GenerateAPIRoutesForCheck: generate a set of routes to serve
-func (a* ApiSystem) GenerateAPIRoutesForCheck() {
-	env.Output.WriteChDebug("(ApiSystem::GenerateAPIRoutesForCheck)")
+func (a* ApiEngine) GenerateAPIRoutesForCheck() {
+	env.Output.WriteChDebug("(ApiEngine::GenerateAPIRoutesForCheck)")
 	a.AddRoute(ui.GenerateRoute("allchecks","GET","/api/checks",GetAllChecks))
 	a.AddRoute(ui.GenerateRoute("check","GET","/api/checks/{check}",GetCheck))
 }

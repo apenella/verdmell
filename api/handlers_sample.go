@@ -9,7 +9,7 @@ import(
 //
 //# GetAllSamples: write all samples' data to response writer
 func GetAllSamples(w http.ResponseWriter, r *http.Request) {
-	env.Output.WriteChDebug("(ApiSystem::GetAllSamples)")
+	env.Output.WriteChDebug("(ApiEngine::GetAllSamples)")
 	checks := box.GetObject(CHECKS).(*check.CheckEngine)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -19,7 +19,7 @@ func GetAllSamples(w http.ResponseWriter, r *http.Request) {
 //
 //# GetSample: write the specific sample's data to response writer
 func GetSample(w http.ResponseWriter, r *http.Request) {
-	env.Output.WriteChDebug("(ApiSystem::GetSample)")
+	env.Output.WriteChDebug("(ApiEngine::GetSample)")
 	checks := box.GetObject(CHECKS).(*check.CheckEngine)
 	vars := mux.Vars(r)
 	sample := vars["sample"]

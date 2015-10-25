@@ -12,8 +12,8 @@ import (
 
 //
 //# GenerateAPIRoutesForSamples: generate a set of routes to serve
-func (a* ApiSystem) GenerateAPIRoutesForSamples() {
-	env.Output.WriteChDebug("(ApiSystem::GenerateAPIRoutesForSamples)")
+func (a* ApiEngine) GenerateAPIRoutesForSamples() {
+	env.Output.WriteChDebug("(ApiEngine::GenerateAPIRoutesForSamples)")
 	a.AddRoute(ui.GenerateRoute("allservices","GET","/api/samples",GetAllSamples))
 	a.AddRoute(ui.GenerateRoute("service","GET","/api/samples/{sample}",GetSample))
 }

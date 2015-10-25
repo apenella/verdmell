@@ -8,7 +8,7 @@
 		},
 		"second": {
 			"description": "The number two",
-			"command": "./conf.d/scripts/verdmelltest.sh 2 0 second",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 second",
 			"expirationTime": 180
 		},
 		"third": {

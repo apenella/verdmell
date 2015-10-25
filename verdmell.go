@@ -65,7 +65,7 @@ func main() {
 		// Add the Service System object into the box
 		objBox.AddObject(api.SERVICES,srv)
 		// creat a new Api System
-		apisys := api.NewApiSystem(env,objBox)
+		apisys := api.NewApiEngine(env,objBox)
 
 		if err = cks.StartCheckEngine(nil); err != nil {
 			env.Output.WriteChError(err)
