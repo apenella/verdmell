@@ -1,11 +1,12 @@
 /*
-Check system management
+Check Engine management
+
+The package 'check' is used by verdmell to manage the monitoring checks defined by user
+
 -Checks
--Check groups
--CheckSamplesMap
--CheckSamples
--RunningQueues
--CheckQueue
+-CheckObject
+-Checkgroups
+
 */
 package check
 
@@ -19,9 +20,9 @@ var env *environment.Environment
 
 //#
 //#
-//# CheckSystem struct
-//# The struct for CheckSystem has all Check, Checkgroup and samples information
-type CheckSystem struct{
+//# CheckEngine struct
+//# The struct for CheckEngine has all Check, Checkgroup and samples information
+type CheckEngine struct{
   // Map to storage the checks
   Ck *Checks  `json:"checks"`
   // Map to storage the checkgroups
@@ -34,10 +35,10 @@ type CheckSystem struct{
   outputSampleChan chan *sample.CheckSample `json: "-"`
 }
 //
-//# NewCheckSystem: return a Checksystem instance to be run
-func NewCheckSystem(e *environment.Environment) (error, *CheckSystem){
-  e.Output.WriteChDebug("(CheckSystem::NewCheckSystem)")
-  cks := new(CheckSystem)
+//# NewCheckEngine: return a CheckEngine instance to be run
+func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
+  e.Output.WriteChDebug("(CheckEngine::NewCheckEngine)")
+  cks := new(CheckEngine)
   ss := new(sample.SampleSystem)
   var err error
 
@@ -88,62 +89,62 @@ func NewCheckSystem(e *environment.Environment) (error, *CheckSystem){
 //#----------------------------------------------------------------------------------------
 
 //
-//# SetChecks: attribute from CheckSystem
-func (c *CheckSystem) SetChecks(ck *Checks) {
-  env.Output.WriteChDebug("(CheckSystem::SetChecks) Set value '"+ck.String()+"'")
+//# SetChecks: attribute from CheckEngine
+func (c *CheckEngine) SetChecks(ck *Checks) {
+  env.Output.WriteChDebug("(CheckEngine::SetChecks) Set value '"+ck.String()+"'")
   c.Ck = ck
 }
 //
-//# SetCheckgroups: attribute from CheckSystem
-func (c *CheckSystem) SetCheckgroups(cg *Checkgroups) {
-  env.Output.WriteChDebug("(CheckSystem::SetCheckgroups) Set value '"+cg.String()+"'")
+//# SetCheckgroups: attribute from CheckEngine
+func (c *CheckEngine) SetCheckgroups(cg *Checkgroups) {
+  env.Output.WriteChDebug("(CheckEngine::SetCheckgroups) Set value '"+cg.String()+"'")
   c.Cg = cg
 }
 //
-//# SetChecksamplesmap: attribute from CheckSystem
-func (c *CheckSystem) SetSampleSystem(cs *sample.SampleSystem) {
-  env.Output.WriteChDebug("(CheckSystem::SetSampleSystem)")
+//# SetChecksamplesmap: attribute from CheckEngine
+func (c *CheckEngine) SetSampleSystem(cs *sample.SampleSystem) {
+  env.Output.WriteChDebug("(CheckEngine::SetSampleSystem)")
   c.Cs = cs
 }
 //
-//# SetTimestamp: attribute from CheckSystem
-func (c *CheckSystem) SetTimestamp(t int64) {
-  env.Output.WriteChDebug("(CheckSystem::SetTimestamp)")
+//# SetTimestamp: attribute from CheckEngine
+func (c *CheckEngine) SetTimestamp(t int64) {
+  env.Output.WriteChDebug("(CheckEngine::SetTimestamp)")
   c.Timestamp = t
 }
 //
 //# SetOutputSampleChan: methods sets the inputSampleChan's value
-func (c *CheckSystem) SetOutputSampleChan(o chan *sample.CheckSample) {
+func (c *CheckEngine) SetOutputSampleChan(o chan *sample.CheckSample) {
   c.outputSampleChan = o
 }
 
 //
-//# Getchecks: attribute from CheckSystem
-func (c *CheckSystem) GetChecks() *Checks{
-  env.Output.WriteChDebug("(CheckSystem::GetChecks) Get value")
+//# Getchecks: attribute from CheckEngine
+func (c *CheckEngine) GetChecks() *Checks{
+  env.Output.WriteChDebug("(CheckEngine::GetChecks) Get value")
   return c.Ck
 }
 //
-//# Getcheckgroups: attribute from CheckSystem
-func (c *CheckSystem) GetCheckgroups() *Checkgroups{
-  env.Output.WriteChDebug("(CheckSystem::GetCheckgroups) Get value")
+//# Getcheckgroups: attribute from CheckEngine
+func (c *CheckEngine) GetCheckgroups() *Checkgroups{
+  env.Output.WriteChDebug("(CheckEngine::GetCheckgroups) Get value")
   return c.Cg
 }
 //
-//# GetChecksamplesmap: attribute from CheckSystem
-func (c *CheckSystem) GetSampleSystem() *sample.SampleSystem{
-  env.Output.WriteChDebug("(CheckSystem::GetSampleSystem)")
+//# GetChecksamplesmap: attribute from CheckEngine
+func (c *CheckEngine) GetSampleSystem() *sample.SampleSystem{
+  env.Output.WriteChDebug("(CheckEngine::GetSampleSystem)")
   return c.Cs
 }
 //
-//# GetTimestamp: attribute from CheckSystem
-func (c *CheckSystem) GetTimestamp() int64 {
-  env.Output.WriteChDebug("(CheckSystem::GetTimestamp)")
+//# GetTimestamp: attribute from CheckEngine
+func (c *CheckEngine) GetTimestamp() int64 {
+  env.Output.WriteChDebug("(CheckEngine::GetTimestamp)")
   return c.Timestamp
 }
 //
 //# GetOutputSampleChan: methods sets the inputSampleChan's value
-func (c *CheckSystem) GetOutputSampleChan() chan *sample.CheckSample {
+func (c *CheckEngine) GetOutputSampleChan() chan *sample.CheckSample {
   return c.outputSampleChan
 }
 
@@ -152,9 +153,9 @@ func (c *CheckSystem) GetOutputSampleChan() chan *sample.CheckSample {
 //#---------------------------------------------------------------------
 
 //
-//# StartCheckSystem: will determine which kind of check has been required by user and start the checks
-func (c *CheckSystem) StartCheckSystem(i interface{}) error {
-  env.Output.WriteChDebug("(CheckSystem::StartCheckSystem)")
+//# StartCheckEngine: will determine which kind of check has been required by user and start the checks
+func (c *CheckEngine) StartCheckEngine(i interface{}) error {
+  env.Output.WriteChDebug("(CheckEngine::StartCheckEngine)")
 
   endChan := make(chan bool)
   defer close(endChan)
@@ -172,7 +173,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
 
   switch req := i.(type){
   case *CheckObject:
-    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Starting the check '"+req.String()+"'")
+    env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) Starting the check '"+req.String()+"'")
     //add the check to be executed
     checks[req.GetName()] = req
     //add the check dependencies
@@ -197,16 +198,16 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
 
     select{
     case <-endChan:
-      env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) All Pools Finished")
+      env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) All Pools Finished")
     case err := <-errChan:
       return err
     }
 
   case []string:
-    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Running a Checkgroup")
+    env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) Running a Checkgroup")
 
     for _,checkname := range req {
-      env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) Preparing the check '"+checkname+"'")
+      env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) Preparing the check '"+checkname+"'")
       cks := c.GetChecks()
 
       if err, checkObj := cks.GetCheckObjectByName(checkname); err != nil {
@@ -239,7 +240,7 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
 
     select{
     case <-endChan:
-      env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) All Pools Finished")
+      env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) All Pools Finished")
     case err := <-errChan:
       return err
     }
@@ -250,19 +251,19 @@ func (c *CheckSystem) StartCheckSystem(i interface{}) error {
     if err := checks.StartCheckTaskPools(c.GetSampleSystem(),c.GetOutputSampleChan(),c.GetTimestamp()); err != nil{
       return err
     }
-    env.Output.WriteChDebug("(CheckSystem::StartCheckSystem) All Pools Finished")
+    env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) All Pools Finished")
   }
 
   return nil
 }
 //
 //# InitCheckRunningQueues: prepares each checkobject to be run
-func (c *CheckSystem) InitCheckRunningQueues() error {
+func (c *CheckEngine) InitCheckRunningQueues() error {
   cs := c.GetChecks()
 
   for _,obj := range cs.GetCheck() {
       go func(checkObj *CheckObject) {
-        env.Output.WriteChDebug("(CheckSystem::InitCheckRunningQueues) CheckQueue for '"+checkObj.GetName()+"'") 
+        env.Output.WriteChDebug("(CheckEngine::InitCheckRunningQueues) CheckQueue for '"+checkObj.GetName()+"'") 
         checkObj.StartQueue()
       }(obj)
   }
@@ -270,7 +271,7 @@ func (c *CheckSystem) InitCheckRunningQueues() error {
 }
 //
 //# AddCheck: method add a new check to the Checks struct
-func (c *CheckSystem) AddCheck(obj *CheckObject) error {
+func (c *CheckEngine) AddCheck(obj *CheckObject) error {
   if err := c.Ck.AddCheck(obj); err != nil {
     return err
   }
@@ -278,22 +279,22 @@ func (c *CheckSystem) AddCheck(obj *CheckObject) error {
 }
 //
 //# ListCheckNames: returns an array with the check namess defined on Checks object 
-func (c *CheckSystem) ListCheckNames() []string {
+func (c *CheckEngine) ListCheckNames() []string {
   return c.Ck.ListCheckNames()
 }
 //
 //# IsDefined: return if a check is defined
-func (c *CheckSystem) IsDefined(name string) bool {
+func (c *CheckEngine) IsDefined(name string) bool {
   return c.Ck.IsDefined(name)
 }
 //
 //# GetCheckObjectByName: returns a check object gived a name
-func (c *CheckSystem) GetCheckObjectByName(checkname string) (error, *CheckObject) {
+func (c *CheckEngine) GetCheckObjectByName(checkname string) (error, *CheckObject) {
   return c.Ck.GetCheckObjectByName(checkname)
 }
 //
 //# GetCheckgroupByName: returns a check object gived a name
-func (c *CheckSystem) GetCheckgroupByName(checkgroupname string) (error, []string) {
+func (c *CheckEngine) GetCheckgroupByName(checkgroupname string) (error, []string) {
   return c.Cg.GetCheckgroupByName(checkgroupname)
 }
 
@@ -301,15 +302,15 @@ func (c *CheckSystem) GetCheckgroupByName(checkgroupname string) (error, []strin
 
 //
 //# GetAllChecks: return all checks
-func (c *CheckSystem) GetAllChecks() []byte {
-  env.Output.WriteChDebug("(CheckSystem::GetAllChecks)")
+func (c *CheckEngine) GetAllChecks() []byte {
+  env.Output.WriteChDebug("(CheckEngine::GetAllChecks)")
   return utils.ObjectToJsonByte(c.GetChecks())
 }
 //
 //# GetCheck: return a checks
-func (c *CheckSystem) GetCheck(check string) []byte {
-  env.Output.WriteChDebug("(CheckSystem::GetCheck)")
-  // Get Checks attribute from CheckSystem
+func (c *CheckEngine) GetCheck(check string) []byte {
+  env.Output.WriteChDebug("(CheckEngine::GetCheck)")
+  // Get Checks attribute from CheckEngine
   cks := c.GetChecks()
   // Get Check map from Checks
   ck := cks.GetCheck()
@@ -317,15 +318,15 @@ func (c *CheckSystem) GetCheck(check string) []byte {
 }
 //
 //# GetAllCheckgroups: return all checks
-func (c *CheckSystem) GetAllCheckgroups() []byte {
-  env.Output.WriteChDebug("(CheckSystem::GetAllCheckgroups)")
+func (c *CheckEngine) GetAllCheckgroups() []byte {
+  env.Output.WriteChDebug("(CheckEngine::GetAllCheckgroups)")
   return utils.ObjectToJsonByte(c.GetCheckgroups())
 }
 //
 //# GetCheckgroup: return a checks
-func (c *CheckSystem) GetCheckgroup(group string) []byte {
-  env.Output.WriteChDebug("(CheckSystem::GetCheckgroup)")
-  // Get Checkgroupss attribute from CheckSystem
+func (c *CheckEngine) GetCheckgroup(group string) []byte {
+  env.Output.WriteChDebug("(CheckEngine::GetCheckgroup)")
+  // Get Checkgroupss attribute from CheckEngine
   cgs := c.GetCheckgroups()
   // Get Check map from Checks
   cg := cgs.GetCheckgroup()
@@ -334,15 +335,15 @@ func (c *CheckSystem) GetCheckgroup(group string) []byte {
 
 //
 //# GetAllSamples: return the status of all checks
-func (c *CheckSystem) GetAllSamples() []byte {
-  env.Output.WriteChDebug("(CheckSystem::GetAllSamples)")
+func (c *CheckEngine) GetAllSamples() []byte {
+  env.Output.WriteChDebug("(CheckEngine::GetAllSamples)")
   return utils.ObjectToJsonByte(c.GetSampleSystem()) 
 }
 
 //
 //# GetSampleForCheck: return the status of all checks
-func (c *CheckSystem) GetSampleForCheck(check string) []byte {
-  env.Output.WriteChDebug("(CheckSystem::GetSampleForCheck)")
+func (c *CheckEngine) GetSampleForCheck(check string) []byte {
+  env.Output.WriteChDebug("(CheckEngine::GetSampleForCheck)")
   samplesystem := c.GetSampleSystem()
   _,s := samplesystem.GetSample(check)
   return utils.ObjectToJsonByte(s)
@@ -354,7 +355,7 @@ func (c *CheckSystem) GetSampleForCheck(check string) []byte {
 //#---------------------------------------------------------------------
 
 //# String: convert a Checks object to string
-func (c *CheckSystem) String() string {
+func (c *CheckEngine) String() string {
   return utils.ObjectToJsonString(c)
 }
 

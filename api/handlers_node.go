@@ -7,14 +7,14 @@ import(
 )
 
 //
-//# StartCheckSystem: is the handler that manages the start checks system request
-func StartCheckSystem(w http.ResponseWriter, r *http.Request) {
-	env.Output.WriteChDebug("(ApiSystem::StartCheckSystem)")
-	checks := box.GetObject(CHECKS).(*check.CheckSystem)
+//# StartCheckEngine: is the handler that manages the start checks system request
+func StartCheckEngine(w http.ResponseWriter, r *http.Request) {
+	env.Output.WriteChDebug("(ApiSystem::StartCheckEngine)")
+	checks := box.GetObject(CHECKS).(*check.CheckEngine)
 	//vars := mux.Vars(r)
 	//check := vars["check"]
 
-	if err := checks.StartCheckSystem(nil); err != nil {
+	if err := checks.StartCheckEngine(nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	GetAllServices(w,r)

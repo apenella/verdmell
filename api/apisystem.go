@@ -74,12 +74,12 @@ func (a* ApiSystem) AddRoute(route *ui.Route){
 	a.Routes = append(a.Routes, route)
 }
 //
-//# GetCheckSystem: return CHECKS from obect box
-func (a *ApiSystem) GetCheckSystem() *check.CheckSystem {
+//# GetCheckEngine: return CHECKS from obect box
+func (a *ApiSystem) GetCheckEngine() *check.CheckEngine {
 	if obj := box.GetObject(CHECKS); obj != nil{
-		return obj.(*check.CheckSystem)
+		return obj.(*check.CheckEngine)
 	}
-	env.Output.WriteChDebug("(ApiSystem::GetCheckSystem) There is no object for "+CHECKS)
+	env.Output.WriteChDebug("(ApiSystem::GetCheckEngine) There is no object for "+CHECKS)
 	return nil
 }
 //

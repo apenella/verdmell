@@ -18,7 +18,7 @@ func main() {
 
 	var err error
 	var env *environment.Environment
-	var cks *check.CheckSystem
+	var cks *check.CheckEngine
 	var srv *service.ServiceSystem
 
 	exitStatus := 0
@@ -37,7 +37,7 @@ func main() {
 	defer output.DestroyInstance()
 
 	// Call to initialize the check system
-	if err, cks = check.NewCheckSystem(env); err != nil {
+	if err, cks = check.NewCheckEngine(env); err != nil {
 		message.WriteError(err)
 		os.Exit(4)
 	}
@@ -67,7 +67,7 @@ func main() {
 		// creat a new Api System
 		apisys := api.NewApiSystem(env,objBox)
 
-		if err = cks.StartCheckSystem(nil); err != nil {
+		if err = cks.StartCheckEngine(nil); err != nil {
 			env.Output.WriteChError(err)
 			os.Exit(4)
 		}
@@ -87,7 +87,7 @@ func main() {
 				env.Output.WriteChError(err)
 				os.Exit(4)	
 			}	
-			if err = cks.StartCheckSystem(checkObj); err != nil {
+			if err = cks.StartCheckEngine(checkObj); err != nil {
 				env.Output.WriteChError(err)
 				os.Exit(4)
 			}
@@ -98,14 +98,14 @@ func main() {
 				env.Output.WriteChError(err)
 				os.Exit(4)	
 			}
-			if err = cks.StartCheckSystem(checks); err != nil {
+			if err = cks.StartCheckEngine(checks); err != nil {
 				env.Output.WriteChError(err)
 				os.Exit(4)
 			}
 
 		//execute all checks
 		} else {
-			if err = cks.StartCheckSystem(nil); err != nil {
+			if err = cks.StartCheckEngine(nil); err != nil {
 				env.Output.WriteChError(err)
 				os.Exit(4)
 			}

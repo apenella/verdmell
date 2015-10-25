@@ -1,5 +1,5 @@
 /*
-Check system management
+Check Engine management
 
 The package 'check' is used by verdmell to manage the monitoring checks defined by user
 

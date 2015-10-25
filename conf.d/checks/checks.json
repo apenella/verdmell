@@ -1,9 +1,36 @@
 {
 	"checks": {
-		"eventlog": {
-			"description": "validate eventlog service",
-			"command": "cscript ./conf.d/scripts/win_services_info.vbs /q:status /s:eventlog //NOLOGO",
-			"expirationTime": 1
+		"first": {
+			"description": "The number one",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 first",
+			"expirationTime": 180,
+			"depend": ["second"]
+		},
+		"second": {
+			"description": "The number two",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 second",
+			"expirationTime": 180
+		},
+		"third": {
+			"description": "The number three",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 third",
+			"expirationTime": 180,
+			"depend": ["first"]
+		},
+		"forth": {
+			"description": "The number four",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 forth",
+			"expirationTime": 180,
+			"depend": ["first","second","third"]
+		},
+		"eleventh": {
+			"description": "The number eleven",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 eleventh",
+			"expirationTime": 180,
+			"depend": ["first","third"]
 		}
+	},
+	"checkgroups": {
+		"ordinals": ["first","eleventh"]
 	}
 }
