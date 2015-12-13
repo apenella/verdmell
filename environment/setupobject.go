@@ -21,6 +21,7 @@ type setupObject struct {
 	Servicesfolder	string `json: "servicesfolder"`
 	Hostname string `json:"hostname"`
 	Ip string `json:"ip"`
+	//Even it is named Cluster, it refears to cluster nodes
 	Cluster map[string] string `json:"cluster"`
 	// output manager
 	output *message.Message

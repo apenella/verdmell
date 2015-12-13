@@ -7,6 +7,7 @@ import (
 	"verdmell/environment"
 	"verdmell/check"
 	"verdmell/service"
+	"verdmell/cluster"
 	"verdmell/api"
 	"verdmell/ui"
 )
@@ -20,6 +21,7 @@ func main() {
 	var env *environment.Environment
 	var cks *check.CheckEngine
 	var srv *service.ServiceEngine
+	var cltr *cluster.ClusterEngine
 
 	exitStatus := 0
 
@@ -52,7 +54,6 @@ func main() {
 
 	switch(context.ExecutionMode){
 	case "cluster":
-		env.Output.WriteChInfo("Welcome to Verdmell's server mode. I'm waiting your request on http://"+context.Host+":"+strconv.Itoa(context.Port))
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
 		
@@ -67,6 +68,12 @@ func main() {
 		// creat a new Api System
 		apisys := api.NewApiEngine(env,objBox)
 
+		if err, cltr = cluster.NewClusterEngine(env); err != nil {
+		 	message.WriteError(err)
+		 	os.Exit(4)
+		}
+		cltr.SayHi()
+
 		if err = cks.StartCheckEngine(nil); err != nil {
 			env.Output.WriteChError(err)
 			os.Exit(4)
@@ -75,6 +82,8 @@ func main() {
 		webconsole := ui.NewUI(listenaddr, env.Setup.Cluster)
 		webconsole.AddRoutes(apisys.GetRoutes())
 		webconsole.StartUI()
+
+		env.Output.WriteChInfo("Welcome to Verdmell's cluster mode. I'm waiting your request on http://"+context.Host+":"+strconv.Itoa(context.Port))
 
 		break
 	case "standalone":

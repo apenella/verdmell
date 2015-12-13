@@ -25,3 +25,5 @@ func GenerateRoute(n string, m string, p string, h http.HandlerFunc) *Route {
 	}
 	return route
 }
+
+//#######################################################################################################

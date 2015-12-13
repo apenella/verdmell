@@ -60,7 +60,7 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	}
 
 	// start the sample receiver
-	sys.StartServiceEngineReceiver()
+	sys.StartServiceEngineSampleReceiver()
 
 	return nil, sys
 }
@@ -97,21 +97,21 @@ func (s *ServiceEngine) GetInputSampleChan() chan *sample.CheckSample {
 
 //
 //# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceEngine) StartServiceEngineReceiver() error {
+func (s *ServiceEngine) StartServiceEngineSampleReceiver() error {
 	s.inputSampleChan = make(chan *sample.CheckSample)
 	services := s.GetServices()
 
-	env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineReceiver) Starting sample receiver")
+	env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineSampleReceiver) Starting sample receiver")
 	go func() {
 		defer close (s.inputSampleChan)
 		for{
 			select{
 			case sample := <-s.inputSampleChan:
-				env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineReceiver) New sample received for '"+sample.GetCheck()+"'")
+				env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineSampleReceiver) New sample received for '"+sample.GetCheck()+"'")
 				_,servicesCheck := s.GetServicesForCheck(sample.GetCheck())
 				for _,service := range servicesCheck {
 					_,srv := services.GetServiceObject(service)
-					env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
+					env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineSampleReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
 					go srv.SendToSampleChannel(sample)
 				}
 			}
