@@ -22,7 +22,7 @@ import (
 //# Cluster struct:
 //# Cluster is a set of nodes
 type Cluster struct{
-	//map to store the nodes that belong to the cluster
+  //map to store the nodes that belong to the cluster
   Nodes map[string]*ClusterNode `json:"nodes"`
   //map to store the services that belong to the cluster
   Services map[string] string `json:"services"` 
@@ -32,7 +32,7 @@ type Cluster struct{
 //# NewCluster: return a CheckEngine instance to be run
 func NewCluster() (error, *Cluster) {
 // func NewCluster(n map[string]*ClusterNode, s map[string]string) (error, *Cluster) {
-	env.Output.WriteChDebug("(Cluster::NewCluster)")
+  env.Output.WriteChDebug("(Cluster::NewCluster)")
   cluster := new(Cluster)
 
   // cluster.SetNodes(n)

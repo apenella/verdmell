@@ -54,9 +54,10 @@ func main() {
 
 	switch(context.ExecutionMode){
 	case "cluster":
+
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
-		
+
 		// creat a new objects api to store all process data
 		objBox := api.NewObjectsBox()
 		// Add the Check System object into the box		
@@ -79,7 +80,7 @@ func main() {
 			os.Exit(4)
 		}
 
-		webconsole := ui.NewUI(listenaddr, env.Setup.Cluster)
+		webconsole := ui.NewUI(listenaddr)
 		webconsole.AddRoutes(apisys.GetRoutes())
 		webconsole.StartUI()
 

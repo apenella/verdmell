@@ -14,6 +14,7 @@ package cluster
 import (
 	"verdmell/environment"
   "verdmell/utils"
+  "verdmell/ui"
 )
 
 //
@@ -24,7 +25,8 @@ var env *environment.Environment
 //# ClusterEngine struct:
 //# ClusterEngine defines a map to store the maps
 type ClusterEngine struct{
-	Cluster *Cluster `json:"cluster"`
+	Ui ui.UI
+  Cluster *Cluster `json:"cluster"`
 }
 //
 //# NewClusterEngine: return a CheckEngine instance to be run
@@ -50,7 +52,6 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
         env.Output.WriteChDebug("(ClusterEngine::NewClusterEngine) The cluster nodes '"+cluster.Cluster.String()+"'")
       }
     } 
-
   }
 
   err = nil

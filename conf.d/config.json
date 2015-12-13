@@ -4,6 +4,8 @@
 	"checksfolder": "checks",
 	"servicesfolder": "services",
 	"cluster": {
-		"apenella.verdmell": "http://localhost:5497"
+		"apenella.verdmell": "http://localhost:5497",
+		"apenella1.verdmell": "http://localhost:5497",
+		"apenella2.verdmell": "http://localhost:5497"
 	}
 }

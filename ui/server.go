@@ -9,15 +9,13 @@ import(
 var ui *UI = nil
 
 type UI struct{
-	nodes map[string] string
 	listenaddr string
 	router *mux.Router
 }
 
-func NewUI(listenaddr string, n map[string] string) *UI {
+func NewUI(listenaddr string) *UI {
 	if ui == nil {
 		ui = &UI{
-			nodes: n,
 			listenaddr: listenaddr,
 			router: mux.NewRouter().StrictSlash(true),
 		}

@@ -16,13 +16,16 @@ func (u* UI) GenerateRoutes() {
 	u.AddRoute(GenerateRoute("WebUI","GET","/ui",WebUI))
 }
 
-
+//
+//# AddRoutes: add a set of routes 
 func (u *UI) AddRoutes(routes []*Route){
 	for _,route := range routes {
 		u.AddRoute(route)
 	}
 }
 
+//
+//# AddRoute: add one route to the router
 func (u *UI) AddRoute(route *Route) {
 	u.router.
 		Methods(route.Method).
