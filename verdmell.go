@@ -43,12 +43,19 @@ func main() {
 		message.WriteError(err)
 		os.Exit(4)
 	}
+	// Set the environment's check engine
+	env.SetCheckEngine(cks)
+	// Set the environment's sample engine
+	env.SetSampleEngine(cks.GetSampleEngine())
 
 	// Call to initialize the ServiceEngine
 	if err,srv = service.NewServiceEngine(env); err != nil {
 		message.WriteError(err)
 		os.Exit(4)
 	}
+	// Set the environments services engine
+	env.SetServiceEngine(srv)
+
 	// Set the output sample channel for checks as the input's service one
 	cks.SetOutputSampleChan(srv.GetInputSampleChan())
 
@@ -57,6 +64,8 @@ func main() {
 
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
+		
+
 
 		// creat a new objects api to store all process data
 		objBox := api.NewObjectsBox()

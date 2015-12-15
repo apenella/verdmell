@@ -22,10 +22,13 @@ type Environment struct{
 	Output *message.Message
 	// Context execution parameters
 	Context *currentContext
-	//Check names
-	Checks []string
-	//Services names
-	Services []string
+
+	//ChecksEngine
+	CheckEngine interface{}
+	//SampleEngine
+	SampleEngine interface{}
+	//ServiceEngine
+	ServiceEngine interface{}
 }
 //
 // Methods for Environment
@@ -39,6 +42,10 @@ func NewEnvironment() (error, *Environment) {
 	var setup = new(setupObject)
 
 	output := message.GetInstance(context.Loglevel)
+	if output == nil {
+		return errors.New("(Environment::NewEnvironment) The OutputMessage instance is null"),nil
+	}
+
 	if err, context = newCurrentContext(output); err != nil {return err, nil}
 	if err, setup = newSetupObject(context.SetupFile, context.ConfigFolder, output); err != nil {return err, nil}
 
@@ -65,46 +72,65 @@ func NewEnvironment() (error, *Environment) {
 
 // Set setup for the Environment
 func (e *Environment) SetSetup(s *setupObject) {
+	e.Output.WriteChDebug("(Environment::SetSetup)")
 	e.Setup = s
 }
 // Set output for the Environment
 func (e *Environment) SetOutput(o *message.Message){
+	e.Output.WriteChDebug("(Environment::SetOutput)")
 	e.Output = o
 }
 // Set the context for the Environment
 func (e *Environment) SetContext(c *currentContext) {
+	e.Output.WriteChDebug("(Environment::SetContext)")
 	e.Context = c
 }
-// Set the Checks or the Environment
-func (e *Environment) SetChecks(c []string) {
-	e.Checks = c
+// Set the CheckEngine for the Environment
+func (e *Environment) SetCheckEngine(c interface{}) {
+	e.Output.WriteChDebug("(Environment::SetCheckEngine)")
+	e.CheckEngine = c
 }
-// Set the Services for the Environment
-func (e *Environment) SetServices(s []string) {
-	e.Services = s
+// Set the SampleEngine for the Environment
+func (e *Environment) SetSampleEngine(s interface{}) {
+	e.Output.WriteChDebug("(Environment::SetSampleEngine)")
+	e.SampleEngine = s
+}
+// Set the ServiceEngine for the Environment
+func (e *Environment) SetServiceEngine(s interface{}) {
+	e.Output.WriteChDebug("(Environment::SetServiceEngine)")
+	e.ServiceEngine = s
 }
 
 // Get the setupObject from envirionment
 func (e *Environment) GetSetup() *setupObject{
-		return e.Setup
+	e.Output.WriteChDebug("(Environment::GetSetup)")
+	return e.Setup
 }
 // Get output from environment
 func (e *Environment) GetOutput() *message.Message{
+	e.Output.WriteChDebug("(Environment::GetOutput)")
 	return e.Output
 }
 // Get context from environment
 func (e *Environment) GetContext() *currentContext{
-		return e.Context
+	e.Output.WriteChDebug("(Environment::GetContext)")
+	return e.Context
 }
-// Get Checks from environment
-func (e *Environment) GetChecks() []string{
-		return e.Checks
+// Get CheckEngine from environment
+func (e *Environment) GetCheckEngine() interface{} {
+	e.Output.WriteChDebug("(Environment::GetCheckEngine)")
+	return e.CheckEngine
 }
-// Get Services from environment
-func (e *Environment) GetServices() []string{
-		return e.Services
+// Get SampleEngine from environment
+func (e *Environment) GetSampleEngine() interface{} {
+	e.Output.WriteChDebug("(Environment::GetSampleEngine)")
+	return e.SampleEngine
 }
-
+// Get ServiceEngine from environment
+func (e *Environment) GetServiceEngine() interface{} {
+	e.Output.WriteChDebug("(Environment::GetServiceEngine)")
+	return e.ServiceEngine
+}
 //
 // Specific methods
 //---------------------------------------------------------------------

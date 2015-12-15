@@ -14,6 +14,7 @@ package service
 
 import (
 	"verdmell/environment"
+	"verdmell/check"
 	"verdmell/utils"
 	"verdmell/sample"
 )
@@ -55,9 +56,12 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	// Set description for default service
 	desc := "Global services for node "+env.Setup.Hostname
 	
-	if err := sys.RegisterService(env.Setup.Hostname,desc,env.GetChecks()); err != nil{
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) Registering service '"+env.Setup.Hostname+"'")
+	checkengine := env.GetCheckEngine().(*check.CheckEngine)
+	if err := sys.RegisterService(env.Setup.Hostname,desc, checkengine.ListCheckNames()); err != nil{
 		return err, nil
 	}
+
 
 	// start the sample receiver
 	sys.StartServiceEngineSampleReceiver()
@@ -140,6 +144,8 @@ func (s *ServiceEngine) RegisterService(name string, desc string, checks []strin
 	srv.AddServiceObject(serviceObj)
 	// set the attribute CheckServiceMapReduce
 	srv.GenerateCheckServices()
+
+	env.Output.WriteChDebug("(ServiceEngine::RegisterService) Service '"+env.Setup.Hostname+"' registered properly")
 
 	return nil
 }

@@ -16,6 +16,7 @@ import (
 	"time"
 	"errors"
 	"strconv"
+	"verdmell/check"
 	"verdmell/sample"
 	"verdmell/utils"
 )
@@ -51,6 +52,7 @@ func NewServiceObject(name string, desc string, checks []string) (error,*Service
 	}()
 	
 	env.Output.WriteChDebug("(ServiceObject::NewServiceObject) "+serviceObj.String())
+
 	return nil, serviceObj
 }
 
@@ -149,7 +151,8 @@ func (s *ServiceObject) ValidateServiceObject() error {
 	}
 
 	// transform the []string to a map to optimize the search during validation
-	for _,check := range env.GetChecks(){
+	checkengine := env.GetCheckEngine().(*check.CheckEngine)
+	for _,check := range checkengine.ListCheckNames() {
 		checkMap[check] = nil
 	}
 	// validate that all checks were defined as check
@@ -159,10 +162,10 @@ func (s *ServiceObject) ValidateServiceObject() error {
 			return err
 		}
 	}
-
+	env.Output.WriteChDebug("(ServiceObject::ValidateServiceObject) The service '"+s.GetName()+"' has been properly validated")
 	return nil
 }
-
+ 
 //
 //# StartServiceObjectCheckSampleInput: methot the serviceObject to receive samples and calculates the service status
 func (s *ServiceObject) StartServiceObjectSampleChannel(){

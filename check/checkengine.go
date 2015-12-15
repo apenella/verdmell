@@ -58,11 +58,6 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
     return err, nil
   }
 
-  // get all check from Checks
-  checkNames := ck.ListCheckNames()
-  // set all checks list to the environment
-  env.SetChecks(checkNames)
-
   // Get defined checks groups
   // validate checks and set the checks into check system
   cg := RetrieveCheckgroups(folder)
