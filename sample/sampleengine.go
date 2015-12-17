@@ -110,6 +110,24 @@ func (sys *SampleEngine) DeleteSample(name string) error {
   delete(sys.Samples,name)
   return nil
 }
+//
+//# GetAllSamples: return the status of all checks
+func (sys *SampleEngine) GetAllSamples() []byte {
+  env.Output.WriteChDebug("(SampleEngine::GetAllSamples)")
+  return utils.ObjectToJsonByte(sys.Samples) 
+}
+//
+//# GetSampleForCheck: return the status of all checks
+func (sys *SampleEngine) GetSampleForCheck(check string) []byte {
+  env.Output.WriteChDebug("(SampleEngine::GetSampleForCheck)")
+  _,s := sys.GetSample(check)
+  return utils.ObjectToJsonByte(s)
+}
+
+
+//#
+//# Common methods
+//#---------------------------------------------------------------------
 
 //
 //# String: converts a SampleEngine object to string

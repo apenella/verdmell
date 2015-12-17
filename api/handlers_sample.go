@@ -1,7 +1,7 @@
 package api
 
 import(
-	"verdmell/check"
+	"verdmell/sample"
 	"net/http"
 	"github.com/gorilla/mux"
 )
@@ -10,8 +10,8 @@ import(
 //# GetAllSamples: write all samples' data to response writer
 func GetAllSamples(w http.ResponseWriter, r *http.Request) {
 	env.Output.WriteChDebug("(ApiEngine::GetAllSamples)")
-	checks := box.GetObject(CHECKS).(*check.CheckEngine)
-
+	checks := env.GetSampleEngine().(*sample.SampleEngine)
+	
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(checks.GetAllSamples())	
@@ -20,13 +20,15 @@ func GetAllSamples(w http.ResponseWriter, r *http.Request) {
 //# GetSample: write the specific sample's data to response writer
 func GetSample(w http.ResponseWriter, r *http.Request) {
 	env.Output.WriteChDebug("(ApiEngine::GetSample)")
-	checks := box.GetObject(CHECKS).(*check.CheckEngine)
+	
+	samples := env.GetSampleEngine().(*sample.SampleEngine)
 	vars := mux.Vars(r)
-	sample := vars["sample"]
+	check := vars["sample"]
 	
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write(checks.GetSampleForCheck(sample))
+
+	w.Write(samples.GetSampleForCheck(check))
 }
 
 //#######################################################################################################

@@ -76,29 +76,20 @@ func (a* ApiEngine) AddRoute(route *ui.Route){
 //
 //# GetCheckEngine: return CHECKS from obect box
 func (a *ApiEngine) GetCheckEngine() *check.CheckEngine {
-	if obj := box.GetObject(CHECKS); obj != nil{
-		return obj.(*check.CheckEngine)
-	}
-	env.Output.WriteChDebug("(ApiEngine::GetCheckEngine) There is no object for "+CHECKS)
-	return nil
+	env.Output.WriteChDebug("(ApiEngine::GetCheckEngine)")
+	return env.GetCheckEngine().(*check.CheckEngine)
 }
 //
 //# GetServiceEngine: return CHECKS from obect box
 func (a *ApiEngine) GetServiceEngine() *service.ServiceEngine {
-	if obj := box.GetObject(SERVICES); obj != nil{
-		return obj.(*service.ServiceEngine)
-	}
-	env.Output.WriteChDebug("(ApiEngine::GetServiceEngine) There is no object for "+SERVICES)
-	return nil
+	env.Output.WriteChDebug("(ApiEngine::GetServiceEngine)")
+	return env.GetServiceEngine().(*service.ServiceEngine)
 }
 //
 //# GetSampleEngine: return CHECKS from obect box
 func (a *ApiEngine) GetSampleEngine() *sample.SampleEngine {
-	if obj := box.GetObject(SAMPLES); obj != nil{
-		return obj.(*sample.SampleEngine)
-	}
-	env.Output.WriteChDebug("(ApiEngine::GetSampleEngine) There is no object for "+SAMPLES)
-	return nil
+	env.Output.WriteChDebug("(ApiEngine::GetSampleEngine)")
+	return env.GetSampleEngine().(*sample.SampleEngine)
 }
 
 //#######################################################################################################

@@ -76,6 +76,13 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
   // Initialize the first timestamp to 0
   cks.SetTimestamp(0)
 
+  // Set the environment's check engine
+  env.SetCheckEngine(cks)
+  // Set the environment's sample engine
+  env.SetSampleEngine(ss)
+
+
+
 	return err, cks
 }
 
@@ -327,23 +334,6 @@ func (c *CheckEngine) GetCheckgroup(group string) []byte {
   cg := cgs.GetCheckgroup()
   return utils.ObjectToJsonByte(cg[group])
 }
-
-//
-//# GetAllSamples: return the status of all checks
-func (c *CheckEngine) GetAllSamples() []byte {
-  env.Output.WriteChDebug("(CheckEngine::GetAllSamples)")
-  return utils.ObjectToJsonByte(c.GetSampleEngine()) 
-}
-
-//
-//# GetSampleForCheck: return the status of all checks
-func (c *CheckEngine) GetSampleForCheck(check string) []byte {
-  env.Output.WriteChDebug("(CheckEngine::GetSampleForCheck)")
-  SampleEngine := c.GetSampleEngine()
-  _,s := SampleEngine.GetSample(check)
-  return utils.ObjectToJsonByte(s)
-}
-
 
 //#
 //# Common methods
