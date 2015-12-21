@@ -13,6 +13,7 @@ The package 'service' is used by verdmell to manage the definied services.
 package service
 
 import (
+	"errors"
 	"verdmell/environment"
 	"verdmell/check"
 	"verdmell/utils"
@@ -154,25 +155,40 @@ func (s *ServiceEngine) RegisterService(name string, desc string, checks []strin
 
 //
 //# GetAllServices: return information for all services
-func (sys *ServiceEngine) GetAllServices() []byte {
+func (sys *ServiceEngine) GetAllServices() (error, []byte) {
 	env.Output.WriteChDebug("(ServiceEngine::GetAllServices)")
-	ss := sys.GetServices()
+	var services *Services
+
+	if services = sys.GetServices(); services== nil {
+		return errors.New("(ServiceEngine::GetAllServices) There are no services defined."), nil
+	}
 
 	//return ss.String()
-	return utils.ObjectToJsonByte(ss)
+	return nil, utils.ObjectToJsonByte(services)
 }
 //
 //# GetServices: return all information about a service
-func (sys *ServiceEngine) GetService(service string) []byte {
+func (sys *ServiceEngine) GetService(name string) (error, []byte) {
 	env.Output.WriteChDebug("(ServiceEngine::GetService)")
-	ss := sys.GetServices()
-	s := ss.GetServices()
+	var services *Services
+	var service map[string] *ServiceObject
+	var obj *ServiceObject
+	var exist bool
 
-	//return s[service].String()
-	return utils.ObjectToJsonByte(s[service])
+	if services = sys.GetServices(); services == nil {
+		return errors.New("(ServiceEngine::GetService) There are no services defined."), nil
+	}
+
+	if service = services.GetServices(); service == nil {
+		return errors.New("(ServiceEngine::GetService) There are no services defined."), nil
+	}
+
+	if obj, exist = service[name]; !exist {
+		return errors.New("(ServiceEngine::GetService) The service '"+name+"' is not defined."), nil
+	}
+
+	return nil, utils.ObjectToJsonByte(obj)
 }
-
-
 
 //
 //# GetAllServicesStatusHuman: converts a SampleSystem object to string

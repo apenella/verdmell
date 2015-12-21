@@ -10,17 +10,8 @@ import (
 
 //
 var env *environment.Environment
-var box *ObjectsBox
-
-// constants
-const(
-	CHECKS = "checks"
-	SERVICES = "services"
-	SAMPLES = "samples"
-)
 
 type ApiEngine struct {
-	Box *ObjectsBox
 	Routes []*ui.Route
 }
 
@@ -28,35 +19,24 @@ type ApiEngine struct {
 //#
 //# ApiEngine struct:
 //# ApiEngine defines all informataion required for API
-func NewApiEngine(e *environment.Environment, b *ObjectsBox) *ApiEngine {	
+func NewApiEngine(e *environment.Environment) *ApiEngine {	
   e.Output.WriteChDebug("(ApiEngine::NewApiEngine)")
   sys := new(ApiEngine)
   
   // set the environment attribute
   env = e
-  box = b
 
   sys.GenerateAPIRoutes()
 
   return sys
 }
-
-//# SetObjectBox: set objects for API
-// func (a *ApiEngine) SetObjectBox(box *ObjectsBox){
-// 	env.Output.WriteChDebug("(ApiEngine::SetObjectBox)")
-// 	a.Box = box
-// }
+//
 //# SetRoutes: set routes for API
 func (a *ApiEngine) SetRoutes(routes []*ui.Route){
 	env.Output.WriteChDebug("(ApiEngine::SetRoutes)")
 	a.Routes = routes
 }
-
-//# GetObjectBox: get objects from API
-// func (a *ApiEngine) GetObjectBox() *ObjectsBox {
-// 	env.Output.WriteChDebug("(ApiEngine::GetObjectBox)")
-// 	return a.Box
-// }
+//
 //# GetRoutes: set routes for API
 func (a *ApiEngine) GetRoutes() []*ui.Route{
 	env.Output.WriteChDebug("(ApiEngine::GetRoutes)")

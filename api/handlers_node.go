@@ -25,10 +25,12 @@ func StartCheckEngine(w http.ResponseWriter, r *http.Request) {
 func GetNodeStatus(w http.ResponseWriter, r *http.Request) {
 	env.Output.WriteChDebug("(ApiEngine::GetService)")
 	services := env.GetServiceEngine().(*service.ServiceEngine)
+
+	_,json := services.GetService(env.Context.Service)
 	
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write(services.GetService(env.Context.Service))
+	w.Write(json)
 }
 
 //#######################################################################################################
