@@ -17,7 +17,7 @@ func StartCheckEngine(w http.ResponseWriter, r *http.Request) {
 	if err := checks.StartCheckEngine(nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	GetAllServices(w,r)
+	apiWriter(GetAllServices)
 }
 
 //

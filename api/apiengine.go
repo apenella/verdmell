@@ -6,6 +6,7 @@ import (
 	"verdmell/check"
 	"verdmell/sample"
 	"verdmell/service"
+	"net/http"
 )
 
 //
@@ -46,6 +47,20 @@ func (a *ApiEngine) GetRoutes() []*ui.Route{
 //#
 //# Specific methods
 //#---------------------------------------------------------------------
+//
+//# apiWriter: write data to response writer
+func apiWriter(fn func (*http.Request)(error,[]byte)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request){
+		env.Output.WriteChDebug("(ApiEngine::apiWriter) clousure")
+		if err, data := fn(r); err != nil {
+			http.NotFound(w,r)
+		} else {
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusOK)
+			w.Write(data)
+		}
+	}
+}
 
 //
 //# AddRoute: for include a new route to API Routes

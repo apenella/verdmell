@@ -160,7 +160,9 @@ func (sys *ServiceEngine) GetAllServices() (error, []byte) {
 	var services *Services
 
 	if services = sys.GetServices(); services== nil {
-		return errors.New("(ServiceEngine::GetAllServices) There are no services defined."), nil
+		msg := "(ServiceEngine::GetService) There are no services defined."
+		env.Output.WriteChDebug(msg)
+		return errors.New(msg), nil
 	}
 
 	//return ss.String()
@@ -176,15 +178,21 @@ func (sys *ServiceEngine) GetService(name string) (error, []byte) {
 	var exist bool
 
 	if services = sys.GetServices(); services == nil {
-		return errors.New("(ServiceEngine::GetService) There are no services defined."), nil
+		msg := "(ServiceEngine::GetService) There are no services defined."
+		env.Output.WriteChDebug(msg)
+		return errors.New(msg), nil
 	}
 
 	if service = services.GetServices(); service == nil {
-		return errors.New("(ServiceEngine::GetService) There are no services defined."), nil
+		msg := "(ServiceEngine::GetService) There are no services defined."
+		env.Output.WriteChDebug(msg)
+		return errors.New(msg), nil
 	}
 
 	if obj, exist = service[name]; !exist {
-		return errors.New("(ServiceEngine::GetService) The service '"+name+"' is not defined."), nil
+		msg := "(ServiceEngine::GetService) The service '"+name+"' is not defined."
+		env.Output.WriteChDebug(msg)
+		return errors.New(msg), nil
 	}
 
 	return nil, utils.ObjectToJsonByte(obj)
