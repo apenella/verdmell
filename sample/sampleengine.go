@@ -112,16 +112,16 @@ func (sys *SampleEngine) DeleteSample(name string) error {
 }
 //
 //# GetAllSamples: return the status of all checks
-func (sys *SampleEngine) GetAllSamples() []byte {
+func (sys *SampleEngine) GetAllSamples() (error, []byte) {
   env.Output.WriteChDebug("(SampleEngine::GetAllSamples)")
-  return utils.ObjectToJsonByte(sys.Samples) 
+  return nil,utils.ObjectToJsonByte(sys.Samples) 
 }
 //
 //# GetSampleForCheck: return the status of all checks
-func (sys *SampleEngine) GetSampleForCheck(check string) []byte {
+func (sys *SampleEngine) GetSampleForCheck(check string) (error, []byte) {
   env.Output.WriteChDebug("(SampleEngine::GetSampleForCheck)")
   _,s := sys.GetSample(check)
-  return utils.ObjectToJsonByte(s)
+  return nil,utils.ObjectToJsonByte(s)
 }
 
 

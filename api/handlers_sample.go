@@ -8,27 +8,22 @@ import(
 
 //
 //# GetAllSamples: write all samples' data to response writer
-func GetAllSamples(w http.ResponseWriter, r *http.Request) {
+func GetAllSamples(r *http.Request) (error, []byte) {
 	env.Output.WriteChDebug("(ApiEngine::GetAllSamples)")
-	checks := env.GetSampleEngine().(*sample.SampleEngine)
+	samples := env.GetSampleEngine().(*sample.SampleEngine)
 	
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(checks.GetAllSamples())	
+	return samples.GetAllSamples()
 }
 //
 //# GetSample: write the specific sample's data to response writer
-func GetSample(w http.ResponseWriter, r *http.Request) {
+func GetSample(r *http.Request) (error, []byte) {
 	env.Output.WriteChDebug("(ApiEngine::GetSample)")
 	
 	samples := env.GetSampleEngine().(*sample.SampleEngine)
 	vars := mux.Vars(r)
 	check := vars["sample"]
-	
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
 
-	w.Write(samples.GetSampleForCheck(check))
+	return samples.GetSampleForCheck(check)
 }
 
 //#######################################################################################################

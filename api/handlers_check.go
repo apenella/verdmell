@@ -8,26 +8,21 @@ import(
 
 //
 //# GetAllChecks: write all checks' data to response writer
-func GetAllChecks(w http.ResponseWriter, r *http.Request) {
+func GetAllChecks(r *http.Request) (error,[]byte) {
 	env.Output.WriteChDebug("(ApiEngine::GetAllChecks)")
 	checks := env.GetCheckEngine().(*check.CheckEngine)
-	//checks := box.GetObject(CHECKS).(*check.CheckEngine)
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(checks.GetAllChecks())	
+	return checks.GetAllChecks()
 }
 //
 //# GetCheck: write the specific check's data to response writer
-func GetCheck(w http.ResponseWriter, r *http.Request) {
+func GetCheck(r *http.Request) (error,[]byte) {
 	env.Output.WriteChDebug("(ApiEngine::GetCheck)")
 	checks := env.GetCheckEngine().(*check.CheckEngine)
 	vars := mux.Vars(r)
 	check := vars["check"]
 	
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(checks.GetCheck(check))
+	return checks.GetCheck(check)
 }
 
 //#######################################################################################################

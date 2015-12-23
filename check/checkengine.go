@@ -304,35 +304,35 @@ func (c *CheckEngine) GetCheckgroupByName(checkgroupname string) (error, []strin
 
 //
 //# GetAllChecks: return all checks
-func (c *CheckEngine) GetAllChecks() []byte {
+func (c *CheckEngine) GetAllChecks() (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetAllChecks)")
-  return utils.ObjectToJsonByte(c.GetChecks())
+  return nil,utils.ObjectToJsonByte(c.GetChecks())
 }
 //
 //# GetCheck: return a checks
-func (c *CheckEngine) GetCheck(check string) []byte {
+func (c *CheckEngine) GetCheck(check string) (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetCheck)")
   // Get Checks attribute from CheckEngine
   cks := c.GetChecks()
   // Get Check map from Checks
   ck := cks.GetCheck()
-  return utils.ObjectToJsonByte(ck[check])
+  return nil,utils.ObjectToJsonByte(ck[check])
 }
 //
 //# GetAllCheckgroups: return all checks
-func (c *CheckEngine) GetAllCheckgroups() []byte {
+func (c *CheckEngine) GetAllCheckgroups() (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetAllCheckgroups)")
-  return utils.ObjectToJsonByte(c.GetCheckgroups())
+  return nil,utils.ObjectToJsonByte(c.GetCheckgroups())
 }
 //
 //# GetCheckgroup: return a checks
-func (c *CheckEngine) GetCheckgroup(group string) []byte {
+func (c *CheckEngine) GetCheckgroup(group string) (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetCheckgroup)")
   // Get Checkgroupss attribute from CheckEngine
   cgs := c.GetCheckgroups()
   // Get Check map from Checks
   cg := cgs.GetCheckgroup()
-  return utils.ObjectToJsonByte(cg[group])
+  return nil,utils.ObjectToJsonByte(cg[group])
 }
 
 //#
