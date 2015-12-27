@@ -150,7 +150,11 @@ func (sys *SampleEngine) GetSampleForCheck(name string) (error, []byte) {
 //
 //# String: converts a SampleEngine object to string
 func (sys *SampleEngine) String() string {
-  return utils.ObjectToJsonString(sys)
+  if err, str := utils.ObjectToJsonString(sys); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 
 //

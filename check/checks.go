@@ -420,6 +420,10 @@ func Itoa(i int) string {
 
 //# String: convert a Checks object to string
 func (c *Checks) String() string {
-  return utils.ObjectToJsonString(c)
+if err, str := utils.ObjectToJsonString(c); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 //#######################################################################################################

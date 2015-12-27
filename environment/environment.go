@@ -24,11 +24,13 @@ type Environment struct{
 	Context *currentContext
 
 	//ChecksEngine
-	CheckEngine interface{}
+	CheckEngine interface{} `json:"checks"`
 	//SampleEngine
-	SampleEngine interface{}
+	SampleEngine interface{} `json:"samples"`
 	//ServiceEngine
-	ServiceEngine interface{}
+	ServiceEngine interface{} `json:"services"`
+	//ClusterEngine
+	ClusterEngine interface{} `json:"cluster"`
 }
 //
 // Methods for Environment
@@ -100,6 +102,11 @@ func (e *Environment) SetServiceEngine(s interface{}) {
 	e.Output.WriteChDebug("(Environment::SetServiceEngine)")
 	e.ServiceEngine = s
 }
+// Set the ServiceEngine for the Environment
+func (e *Environment) SetClusterEngine(s interface{}) {
+	e.Output.WriteChDebug("(Environment::SetClusterEngine)")
+	e.ClusterEngine = s
+}
 
 // Get the setupObject from envirionment
 func (e *Environment) GetSetup() *setupObject{
@@ -131,6 +138,12 @@ func (e *Environment) GetServiceEngine() interface{} {
 	e.Output.WriteChDebug("(Environment::GetServiceEngine)")
 	return e.ServiceEngine
 }
+// Get ClusterEngine from environment
+func (e *Environment) GetClusterEngine() interface{} {
+	e.Output.WriteChDebug("(Environment::GetClusterEngine)")
+	return e.ServiceEngine
+}
+
 //
 // Specific methods
 //---------------------------------------------------------------------
@@ -148,13 +161,25 @@ func (e *Environment) validateEnvironment() error {
 
 		return nil
 }
+//
+//# GetNodeInfo from node
+func (e *Environment) GetNodeInfo() (error,[]byte) {
+	e.Output.WriteChDebug("(Environment::GetNodeInfo)")
 
+	environment := make(map[string]interface{})
+
+	environment["checks"] = e.GetCheckEngine()
+	environment["samples"] = e.GetSampleEngine()
+	environment["services"] = e.GetServiceEngine()
+
+	return nil,utils.ObjectToJsonByte(environment)
+	
+}
 //
 //# GetCluster return all cluster nodes
 func (e *Environment) GetCluster() []byte{
 	return utils.ObjectToJsonByte(e.Setup.Cluster)
 }
-
 //
 // Common methods
 //---------------------------------------------------------------------
@@ -162,7 +187,11 @@ func (e *Environment) GetCluster() []byte{
 //
 // String method to return the string
 func (e *Environment) String() string {
-	return utils.ObjectToJsonString(e)
+	if err, str := utils.ObjectToJsonString(e); err != nil{
+		return err.Error()
+	} else{
+		return str
+	}
 }
 
 //####################################################################################################

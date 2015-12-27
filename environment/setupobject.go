@@ -102,5 +102,9 @@ func (s *setupObject) AddNodeToCluster(node string, url string) bool {
 
 // String method transform the setupObject to string
 func (s *setupObject) String() string{
-	return utils.ObjectToJsonString(s)
+	if err, str := utils.ObjectToJsonString(s); err != nil{
+		return err.Error()
+	} else{
+		return str
+	}
 }

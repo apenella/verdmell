@@ -395,7 +395,11 @@ func (c *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
 
 //# String: convert a Checks object to string
 func (c *CheckEngine) String() string {
-  return utils.ObjectToJsonString(c)
+  if err, str := utils.ObjectToJsonString(c); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 
 //#######################################################################################################

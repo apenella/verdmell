@@ -231,6 +231,10 @@ func (s *ServiceObject) CalculateStatusForService(sam *sample.CheckSample){
 //
 //# String: method converts a ServiceObject to string
 func (s *ServiceObject) String() string {
-	return utils.ObjectToJsonString(s)
+	if err, str := utils.ObjectToJsonString(s); err != nil{
+		return err.Error()
+	} else{
+		return str
+	}
 }
 //#######################################################################################################

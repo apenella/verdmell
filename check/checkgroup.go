@@ -177,6 +177,10 @@ func mergeCheckgroups(allCheckgroups []map[string][]string) *map[string][]string
 //
 //# String: method converts a Checks object to string
 func (c *Checkgroups) String() string {
-  return utils.ObjectToJsonString(c)
+  if err, str := utils.ObjectToJsonString(c); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 //#######################################################################################################

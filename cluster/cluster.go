@@ -108,7 +108,11 @@ func (c *Cluster) AddNode(n *ClusterNode) error {
 
 //# String: convert a Cluster object to string
 func (c *Cluster) String() string {
-	return utils.ObjectToJsonString(c)
+  if err, str := utils.ObjectToJsonString(c); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 
 //#######################################################################################################

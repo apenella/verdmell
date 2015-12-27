@@ -282,7 +282,11 @@ func (s *ServiceEngine) GetServicesForCheck(check string) (error, []string) {
 //
 //# String: converts a SampleSystem object to string
 func (sys *ServiceEngine) String() string {
-	return utils.ObjectToJsonString(sys.GetServices())
+	if err, str := utils.ObjectToJsonString(sys.GetServices()); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 
 //#######################################################################################################

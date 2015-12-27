@@ -25,15 +25,23 @@ func LoadJSONFile(f string, object interface{}) {
 
 //
 //# ObjectToJsonString: converst any object to a json string
-func ObjectToJsonString(object interface{}) string {
-  jsoned, _ := json.Marshal(object)
-  return string(jsoned)
+func ObjectToJsonString(object interface{}) (error, string) {
+  if jsoned, err := json.Marshal(object); err != nil{
+    return err,err.Error() 
+  }else{
+    return nil,string(jsoned)
+  }
+  //jsoned, _ := json.Marshal(object)
+  //return string(jsoned)
 }
 //
 //# ObjectToJsonString: converst any object to a json string
-func ObjectToJsonStringPretty(object interface{}) string {
-  jsoned, _ := json.MarshalIndent(object,"","	")
-  return string(jsoned)
+func ObjectToJsonStringPretty(object interface{}) (error,string) {
+  if jsoned, err := json.MarshalIndent(object,"","	"); err != nil{
+    return err,err.Error() 
+  }else{
+    return nil,string(jsoned)
+  }
 }
 //
 //# ObjectToJsonByte: converst any object to a json byte

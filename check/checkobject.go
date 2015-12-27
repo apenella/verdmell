@@ -248,7 +248,11 @@ func (c *CheckObject) GenerateCheckSample(e int, o string, elapsedtime time.Dura
 
 //# String: converts a CheckObject object to string
 func (c *CheckObject) String() string {
-  return utils.ObjectToJsonString(c)
+  if err, str := utils.ObjectToJsonString(c); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 
 //#######################################################################################################

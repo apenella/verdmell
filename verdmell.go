@@ -116,6 +116,7 @@ func main() {
 			env.Output.WriteChError(err)
 			os.Exit(4)
 		}
+
 		_,hummanstatus := srv.GetServicesStatusHuman(env.Context.Service)
 		message.Write(hummanstatus)
 

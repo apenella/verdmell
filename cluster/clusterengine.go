@@ -12,9 +12,9 @@ The package 'cluster' is used by verdmell to manage the cluster.
 package cluster
 
 import (
+  "errors"
 	"verdmell/environment"
   "verdmell/utils"
-  "verdmell/ui"
 )
 
 //
@@ -25,7 +25,7 @@ var env *environment.Environment
 //# ClusterEngine struct:
 //# ClusterEngine defines a map to store the maps
 type ClusterEngine struct{
-	Ui ui.UI
+	//Ui ui.UI
   Cluster *Cluster `json:"cluster"`
 }
 //
@@ -95,6 +95,19 @@ func (c *ClusterEngine) AddNode(n *ClusterNode) error {
 
   return c.Cluster.AddNode(n)
 }
+//
+//# GetClusterNodes: get all nodes from cluster
+func (c *ClusterEngine) GetClusterNodes() (error,[]byte) {
+  env.Output.WriteChDebug("(ClusterEngine::GetClusterNodes)")
+  var cluster *Cluster
+
+  if cluster = c.GetCluster(); cluster == nil {
+    return errors.New("(ClusterEngine::GetClusterNodes) The cluster object has not been initialized"),nil
+  }
+
+  return nil,utils.ObjectToJsonByte(cluster.GetNodes())
+}
+
 
 //#
 //# Common methods
@@ -102,7 +115,11 @@ func (c *ClusterEngine) AddNode(n *ClusterNode) error {
 
 //# String: convert a ClusterEngine object to string
 func (c *ClusterEngine) String() string {
-	return utils.ObjectToJsonString(c.GetCluster())
+  if err, str := utils.ObjectToJsonString(c.GetCluster()); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 
 //#######################################################################################################

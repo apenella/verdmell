@@ -103,6 +103,10 @@ func (s *CheckSample) GetTimestamp() int64 {
 //
 //# String: method converts a sample to string
 func (s *CheckSample) String() string {
-  return utils.ObjectToJsonString(s)
+  if err, str := utils.ObjectToJsonString(s); err != nil{
+    return err.Error()
+  } else{
+    return str
+  }
 }
 //#######################################################################################################

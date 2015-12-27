@@ -282,7 +282,11 @@ func (s *Services) GenerateCheckServices() error {
 //
 //# String: converts a SampleSystem object to string
 func (s *Services) String() string {
-	return utils.ObjectToJsonString(s)
+	if err, str := utils.ObjectToJsonString(s); err != nil{
+		return err.Error()
+	} else{
+		return str
+	}
 }
 
 
