@@ -11,6 +11,7 @@ The package 'check' is used by verdmell to manage the monitoring checks defined 
 package check
 
 import (
+  "errors"
   "verdmell/environment"
   "verdmell/sample"
   "verdmell/utils"
@@ -299,40 +300,93 @@ func (c *CheckEngine) GetCheckObjectByName(checkname string) (error, *CheckObjec
 func (c *CheckEngine) GetCheckgroupByName(checkgroupname string) (error, []string) {
   return c.Cg.GetCheckgroupByName(checkgroupname)
 }
-
-
-
 //
 //# GetAllChecks: return all checks
 func (c *CheckEngine) GetAllChecks() (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetAllChecks)")
-  return nil,utils.ObjectToJsonByte(c.GetChecks())
+  var checks *Checks
+
+  if checks = c.GetChecks(); checks == nil {
+    msg := "(CheckEngine::GetAllChecks) There are no checks defined."
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  } 
+
+  return nil,utils.ObjectToJsonByte(checks)
 }
 //
 //# GetCheck: return a checks
-func (c *CheckEngine) GetCheck(check string) (error,[]byte) {
+func (c *CheckEngine) GetCheck(name string) (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetCheck)")
+  var checks *Checks
+  var check map[string] *CheckObject
+  var obj *CheckObject
+  var exist bool
+
   // Get Checks attribute from CheckEngine
-  cks := c.GetChecks()
+  if checks = c.GetChecks(); checks == nil {
+    msg := "(CheckEngine::GetCheck) There are no checks defined."
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  }
   // Get Check map from Checks
-  ck := cks.GetCheck()
-  return nil,utils.ObjectToJsonByte(ck[check])
+  if check = checks.GetCheck(); checks == nil {
+    msg := "(CheckEngine::GetCheck) There are no checks defined."
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  }
+  // Get CheckObject from the check's map
+  if obj,exist = check[name]; !exist {
+    msg := "(ServiceEngine::GetCheck) The check '"+name+"' is not defined."
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  }
+
+  return nil,utils.ObjectToJsonByte(obj)
 }
 //
 //# GetAllCheckgroups: return all checks
 func (c *CheckEngine) GetAllCheckgroups() (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetAllCheckgroups)")
-  return nil,utils.ObjectToJsonByte(c.GetCheckgroups())
+  var groups *Checkgroups
+
+  if groups = c.GetCheckgroups(); groups == nil {
+    msg := "(CheckEngine::GetAllCheckgroups) There are no check groups defined."
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  }
+
+  return nil,utils.ObjectToJsonByte(groups)
 }
 //
 //# GetCheckgroup: return a checks
-func (c *CheckEngine) GetCheckgroup(group string) (error,[]byte) {
+func (c *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetCheckgroup)")
+  var groups *Checkgroups
+  var group map[string] []string
+  var obj []string
+  var exist bool
+
   // Get Checkgroupss attribute from CheckEngine
-  cgs := c.GetCheckgroups()
+  if groups = c.GetCheckgroups(); groups == nil {
+    msg := "(CheckEngine::GetCheckgroup) There are no check groups defined."
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  }
   // Get Check map from Checks
-  cg := cgs.GetCheckgroup()
-  return nil,utils.ObjectToJsonByte(cg[group])
+  if group = groups.GetCheckgroup(); group == nil {
+    msg := "(CheckEngine::GetCheckgroup) There are no check groups defined."
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  }
+  // Get Check group from check group's mpa
+  if obj,exist = group[name]; !exist {
+    msg := "(ServiceEngine::GetCheckgroup) The check group '"+name+"' is not defined."
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  }
+  
+  return nil,utils.ObjectToJsonByte(obj)
 }
 
 //#

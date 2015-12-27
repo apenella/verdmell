@@ -76,17 +76,19 @@ func (sys *SampleEngine) AddSample(cs *CheckSample) error {
 }
 //
 //# GetSample: method returns the CheckSample object for a CheckObject
-func (sys *SampleEngine) GetSample(name string) (error,*CheckSample) {
+func (sys *SampleEngine) GetSample(name string) (error, *CheckSample) {
   env.Output.WriteChDebug("(SampleEngine::GetSample) '"+name+"'")
   var sam *CheckSampleSync
   var exist bool
 
   // if no sample for the check, an error is thrown
   if sam, exist = sys.Samples[name]; !exist {
-    return errors.New("(SampleEngine::GetSample) There is no sample for this check"),nil
-  } else {
-    sam = sys.Samples[name]
+    msg := "(SampleEngine::GetSample) There is not a sample for the check '"+name+"'"
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg),nil
   }
+
+  sam = sys.Samples[name]
 
   //read lock
   sam.mutex.RLock()
@@ -102,7 +104,9 @@ func (sys *SampleEngine) DeleteSample(name string) error {
 
   // if no sample for the check, an error is thrown
   if sam, exist = sys.Samples[name]; !exist {
-    return errors.New("(SampleEngine::GetSample) There is no sample for this check")
+    msg := "(SampleEngine::GetSample) There is not a sample to be deleled for the check '"+name+"'"
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg)
   }
 
   sam.mutex.Lock()
@@ -114,14 +118,28 @@ func (sys *SampleEngine) DeleteSample(name string) error {
 //# GetAllSamples: return the status of all checks
 func (sys *SampleEngine) GetAllSamples() (error, []byte) {
   env.Output.WriteChDebug("(SampleEngine::GetAllSamples)")
-  return nil,utils.ObjectToJsonByte(sys.Samples) 
+  sample := make(map[string] *CheckSample)
+
+  for name, obj := range sys.Samples {
+    sample[name] = obj.Sample
+  }
+
+  return nil,utils.ObjectToJsonByte(sample) 
 }
 //
 //# GetSampleForCheck: return the status of all checks
-func (sys *SampleEngine) GetSampleForCheck(check string) (error, []byte) {
+func (sys *SampleEngine) GetSampleForCheck(name string) (error, []byte) {
   env.Output.WriteChDebug("(SampleEngine::GetSampleForCheck)")
-  _,s := sys.GetSample(check)
-  return nil,utils.ObjectToJsonByte(s)
+  var sample *CheckSample
+  var err error
+
+  if err,sample = sys.GetSample(name); err!=nil{
+    msg := "(SampleEngine::GetSampleForCheck) There is not a sample for the check '"+name+"'"
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  }
+
+  return nil,utils.ObjectToJsonByte(sample)
 }
 
 

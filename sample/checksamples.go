@@ -28,7 +28,7 @@ type CheckSample struct{
 }
 
 //#
-//# Getters/Setters methods for Checks object
+//# Getters/Setters methods for CheckSample object
 //#---------------------------------------------------------------------
 
 //

@@ -57,18 +57,6 @@ func main() {
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
 		
-
-
-		// creat a new objects api to store all process data
-		// objBox := api.NewObjectsBox()
-		// Add the Check System object into the box		
-		// objBox.AddObject(api.CHECKS,cks)
-		// Add the Sample System object into the box		
-		// objBox.AddObject(api.SAMPLES,cks.GetSampleEngine())
-		// Add the Service System object into the box
-		// objBox.AddObject(api.SERVICES,srv)
-		// creat a new Api System
-		// apisys := api.NewApiEngine(env,objBox)
 		apisys := api.NewApiEngine(env)
 
 		if err, cltr = cluster.NewClusterEngine(env); err != nil {
