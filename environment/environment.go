@@ -141,7 +141,7 @@ func (e *Environment) GetServiceEngine() interface{} {
 // Get ClusterEngine from environment
 func (e *Environment) GetClusterEngine() interface{} {
 	e.Output.WriteChDebug("(Environment::GetClusterEngine)")
-	return e.ServiceEngine
+	return e.ClusterEngine
 }
 
 //

@@ -82,8 +82,6 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
   // Set the environment's sample engine
   env.SetSampleEngine(ss)
 
-
-
 	return err, cks
 }
 

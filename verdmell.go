@@ -57,13 +57,13 @@ func main() {
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
 		
-		apisys := api.NewApiEngine(env)
-
 		if err, cltr = cluster.NewClusterEngine(env); err != nil {
 		 	message.WriteError(err)
 		 	os.Exit(4)
 		}
 		cltr.SayHi()
+
+		apisys := api.NewApiEngine(env)
 
 		if err = cks.StartCheckEngine(nil); err != nil {
 			env.Output.WriteChError(err)

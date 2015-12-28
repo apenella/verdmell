@@ -8,7 +8,7 @@ import(
 //
 //# GetAllChecks: write all checks' data to response writer
 func GetClusterNodes(r *http.Request) (error,[]byte) {
-	env.Output.WriteChDebug("(ApiEngine::GetAllChecks)")
+	env.Output.WriteChDebug("(ApiEngine::GetClusterNodes)")
 	cluster := env.GetClusterEngine().(*cluster.ClusterEngine)
 
 	return cluster.GetClusterNodes()

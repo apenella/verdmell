@@ -55,6 +55,7 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
   }
 
   err = nil
+  env.SetClusterEngine(cluster)
   env.Output.WriteChDebug("(ClusterEngine::NewClusterEngine) I'm your new Cluster Engine instance.")
 
   return err, cluster
