@@ -97,6 +97,18 @@ func (c *ClusterEngine) AddNode(n *ClusterNode) error {
   return c.Cluster.AddNode(n)
 }
 //
+//# GetCluster: get whole information from cluster
+func (c *ClusterEngine) GetClusterInfo() (error,[]byte) {
+  env.Output.WriteChDebug("(ClusterEngine::GetClusterData)")
+  var cluster *Cluster
+
+  if cluster = c.GetCluster(); cluster == nil {
+    return errors.New("(ClusterEngine::GetClusterData) The cluster object has not been initialized"),nil
+  }
+
+  return nil,utils.ObjectToJsonByte(c.GetCluster())
+}
+//
 //# GetClusterNodes: get all nodes from cluster
 func (c *ClusterEngine) GetClusterNodes() (error,[]byte) {
   env.Output.WriteChDebug("(ClusterEngine::GetClusterNodes)")
