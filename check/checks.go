@@ -121,7 +121,7 @@ func (c *Checks) ValidateChecks(i interface{}) error {
 }
 //
 //# StartCheckTaskPools: start a pool for each check. For each pool are generated the check execution tasks
-func (c *Checks) StartCheckTaskPools(ss *sample.SampleEngine, o chan *sample.CheckSample, timestamp int64) error {
+func (c *Checks) StartCheckTaskPools(o chan *sample.CheckSample) error {
   env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Ready to start all pools for checks")
 
   sampleChan := make(chan *sample.CheckSample)
@@ -133,7 +133,9 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleEngine, o chan *sample.Che
   errChan := make(chan error)
   defer close(errChan)
 
-  // go over Check attriutes from Checks (map[string]CheckObject)
+  ss := env.GetSampleEngine().(*sample.SampleEngine)
+
+  // go over all checks from Checks (map[string]CheckObject)
   for _,check := range c.GetCheck(){
     // runGraphList let to trace which objects are waiting to run
     runGraphList := make(map[string]interface{},0)
@@ -143,7 +145,6 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleEngine, o chan *sample.Che
     go func (obj *CheckObject, rgl map[string]interface{}) {
       env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing tasks for '"+obj.GetName()+"''s pool")
       if err, checksample := c.InitCheckTasks(obj, rgl); err == nil {
-        checksample.SetTimestamp(timestamp)
         sampleChan <- checksample
       } else {
         errChan <- err
@@ -157,7 +158,7 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleEngine, o chan *sample.Che
       select{
       case checksample := <-sampleChan:
         env.Output.WriteChDebug("(Checks::StartCheckTaskPools::goroutine) Check status received: '"+strconv.Itoa(checksample.GetExit())+"'")
-        if err,sam := ss.GetSample(checksample.GetCheck()); err != nil {
+        if err, sam := ss.GetSample(checksample.GetCheck()); err != nil {
           //sending sample to service using the output channel
           o <- checksample
         } else {
@@ -184,7 +185,7 @@ func (c *Checks) StartCheckTaskPools(ss *sample.SampleEngine, o chan *sample.Che
 }
 //
 //# InitCheckTasks: is going to initialize a task for each check and its dependencies. 
-//#  The task enqueu the check to be check but it has dependencies they have to be enqueued befor
+//# The task enqueu the check to be executed. All its dependencies have to be executed before it to be enqueued
 func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]interface{}) (error, *sample.CheckSample) {
   env.Output.WriteChDebug("(Checks::InitCheckTasks) Initializing the tasks for the check '"+checkObj.GetName()+"'")
 
@@ -282,8 +283,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
     }else{
       outputMessage := "Wrong status for '"+checkObj.GetName()+"' because it depends to another check with "+sample.Itoa(exitStatus)+" status"
       env.Output.WriteChWarn("(Checks::InitCheckTasks) "+outputMessage)
-      _,checksample = checkObj.GenerateCheckSample(-1,outputMessage,time.Duration(0)*time.Second, time.Duration(0)*time.Second)
-      //exitStatus = checksample.GetExit()
+      _,checksample = checkObj.GenerateCheckSample(-1,outputMessage,time.Duration(0)*time.Second, time.Duration(0)*time.Second, checkObj.GetTimestamp())
     }
   }else{
     //
@@ -341,16 +341,24 @@ func RetrieveChecks(folder string) *Checks{
       queue := make(chan *CheckObject)
       sample := make(chan *sample.CheckSample)
 
-      if checkObj.GetExpirationTime() < 0 {
-        checkObj.SetExpirationTime(300)
-      }
-
       // the CheckObject Name may be set because in the json file comes as a key
       checkObj.SetName(checkName)
       // the CheckObject Queue may be set to proceed the execution requests
       checkObj.SetTaskQueue(queue)
       // the CheckObject StatusChan may be set to proceed the execution requests
       checkObj.SetSampleChan(sample)
+      // the CheckObject Timestamp to 0
+      checkObj.SetTimestamp(0)
+
+      if checkObj.GetExpirationTime() < 0 {
+        env.Output.WriteChDebug("(Checks::RetrieveChecks) The expiration time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
+        checkObj.SetExpirationTime(300)
+      }
+
+      if checkObj.GetInterval() < checkObj.GetExpirationTime() {
+        env.Output.WriteChDebug("(Checks::RetrieveChecks) The interval time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
+        checkObj.SetInterval(checkObj.GetExpirationTime())
+      }
 
       // sending the CheckObject to be stored
       checkObjChan <- checkObj

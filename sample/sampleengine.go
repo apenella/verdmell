@@ -40,6 +40,9 @@ func NewSampleEngine(e *environment.Environment) (error, *SampleEngine) {
   //var err error
 	env = e
 
+  // Set the environment's sample engine
+  env.SetSampleEngine(sys)
+
 	return nil, sys
 }
 
@@ -51,6 +54,13 @@ func NewSampleEngine(e *environment.Environment) (error, *SampleEngine) {
 //#
 //# Common methods
 //#
+
+//
+// SayHi:
+func (sys *SampleEngine) SayHi() {
+  env.Output.WriteChInfo("(SampleEngine::SayHi) Hi! I'm your new sample engine instance")
+}
+//
 // AddSample method creaty a new entry to CheckSample or modify its value
 func (sys *SampleEngine) AddSample(cs *CheckSample) error {
   var sam *CheckSampleSync

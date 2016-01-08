@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"github.com/apenella/messageOutput"
 	"verdmell/environment"
+	"verdmell/sample"
 	"verdmell/check"
 	"verdmell/service"
 	"verdmell/cluster"
@@ -19,6 +20,7 @@ func main() {
 
 	var err error
 	var env *environment.Environment
+	var sam *sample.SampleEngine
 	var cks *check.CheckEngine
 	var srv *service.ServiceEngine
 	var cltr *cluster.ClusterEngine
@@ -38,7 +40,13 @@ func main() {
 	// preparing to destroy the output system
 	defer output.DestroyInstance()
 
-	// Call to initialize the check system
+	// Call to initialize the SampleEngine
+  if err, sam = sample.NewSampleEngine(env); err != nil {
+		message.WriteError(err)
+		os.Exit(4)
+  }
+  sam.SayHi()
+	// Call to initialize the CheckEngine
 	if err, cks = check.NewCheckEngine(env); err != nil {
 		message.WriteError(err)
 		os.Exit(4)
@@ -48,12 +56,12 @@ func main() {
 		message.WriteError(err)
 		os.Exit(4)
 	}
+	
 	// Set the output sample channel for checks as the input's service one
 	cks.SetOutputSampleChan(srv.GetInputSampleChan())
 
 	switch(context.ExecutionMode){
 	case "cluster":
-
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
 		
