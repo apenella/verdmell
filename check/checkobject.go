@@ -198,7 +198,6 @@ func (c *CheckObject) StartQueue(){
         env.Output.WriteChDebug("(CheckObject::StartQueue) ObjectTask finished. The exit code for '"+checkObj.GetName()+"' is '"+strconv.Itoa(result)+"'")
         go sampleExpiration()
         go scheduleCheckTask()
-
       }
       //Send sample to check object sampleChan.
       checkObj.SampleChan <- sample

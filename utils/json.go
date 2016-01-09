@@ -13,14 +13,14 @@ import (
 
 //
 //# LoadJSONFile: function to dump data from the file f to object
-func LoadJSONFile(f string, object interface{}) {
+func LoadJSONFile(f string, object interface{}) error {
   file, e := ioutil.ReadFile(f)
 
   if e != nil {
     message.WriteError("(loadJSONFile) File error")
     os.Exit(1)
   }
-  json.Unmarshal(file, object)
+  return json.Unmarshal(file, object)
 }
 
 //

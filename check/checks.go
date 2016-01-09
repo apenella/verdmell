@@ -306,12 +306,14 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
 //# UnmarshalCheck: get the json content from a file and field an Checks object on it.
 //  The method requieres a file path.
 //  The method returns a pointer to Checks object
-func UnmarshalCheck(file string) *Checks{
+func UnmarshalCheck(file string) *Checks {
   env.Output.WriteChDebug("(Checks::UnmarshalCheck)")
 
   c := new(Checks)
   // extract the content from the file and dumps it on the CHecks object
-  utils.LoadJSONFile(file, c)
+  if err := utils.LoadJSONFile(file, c); err != nil {
+    env.Output.WriteChError("(Checks::UnmarshalCheck) The input file '"+file+"' has an invalid json structure")
+  }
 
   return c
 }
