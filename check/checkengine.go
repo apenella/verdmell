@@ -29,7 +29,7 @@ type CheckEngine struct{
   // Map to storage the checkgroups
   Cg *Checkgroups  `json:"checkgroups"`
   // Service Channel
-  outputSampleChan chan *sample.CheckSample `json: "-"`
+  outputSampleChannels map[chan *sample.CheckSample] bool `json: "-"`
 }
 //
 //# NewCheckEngine: return a CheckEngine instance to be run
@@ -68,6 +68,9 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
     return err, nil
   }
 
+  // Initialize the outputSampleChannels
+  cks.outputSampleChannels = make(map[chan *sample.CheckSample] bool)
+
   // Set the environment's check engine
   env.SetCheckEngine(cks)
 
@@ -91,9 +94,10 @@ func (c *CheckEngine) SetCheckgroups(cg *Checkgroups) {
   c.Cg = cg
 }
 //
-//# SetOutputSampleChan: methods sets the inputSampleChan's value
-func (c *CheckEngine) SetOutputSampleChan(o chan *sample.CheckSample) {
-  c.outputSampleChan = o
+//# SetOutputSampleChannels: method sets the channels to write samples 
+func (c *CheckEngine) SetOutputSampleChannels(o map[chan *sample.CheckSample] bool) {
+  env.Output.WriteChDebug("(CheckEngine::SetOutputSampleChannels) Set value")
+  c.outputSampleChannels = o
 }
 
 //
@@ -109,14 +113,30 @@ func (c *CheckEngine) GetCheckgroups() *Checkgroups{
   return c.Cg
 }
 //
-//# GetOutputSampleChan: methods sets the inputSampleChan's value
-func (c *CheckEngine) GetOutputSampleChan() chan *sample.CheckSample {
-  return c.outputSampleChan
+//# GetOutputSampleChannels: methods return the channels to write samples
+func (c *CheckEngine) GetOutputSampleChannels() map[chan *sample.CheckSample] bool {
+  env.Output.WriteChDebug("(CheckEngine::GetOutputSampleChannels) Get value")
+  return c.outputSampleChannels
 }
 
 //#
 //# Specific methods
 //#---------------------------------------------------------------------
+
+//
+//# AddOutputSampleChan:
+func (c *CheckEngine) AddOutputSampleChannel(o chan *sample.CheckSample) error {
+  env.Output.WriteChDebug("(CheckEngine::AddOutputSampleChannel)")
+
+  channels := c.GetOutputSampleChannels()
+  if _, exist := channels[o]; !exist {
+    channels[o] = true
+  } else {
+    return errors.New("(CheckEngine::AddOutputSampleChannel) You are trying to add an existing channel")
+  }
+
+  return nil
+}
 
 //
 //# InitCheckRunningQueues: prepares each checkobject to be run
@@ -238,19 +258,24 @@ func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
   env.Output.WriteChDebug("(CheckEngine::sendSample) Send sample for '"+s.GetCheck()+"' check")
   sampleEngine := env.GetSampleEngine().(*sample.SampleEngine)
 
-  // send samples to ServiceEngine
-  // GetSample return an error if no samples has been add before for that check
-  if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
-    // sending sample to service using the output channel
-    c.outputSampleChan <- s
-  } else {
-    // if a sample for that exist
-    // the sample will not send to service system unless it has modified it exit status
-    if sam.GetTimestamp() < s.GetTimestamp() {
-      // sending sample to service using the output channel
-      c.outputSampleChan <- s
-    }
+  for c,_ := range c.GetOutputSampleChannels(){
+    env.Output.WriteChDebug("(CheckEngine::sendSample) Writing sample into channel")
+    c <- s
   }
+
+  // // send samples to ServiceEngine
+  // // GetSample return an error if no samples has been add before for that check
+  // if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
+  //   // sending sample to service using the output channel
+  //   c.outputSampleChan <- s
+  // } else {
+  //   // if a sample for that exist
+  //   // the sample will not send to service system unless it has modified it exit status
+  //   if sam.GetTimestamp() < s.GetTimestamp() {
+  //     // sending sample to service using the output channel
+  //     c.outputSampleChan <- s
+  //   }
+  // }
 
   // Add samples to SampleEngine
   sampleEngine.AddSample(s)
