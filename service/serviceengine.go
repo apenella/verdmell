@@ -14,6 +14,7 @@ package service
 
 import (
 	"errors"
+	"strconv"
 	"verdmell/environment"
 	"verdmell/check"
 	"verdmell/utils"
@@ -30,6 +31,7 @@ var env *environment.Environment
 type ServiceEngine struct{
 	Ss *Services `json:"servicesroot"`
 	inputSampleChan chan *sample.CheckSample `json:"-"`
+	outputSampleChannels map[chan string] bool `json: "-"`
 }
 
 //
@@ -63,8 +65,11 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 		return err, nil
 	}
 
+	// Initialize the outputSampleChannels
+  sys.outputSampleChannels = make(map[chan string] bool)
+
 	// start the sample receiver
-	sys.StartServiceEngineSampleReceiver()
+	sys.StartSampleReceiver()
 
 	// Set the environments services engine
 	env.SetServiceEngine(sys)
@@ -86,6 +91,12 @@ func (s *ServiceEngine) SetServices(ss *Services) {
 func (s *ServiceEngine) SetInputSampleChan(c chan *sample.CheckSample) {
 	s.inputSampleChan = c
 }
+//
+//# SetOutputSampleChannels: method sets the channels to write service status
+func (s *ServiceEngine) SetOutputSampleChannels(o map[chan string] bool) {
+  env.Output.WriteChDebug("(ServiceEngine::SetOutputSampleChannels) Set value")
+  s.outputSampleChannels = o
+}
 
 //
 //# GetServices: methods gets the Services' value
@@ -97,28 +108,39 @@ func (s *ServiceEngine) GetServices() *Services {
 func (s *ServiceEngine) GetInputSampleChan() chan *sample.CheckSample {
 	return s.inputSampleChan
 }
+//
+//# GetOutputSampleChannels: methods return the channels to write samples
+func (s *ServiceEngine) GetOutputSampleChannels() map[chan string] bool {
+  env.Output.WriteChDebug("(ServiceEngine::GetOutputSampleChannels) Get value")
+  return s.outputSampleChannels
+}
 
 //#
 //# Specific methods
 //#---------------------------------------------------------------------
 
 //
+//# SayHi: 
+func (s *ServiceEngine) SayHi() {
+  env.Output.WriteChInfo("(ServiceEngine::SayHi) Hi! I'm your new service engine instance")
+}
+//
 //# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceEngine) StartServiceEngineSampleReceiver() error {
+func (s *ServiceEngine) StartSampleReceiver() error {
 	s.inputSampleChan = make(chan *sample.CheckSample)
 	services := s.GetServices()
 
-	env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineSampleReceiver) Starting sample receiver")
+	env.Output.WriteChDebug("(ServiceEngine::StartSampleReceiver) Starting sample receiver")
 	go func() {
 		defer close (s.inputSampleChan)
 		for{
 			select{
 			case sample := <-s.inputSampleChan:
-				env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineSampleReceiver) New sample received for '"+sample.GetCheck()+"'")
+				env.Output.WriteChDebug("(ServiceEngine::StartSampleReceiver) New sample received for '"+sample.GetCheck()+"'")
 				_,servicesCheck := s.GetServicesForCheck(sample.GetCheck())
 				for _,service := range servicesCheck {
 					_,srv := services.GetServiceObject(service)
-					env.Output.WriteChDebug("(ServiceEngine::StartServiceEngineSampleReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
+					env.Output.WriteChDebug("(ServiceEngine::StartSampleReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
 					go srv.SendToSampleChannel(sample)
 				}
 			}
@@ -127,10 +149,24 @@ func (s *ServiceEngine) StartServiceEngineSampleReceiver() error {
 	return nil
 }
 //
-//# SendSampleToServiceEngine: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceEngine) SendSampleToServiceEngine(sample *sample.CheckSample) {
-	env.Output.WriteChDebug("(ServiceEngine::SendSampleToServiceEngine) Send sample "+sample.String())
+//# SendSample: method prepares the system to wait sample and calculate the results for services
+func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
+	env.Output.WriteChDebug("(ServiceEngine::SendSample) Send sample "+sample.String())
 	s.inputSampleChan <- sample
+}
+//
+//# AddOutputSampleChan: Add a new channel to write service status
+func (s *ServiceEngine) AddOutputSampleChannel(o chan string) error {
+  env.Output.WriteChDebug("(ServiceEngine::AddOutputSampleChannel)")
+
+  channels := s.GetOutputSampleChannels()
+  if _, exist := channels[o]; !exist {
+    channels[o] = true
+  } else {
+    return errors.New("(ServiceEngine::AddOutputSampleChannel) You are trying to add an existing channel")
+  }
+
+  return nil
 }
 //
 //# RegisterService: register a new service for ServiceSysem
@@ -152,6 +188,7 @@ func (s *ServiceEngine) RegisterService(name string, desc string, checks []strin
 
 	return nil
 }
+
 
 //
 //# GetAllServices: return information for all services
@@ -273,6 +310,18 @@ func (s *ServiceEngine) GetServiceObject(name string) (error, *ServiceObject){
 //# GetServiceForCheck: method returns the services that a check is defined to
 func (s *ServiceEngine) GetServicesForCheck(check string) (error, []string) {
 	return s.Ss.GetServicesForCheck(check)
+}
+//
+//# sendServicesStatus: method that send services to other engines
+func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
+//	env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
+  env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
+	for c,_ := range s.GetOutputSampleChannels(){
+     env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' into channel")
+			c <- o.String()
+  }
+
+  return nil
 }
 
 //#

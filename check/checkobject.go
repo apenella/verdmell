@@ -44,26 +44,32 @@ type CheckObject struct{
 //# Getters/Setters methods for Checks object
 //#---------------------------------------------------------------------
 
+//
 //# SetName: method sets the Name value for the CheckObject object
 func (c *CheckObject) SetName(n string) {
   c.Name = n
 }
+//
 //# SetDescription: method sets the Description value for the CheckObject object
 func (c *CheckObject) SetDescription(d string) {
   c.Description = d
 }
+//
 //# SetCommand: method sets the Command value for the CheckObject object
 func (c *CheckObject) SetCommand(cmd string) {
   c.Command = cmd
 }
+//
 //# SetDepend: method sets the Depend value for the CheckObject object
 func (c *CheckObject) SetDepend(d []string) {
   c.Depend = d
 }
+//
 //# SetExpirationTime: method sets the ExpirationTime value for the CheckObject object
 func (c *CheckObject) SetExpirationTime(t int) {
   c.ExpirationTime = t
 }
+//
 //# SetInterval: method sets the Interval value for the CheckObject object
 func (c *CheckObject) SetInterval(i int) {
   c.Interval = i
@@ -74,35 +80,43 @@ func (c *CheckObject) SetTimestamp(t int64) {
   env.Output.WriteChDebug("(CheckObject::SetTimestamp)")
   c.Timestamp = t
 }
+//
 //# SetTaskQueue: method sets the queue value for the CheckObject object
 func (c *CheckObject) SetTaskQueue(q chan *CheckObject) {
   c.TaskQueue = q
 }
+//
 //# SetSampleChan: method sets the StatusChan value for the CheckObject object
 func (c *CheckObject) SetSampleChan(sc chan *sample.CheckSample) {
   c.SampleChan = sc
 }
 
+//
 //# GetName: method returns the Name value for the CheckObject object
 func (c *CheckObject) GetName() string {
   return c.Name
 }
+//
 //# GetDescription: method returns the Description value for the CheckObject object
 func (c *CheckObject) GetDescription() string {
   return c.Description
 }
+//
 //# GetCommand: method returns the Command value for the CheckObject object
 func (c *CheckObject) GetCommand() string {
   return c.Command
 }
+//
 //# GetDepend: method returns the Depend value for the CheckObject object
 func (c *CheckObject) GetDepend() []string {
   return c.Depend
 }
+//
 //# GetExpirationTime: method returns the ExpirationTime value for the CheckObject object
 func (c *CheckObject) GetExpirationTime() int{
   return c.ExpirationTime
 }
+//
 //# GetInterval: method returns the Interval value for the CheckObject object
 func (c *CheckObject) GetInterval() int{
   return c.Interval
@@ -113,10 +127,12 @@ func (c *CheckObject) GetTimestamp() int64 {
   env.Output.WriteChDebug("(CheckObject::GetTimestamp)")
   return c.Timestamp
 }
+//
 //# GetTaskQueue: method returns the TaskQueue value for the CheckObject object
 func (c *CheckObject) GetTaskQueue() chan *CheckObject{
   return c.TaskQueue
 }
+//
 //# GetSampleChan: method returns the StatusChan value for the CheckObject object
 func (c *CheckObject) GetSampleChan() chan *sample.CheckSample{
   return c.SampleChan

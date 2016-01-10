@@ -71,6 +71,8 @@ func main() {
 	case "cluster":
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
+		servicesChan := make(chan string)
+		defer close(servicesChan)
 		
 		if err, cltr = cluster.NewClusterEngine(env); err != nil {
 		 	message.WriteError(err)
@@ -84,6 +86,16 @@ func main() {
 			env.Output.WriteChError(err)
 			os.Exit(4)
 		}
+
+		srv.AddOutputSampleChannel(servicesChan)
+		go func() {
+			for{
+				select{
+				case s := <- servicesChan:
+					env.Output.WriteChInfo(s)
+				}
+			}
+		}()
 
 		webconsole := ui.NewUI(listenaddr)
 		webconsole.AddRoutes(apisys.GetRoutes())

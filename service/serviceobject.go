@@ -30,6 +30,7 @@ type ServiceObject struct{
 	Description string `json:"description"`
 	Checks []string `json:"checks"`
 	Status int `json:"status"`
+	Timestamp int64 `json:"timestamp"`
 	inputSampleChan chan *sample.CheckSample `json:"-"`
 	checksStatusCache map[string] int	`json:"-"`
 }
@@ -41,6 +42,7 @@ func NewServiceObject(name string, desc string, checks []string) (error,*Service
 	serviceObj.SetDescription(desc)
 	serviceObj.SetChecks(checks)
 	serviceObj.SetStatus(-1)
+	serviceObj.SetTimestamp(0)
 
 	if err := serviceObj.ValidateServiceObject(); err != nil {
 		env.Output.WriteChDebug("(ServiceObject::NewServiceObject) Service not properly defined '"+serviceObj.GetName()+"'")
@@ -80,6 +82,12 @@ func (s *ServiceObject) SetDescription(d string){
 func (s *ServiceObject) SetStatus(status int){
 	s.Status = status
 }
+//
+//# SetTimestamp: attribute from CheckObject
+func (s *ServiceObject) SetTimestamp(t int64) {
+  env.Output.WriteChDebug("(ServiceObject::SetTimestamp)")
+  s.Timestamp = t
+}
 
 //
 //# GetName: method return the Name value for the ServiceObject
@@ -101,6 +109,13 @@ func (s *ServiceObject) GetDescription() string {
 func (s *ServiceObject) GetStatus() int{
 	return s.Status
 }
+//
+//# GetTimestamp: attribute from CheckObject
+func (s *ServiceObject) GetTimestamp() int64 {
+  env.Output.WriteChDebug("(ServiceObject::GetTimestamp)")
+  return s.Timestamp
+}
+
 
 //#
 //# Specific methods
@@ -187,7 +202,13 @@ func (s *ServiceObject) StartServiceObjectSampleChannel(){
 			if !exist || statusCachedValue != sam.GetExit() {
 				env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) The '"+sam.GetCheck()+"' status has changed, and service status have to be calculated.")
 				s.CalculateStatusForService(sam)
+				// start a new routine that will send the service object to interested ones
+				go func() {
+ 					serviceEngine := env.GetServiceEngine().(*ServiceEngine)
+					serviceEngine.sendServicesStatus(s)					
+				}()
 			}
+
 		}
 	}
 }
@@ -221,6 +242,7 @@ func (s *ServiceObject) CalculateStatusForService(sam *sample.CheckSample){
 			env.Output.WriteChDebug("(ServiceObject::CalculateStatusForService) Service '"+s.GetName()+"' has changed its status to '"+sample.Itoa(status)+"'")
 		}
 	}
+	s.SetTimestamp(s.GetTimestamp()+1)
 	s.SetStatus(currentStatus)
 }
 

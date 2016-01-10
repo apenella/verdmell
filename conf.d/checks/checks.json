@@ -2,7 +2,7 @@
 	"checks": {
 		"first": {
 			"description": "The number one",
-			"command": "./conf.d/scripts/verdmelltest.sh 0 0 first",
+			"command": "./conf.d/scripts/random.sh 4 first",
 			"expirationTime": 10,
 			"depend": ["second"],
 			"interval": 10
