@@ -261,7 +261,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
 //
 //# sendSamples: method that send samples to other engines
 func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
-  env.Output.WriteChDebug("(CheckEngine::sendSample)["+strconv.Itoa(int(s.GetTimestamp()))+"] Send sample for '"+s.GetCheck()+"' check")
+  env.Output.WriteChDebug("(CheckEngine::sendSample)["+strconv.Itoa(int(s.GetTimestamp()))+"] Send sample for '"+s.GetCheck()+"' check with exit '"+strconv.Itoa(s.GetExit())+"'")
   sampleEngine := env.GetSampleEngine().(*sample.SampleEngine)
 
   // send samples to ServiceEngine
@@ -285,7 +285,7 @@ func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
 func (c *CheckEngine) writeSamplesToChannels(s *sample.CheckSample) {
   env.Output.WriteChDebug("(CheckEngine::writeSamplesToChannels)")
   for c,_ := range c.GetOutputSampleChannels(){
-    env.Output.WriteChDebug("(CheckEngine::writeSamplesToChannels) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Writing sample '"+s.GetCheck()+"' into channel")
+    env.Output.WriteChDebug("(CheckEngine::writeSamplesToChannels) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Writing sample '"+s.GetCheck()+"' with exit '"+strconv.Itoa(s.GetExit())+"' into channel")
     c <- s
   }
 }

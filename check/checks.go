@@ -152,12 +152,16 @@ func (c *Checks) StartCheckTaskPools() error {
 
   // waiting the CheckObjects results
   go func(){
+    env.Output.WriteChDebug("(Checks::StartCheckTaskPools) waiting for tasks "+strconv.Itoa(len(c.GetCheck()))+" to be finished")
     for i:= 0; i<len(c.GetCheck()); i++{
       select{
       case checksample := <-sampleChan:
-        env.Output.WriteChDebug("(Checks::StartCheckTaskPools)["+strconv.Itoa(int(checksample.GetTimestamp()))+"] End of task '"+checksample.GetCheck()+"' received")
-        checkEngine := env.GetCheckEngine().(*CheckEngine)
-        checkEngine.sendSample(checksample)       
+        env.Output.WriteChDebug("(Checks::StartCheckTaskPools)["+strconv.Itoa(int(checksample.GetTimestamp()))+"] End of task has been notified for '"+checksample.GetCheck()+"'")
+        //
+        // The samples will be send from the command invocation
+        //
+        // checkEngine := env.GetCheckEngine().(*CheckEngine)
+        // checkEngine.sendSample(checksample)       
       case err := <-errChan:
         env.Output.WriteChDebug(err)
       }

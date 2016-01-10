@@ -196,6 +196,7 @@ func (c *CheckObject) StartQueue(){
         }
         result = sample.GetExit()
         env.Output.WriteChDebug("(CheckObject::StartQueue) ObjectTask finished. The exit code for '"+checkObj.GetName()+"' is '"+strconv.Itoa(result)+"'")
+
         go sampleExpiration()
         go scheduleCheckTask()
       }
@@ -253,6 +254,10 @@ func (c *CheckObject) StartCheckObjectTask() (error,  *sample.CheckSample) {
   if len(out) > 0 { output = string(out[:len(out)-1])}
   _,sample := c.GenerateCheckSample(exit,output,elapsedtime, time.Duration(c.GetExpirationTime())*time.Second,c.GetTimestamp())
   env.Output.WriteChInfo("(CheckObject::StartCheckObjectTask) ["+sample.GetSampletime().String()+"] New sample generated for '"+c.GetName()+"' at time '"+strconv.Itoa(int(c.GetTimestamp()))+"'")
+
+  // send the sample to CheckEngines's sendSample method to write its value into output channels
+  checkEngine := env.GetCheckEngine().(*CheckEngine)
+  checkEngine.sendSample(sample)
 
   if messageError != "" {
     env.Output.WriteChWarn(messageError)    
