@@ -12,6 +12,7 @@ package check
 
 import (
   "errors"
+  "strconv"
   "verdmell/environment"
   "verdmell/sample"
   "verdmell/utils"
@@ -123,6 +124,11 @@ func (c *CheckEngine) GetOutputSampleChannels() map[chan *sample.CheckSample] bo
 //# Specific methods
 //#---------------------------------------------------------------------
 
+//
+//# SayHi: 
+func (sys *CheckEngine) SayHi() {
+  env.Output.WriteChInfo("(CheckEngine::SayHi) Hi! I'm your new check engine instance")
+}
 //
 //# AddOutputSampleChan:
 func (c *CheckEngine) AddOutputSampleChannel(o chan *sample.CheckSample) error {
@@ -255,14 +261,13 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
 //
 //# sendSamples: method that send samples to other engines
 func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
-  env.Output.WriteChDebug("(CheckEngine::sendSample) Send sample for '"+s.GetCheck()+"' check")
+  env.Output.WriteChDebug("(CheckEngine::sendSample)["+strconv.Itoa(int(s.GetTimestamp()))+"] Send sample for '"+s.GetCheck()+"' check")
   sampleEngine := env.GetSampleEngine().(*sample.SampleEngine)
 
   // send samples to ServiceEngine
   // GetSample return an error if no samples has been add before for that check
   if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
     // sending sample to service using the output channel
-    // c.outputSampleChan <- s
     c.writeSamplesToChannels(s)
   } else {
     // if a sample for that exist
@@ -270,12 +275,9 @@ func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
     if sam.GetTimestamp() < s.GetTimestamp() {
       // sending sample to service using the output channel
       c.writeSamplesToChannels(s)
-      // c.outputSampleChan <- s
     }
   }
 
-  // Add samples to SampleEngine
-  sampleEngine.AddSample(s)
   return nil
 }
 //
@@ -283,7 +285,7 @@ func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
 func (c *CheckEngine) writeSamplesToChannels(s *sample.CheckSample) {
   env.Output.WriteChDebug("(CheckEngine::writeSamplesToChannels)")
   for c,_ := range c.GetOutputSampleChannels(){
-    env.Output.WriteChDebug("(CheckEngine::writeSamplesToChannels) Writing sample into channel")
+    env.Output.WriteChDebug("(CheckEngine::writeSamplesToChannels) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Writing sample '"+s.GetCheck()+"' into channel")
     c <- s
   }
 }

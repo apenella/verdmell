@@ -155,7 +155,7 @@ func (c *Checks) StartCheckTaskPools() error {
     for i:= 0; i<len(c.GetCheck()); i++{
       select{
       case checksample := <-sampleChan:
-        env.Output.WriteChDebug("(Checks::StartCheckTaskPools) End of task '"+checksample.GetCheck()+"' received")
+        env.Output.WriteChDebug("(Checks::StartCheckTaskPools)["+strconv.Itoa(int(checksample.GetTimestamp()))+"] End of task '"+checksample.GetCheck()+"' received")
         checkEngine := env.GetCheckEngine().(*CheckEngine)
         checkEngine.sendSample(checksample)       
       case err := <-errChan:

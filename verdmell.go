@@ -62,6 +62,10 @@ func main() {
 	if err := cks.AddOutputSampleChannel(srv.GetInputSampleChan()); err != nil {
 		env.Output.WriteChWarn(err)
 	}
+	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
+	if err := cks.AddOutputSampleChannel(sam.GetInputSampleChan()); err != nil {
+		env.Output.WriteChWarn(err)
+	}
 
 	switch(context.ExecutionMode){
 	case "cluster":

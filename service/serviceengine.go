@@ -63,11 +63,11 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 		return err, nil
 	}
 
-	// Set the environments services engine
-	env.SetServiceEngine(sys)
-
 	// start the sample receiver
 	sys.StartServiceEngineSampleReceiver()
+
+	// Set the environments services engine
+	env.SetServiceEngine(sys)
 
 	return nil, sys
 }

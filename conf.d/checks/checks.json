@@ -3,14 +3,15 @@
 		"first": {
 			"description": "The number one",
 			"command": "./conf.d/scripts/verdmelltest.sh 0 0 first",
-			"expirationTime": 5,
-			"depend": ["second"]
+			"expirationTime": 10,
+			"depend": ["second"],
+			"interval": 10
 		},
 		"second": {
 			"description": "The number two",
 			"command": "./conf.d/scripts/verdmelltest.sh 0 0 second",
-			"expirationTime": 1,
-			"interval": 5
+			"expirationTime": 10,
+			"interval": 10
 		},
 		"third": {
 			"description": "The number three",

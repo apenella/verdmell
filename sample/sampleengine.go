@@ -11,6 +11,7 @@ package sample
  import (
   "errors"
   "sync"
+  "strconv"
   "verdmell/environment"
   "verdmell/utils"
  )
@@ -23,6 +24,7 @@ var env *environment.Environment
 //# SampleEngine defines a map to store the maps
 type SampleEngine struct{
   Samples map[string]*CheckSampleSync `json: "samples"`
+  inputSampleChan chan *CheckSample `json:"-"`
 }
 
 type CheckSampleSync struct {
@@ -40,34 +42,68 @@ func NewSampleEngine(e *environment.Environment) (error, *SampleEngine) {
   //var err error
 	env = e
 
+  // start the sample receiver
+  sys.StartSampleReceiver()
+
   // Set the environment's sample engine
   env.SetSampleEngine(sys)
 
 	return nil, sys
 }
 
+//
+//# SetInputSampleChan: methods sets the inputSampleChan's value
+func (s *SampleEngine) SetInputSampleChan(c chan *CheckSample) {
+  s.inputSampleChan = c
+}
+
+//
+//# GetInputSampleChan: methods sets the inputSampleChan's value
+func (s *SampleEngine) GetInputSampleChan() chan *CheckSample {
+  return s.inputSampleChan
+}
+
 //#
 //# Specific methods
 //#----------------------------------------------------------------------------------------
 
-
-//#
-//# Common methods
-//#
-
 //
-// SayHi:
+//# SayHi: 
 func (sys *SampleEngine) SayHi() {
   env.Output.WriteChInfo("(SampleEngine::SayHi) Hi! I'm your new sample engine instance")
 }
 //
+//# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
+func (s *SampleEngine) StartSampleReceiver() error {
+  env.Output.WriteChDebug("(SampleEngine::StartSampleReceiver) Starting sample receiver")
+  s.inputSampleChan = make(chan *CheckSample)
+
+  go func() {
+    defer close (s.inputSampleChan)
+    for{
+      select{
+      case sample := <-s.inputSampleChan:
+        env.Output.WriteChDebug("(SampleEngine::StartSampleReceiver) New sample received for '"+sample.GetCheck()+"'")
+        s.AddSample(sample)
+      }
+    }
+  }()
+  return nil
+}
+//
+//# SendSample: method prepares the system to wait samples
+func (s *SampleEngine) SendSample(sample *CheckSample) {
+  env.Output.WriteChDebug("(SampleEngine::SendSample) Send sample "+sample.String())
+  s.inputSampleChan <- sample
+}
+//
 // AddSample method creaty a new entry to CheckSample or modify its value
 func (sys *SampleEngine) AddSample(cs *CheckSample) error {
+  env.Output.WriteChDebug("(SampleEngine::AddSample) ["+strconv.Itoa(int(cs.GetTimestamp()))+"]' "+cs.GetCheck()+"'")
   var sam *CheckSampleSync
   var exist bool
 
   name := cs.GetCheck()
-  env.Output.WriteChDebug("(SampleEngine::AddSample) '"+name+"'")
   
   //If now sample exist for this check, initialize it
   if _, exist = sys.Samples[name]; !exist{
