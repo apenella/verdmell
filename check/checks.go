@@ -133,8 +133,6 @@ func (c *Checks) StartCheckTaskPools(o chan *sample.CheckSample) error {
   errChan := make(chan error)
   defer close(errChan)
 
-  ss := env.GetSampleEngine().(*sample.SampleEngine)
-
   // go over all checks from Checks (map[string]CheckObject)
   for _,check := range c.GetCheck(){
     // runGraphList let to trace which objects are waiting to run
@@ -157,22 +155,11 @@ func (c *Checks) StartCheckTaskPools(o chan *sample.CheckSample) error {
     for i:= 0; i<len(c.GetCheck()); i++{
       select{
       case checksample := <-sampleChan:
-        env.Output.WriteChDebug("(Checks::StartCheckTaskPools::goroutine) Check status received: '"+strconv.Itoa(checksample.GetExit())+"'")
-        if err, sam := ss.GetSample(checksample.GetCheck()); err != nil {
-          //sending sample to service using the output channel
-          o <- checksample
-        } else {
-          // the sample will not send to service system unless it has modified it exit status
-          if sam.GetTimestamp() < checksample.GetTimestamp() {
-            //sending sample to service using the output channel
-            o <- checksample
-          }
-        }
-        ss.AddSample(checksample)
-       
+        env.Output.WriteChDebug("(Checks::StartCheckTaskPools) End of task '"+checksample.GetCheck()+"' received")
+        checkEngine := env.GetCheckEngine().(*CheckEngine)
+        checkEngine.sendSample(checksample)       
       case err := <-errChan:
         env.Output.WriteChDebug(err)
-        //exitStatus = 2
       }
     }
     doneChan <- true

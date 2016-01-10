@@ -233,8 +233,29 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
   return nil
 }
 //
-//# sendSamples: method that
+//# sendSamples: method that send samples to other engines
+func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
+  env.Output.WriteChDebug("(CheckEngine::sendSample) Send sample for '"+s.GetCheck()+"' check")
+  sampleEngine := env.GetSampleEngine().(*sample.SampleEngine)
 
+  // send samples to ServiceEngine
+  // GetSample return an error if no samples has been add before for that check
+  if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
+    // sending sample to service using the output channel
+    c.outputSampleChan <- s
+  } else {
+    // if a sample for that exist
+    // the sample will not send to service system unless it has modified it exit status
+    if sam.GetTimestamp() < s.GetTimestamp() {
+      // sending sample to service using the output channel
+      c.outputSampleChan <- s
+    }
+  }
+
+  // Add samples to SampleEngine
+  sampleEngine.AddSample(s)
+  return nil
+}
 //
 //# AddCheck: method add a new check to the Checks struct
 func (c *CheckEngine) AddCheck(obj *CheckObject) error {
