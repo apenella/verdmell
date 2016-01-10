@@ -121,7 +121,7 @@ func (c *Checks) ValidateChecks(i interface{}) error {
 }
 //
 //# StartCheckTaskPools: start a pool for each check. For each pool are generated the check execution tasks
-func (c *Checks) StartCheckTaskPools(o chan *sample.CheckSample) error {
+func (c *Checks) StartCheckTaskPools() error {
   env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Ready to start all pools for checks")
 
   sampleChan := make(chan *sample.CheckSample)

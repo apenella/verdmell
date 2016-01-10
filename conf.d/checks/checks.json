@@ -3,7 +3,7 @@
 		"first": {
 			"description": "The number one",
 			"command": "./conf.d/scripts/verdmelltest.sh 0 0 first",
-			"expirationTime": 10,
+			"expirationTime": 5,
 			"depend": ["second"]
 		},
 		"second": {

@@ -166,7 +166,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
       // startCheckTaskPools requiere the Sample system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
-      if err := check.StartCheckTaskPools(c.GetOutputSampleChan()); err != nil {
+      if err := check.StartCheckTaskPools(); err != nil {
         errChan <- err
       }
       endChan <- true
@@ -208,7 +208,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
     // run a goroutine for each checkObject and write the result to the channel
     go func() {
       // startCheckTaskPools requiere the SAmple system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
-      if err := check.StartCheckTaskPools(c.GetOutputSampleChan()); err != nil{
+      if err := check.StartCheckTaskPools(); err != nil{
         errChan <- err
       }
       endChan <- true
@@ -224,7 +224,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
   default:
     checks :=  c.GetChecks()
     // startCheckTaskPools requiere the Sample system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
-    if err := checks.StartCheckTaskPools(c.GetOutputSampleChan()); err != nil{
+    if err := checks.StartCheckTaskPools(); err != nil{
       return err
     }
     env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) All Pools Finished")
