@@ -76,10 +76,10 @@ func (c *Checks) GetCheckObjectByName(checkname string) (error,*CheckObject) {
   checkObj := new(CheckObject)
   check := c.GetCheck()
 
-  env.Output.WriteChDebug("(Checks::GetCheckObject) Looking for the check '"+checkname+"'")
+  env.Output.WriteChDebug("(Checks::GetCheckObjectByName) Looking for the check '"+checkname+"'")
 
   if checkObj, err = check[checkname]; err == false {
-    return errors.New("(Checks::GetCheckObject) The checkname '"+checkname+"' has never been load before."),nil
+    return errors.New("(Checks::GetCheckObjectByName) The check '"+checkname+"' has never been load before."),nil
   }
 
   return nil,checkObj
@@ -191,7 +191,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
 
   var err error
   exitStatus := -1
-
+  checkengine := env.GetCheckEngine().(*CheckEngine)
   checksample := new(sample.CheckSample)
   sampleChan := make(chan *sample.CheckSample)
   defer close(sampleChan)
@@ -221,7 +221,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
           jumpDueErrChan <- errors.New("(Checks::InitCheckTasks) Your defined check has a cycle dependency for '"+dep+"'. Detected while running '"+checkObj.GetName()+"'.")
         } else {
           // get a CheckObject by its name
-          if err,obj := c.GetCheckObjectByName(dep); err == nil {
+          if err,obj := checkengine.GetCheckObjectByName(dep); err == nil {
             env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has a dependency to '"+dep+"'")        
             // the current check must be marked into runGraphList
             rgl[d] = nil
