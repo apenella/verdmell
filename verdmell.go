@@ -59,7 +59,9 @@ func main() {
 	
 	// Set the output sample channel for checks as the input's service one
 	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
-	cks.AddOutputSampleChannel(srv.GetInputSampleChan())
+	if err := cks.AddOutputSampleChannel(srv.GetInputSampleChan()); err != nil {
+		env.Output.WriteChWarn(err)
+	}
 
 	switch(context.ExecutionMode){
 	case "cluster":
