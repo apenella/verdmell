@@ -14,6 +14,7 @@ package cluster
 import (
   "errors"
 	"verdmell/environment"
+  "verdmell/service"
   "verdmell/utils"
 )
 
@@ -27,13 +28,14 @@ var env *environment.Environment
 type ClusterEngine struct{
 	//Ui ui.UI
   Cluster *Cluster `json:"cluster"`
+  inputChannel chan *service.ServiceObject `json:"-"`
+  outputChannels map[chan []byte] bool `json:"-"`
 }
 //
 //# NewClusterEngine: return a CheckEngine instance to be run
 func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
   e.Output.WriteChDebug("(ClusterEngine::NewClusterEngine)")
   
-  var err error
   cluster := new(ClusterEngine)
   // get the environment attributes
   env = e
@@ -54,11 +56,17 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
     } 
   }
 
-  err = nil
+  // Initialize the outputSampleChannels
+  cluster.outputChannels = make(map[chan []byte] bool)
+
+  if err := cluster.StartServiceReceiver(); err != nil {
+    return errors.New("(ClusterEngine::NewClusterEngine) The service receiver for could not be started"), nil  
+  }
+
   env.SetClusterEngine(cluster)
   env.Output.WriteChDebug("(ClusterEngine::NewClusterEngine) I'm your new Cluster Engine instance.")
 
-  return err, cluster
+  return nil, cluster
 }
 
 //
@@ -68,10 +76,34 @@ func (c *ClusterEngine) SetCluster(cluster *Cluster) {
   c.Cluster = cluster
 }
 //
+//# SetInputChannel: attribute from Cluster
+func (c *ClusterEngine) SetInputChannel(i chan *service.ServiceObject) {
+  env.Output.WriteChDebug("(ClusterEngine::SetInputChannel)")
+  c.inputChannel = i
+}
+//
+//# SetOutputChannel: attribute from Cluster
+func (c *ClusterEngine) SetOutputChannels(o map[chan []byte] bool) {
+  env.Output.WriteChDebug("(ClusterEngine::SetOutputChannels)")
+  c.outputChannels = o
+}
+//
 //# GetCluster: attribute from ClusterNode
 func (c *ClusterEngine) GetCluster() *Cluster {
   env.Output.WriteChDebug("(ClusterEngine::GetCluster) Get value '"+c.Cluster.String()+"'")
   return c.Cluster
+}
+//
+//# GetInputChannel: attribute from Cluster
+func (c *ClusterEngine) GetInputChannel() chan *service.ServiceObject {
+  env.Output.WriteChDebug("(ClusterEngine::GetInputChannel)")
+  return c.inputChannel
+}
+//
+//# SetOutputChannel: attribute from Cluster
+func (c *ClusterEngine) GetOutputChannels() map[chan []byte] bool {
+  env.Output.WriteChDebug("(ClusterEngine::GetOutputChannels)")
+  return c.outputChannels
 }
 
 //#
@@ -96,6 +128,44 @@ func (c *ClusterEngine) AddNode(n *ClusterNode) error {
 
   return c.Cluster.AddNode(n)
 }
+//
+//# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
+func (c *ClusterEngine) StartServiceReceiver() error {
+  c.inputChannel = make(chan *service.ServiceObject)
+
+  env.Output.WriteChDebug("(ClusterEngine::StartServiceReceiver) Starting services receiver")
+  go func() {
+    defer close (c.inputChannel)
+    for{
+      select{
+      case service := <-c.inputChannel:
+        env.Output.WriteChDebug("(ClusterEngine::StartServiceReceiver) New service status for'"+service.GetName()+"' received")
+      }
+    }
+  }()
+  return nil
+}
+//
+//# SendSample: method prepares the system to wait sample and calculate the results for services
+func (c *ClusterEngine) SendService(service *service.ServiceObject) {
+  env.Output.WriteChDebug("(ClusterEngine::SendService) Send service status for '"+service.GetName()+"'")
+  c.inputChannel <- service
+}
+//
+//# AddOutputSampleChan: Add a new channel to write service status
+func (c *ClusterEngine) AddOutputChannel(o chan []byte) error {
+  env.Output.WriteChDebug("(ClusterEngine::AddOutputChannel)")
+
+  channels := c.GetOutputChannels()
+  if _, exist := channels[o]; !exist {
+    channels[o] = true
+  } else {
+    return errors.New("(ClusterEngine::AddOutputChannel) You are trying to add an existing channel")
+  }
+
+  return nil
+}
+
 //
 //# GetCluster: get whole information from cluster
 func (c *ClusterEngine) GetClusterInfo() (error,[]byte) {
