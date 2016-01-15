@@ -71,14 +71,18 @@ func main() {
 	case "cluster":
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
-		servicesChan := make(chan string)
+		servicesChan := make(chan *service.ServiceObject)
 		defer close(servicesChan)
 		
 		if err, cltr = cluster.NewClusterEngine(env); err != nil {
 		 	message.WriteError(err)
 		 	os.Exit(4)
 		}
-		cltr.SayHi()
+		//
+		// Add the cluster engine's input channel as a service engine's output channel
+		// That's the way how cluster engine will receive either node or services status
+		srv.AddOutputChannel(cltr.GetInputChannel())
+
 
 		apisys := api.NewApiEngine(env)
 
@@ -87,12 +91,11 @@ func main() {
 			os.Exit(4)
 		}
 
-		srv.AddOutputSampleChannel(servicesChan)
 		go func() {
 			for{
 				select{
 				case s := <- servicesChan:
-					env.Output.WriteChInfo(s)
+					env.Output.WriteChInfo(s.String())
 				}
 			}
 		}()

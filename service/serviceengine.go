@@ -31,7 +31,7 @@ var env *environment.Environment
 type ServiceEngine struct{
 	Ss *Services `json:"servicesroot"`
 	inputSampleChan chan *sample.CheckSample `json:"-"`
-	outputSampleChannels map[chan string] bool `json: "-"`
+	outputChannels map[chan *ServiceObject] bool `json: "-"`
 }
 
 //
@@ -65,8 +65,8 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 		return err, nil
 	}
 
-	// Initialize the outputSampleChannels
-  sys.outputSampleChannels = make(map[chan string] bool)
+	// Initialize the OutputChannels
+  sys.outputChannels = make(map[chan *ServiceObject] bool)
 
 	// start the sample receiver
 	sys.StartSampleReceiver()
@@ -92,10 +92,10 @@ func (s *ServiceEngine) SetInputSampleChan(c chan *sample.CheckSample) {
 	s.inputSampleChan = c
 }
 //
-//# SetOutputSampleChannels: method sets the channels to write service status
-func (s *ServiceEngine) SetOutputSampleChannels(o map[chan string] bool) {
-  env.Output.WriteChDebug("(ServiceEngine::SetOutputSampleChannels) Set value")
-  s.outputSampleChannels = o
+//# SetOutputChannels: method sets the channels to write service status
+func (s *ServiceEngine) SetOutputChannels(o map[chan *ServiceObject] bool) {
+  env.Output.WriteChDebug("(ServiceEngine::SetOutputChannels) Set value")
+  s.outputChannels = o
 }
 
 //
@@ -109,10 +109,10 @@ func (s *ServiceEngine) GetInputSampleChan() chan *sample.CheckSample {
 	return s.inputSampleChan
 }
 //
-//# GetOutputSampleChannels: methods return the channels to write samples
-func (s *ServiceEngine) GetOutputSampleChannels() map[chan string] bool {
-  env.Output.WriteChDebug("(ServiceEngine::GetOutputSampleChannels) Get value")
-  return s.outputSampleChannels
+//# GetOutputChannels: methods return the channels to write samples
+func (s *ServiceEngine) GetOutputChannels() map[chan *ServiceObject] bool {
+  env.Output.WriteChDebug("(ServiceEngine::GetOutputChannels) Get value")
+  return s.outputChannels
 }
 
 //#
@@ -156,14 +156,14 @@ func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
 }
 //
 //# AddOutputSampleChan: Add a new channel to write service status
-func (s *ServiceEngine) AddOutputSampleChannel(o chan string) error {
-  env.Output.WriteChDebug("(ServiceEngine::AddOutputSampleChannel)")
+func (s *ServiceEngine) AddOutputChannel(o chan *ServiceObject) error {
+  env.Output.WriteChDebug("(ServiceEngine::AddOutputChannel)")
 
-  channels := s.GetOutputSampleChannels()
+  channels := s.GetOutputChannels()
   if _, exist := channels[o]; !exist {
     channels[o] = true
   } else {
-    return errors.New("(ServiceEngine::AddOutputSampleChannel) You are trying to add an existing channel")
+    return errors.New("(ServiceEngine::AddOutputChannel) You are trying to add an existing channel")
   }
 
   return nil
@@ -316,9 +316,9 @@ func (s *ServiceEngine) GetServicesForCheck(check string) (error, []string) {
 func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
 //	env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
   env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
-	for c,_ := range s.GetOutputSampleChannels(){
+	for c,_ := range s.GetOutputChannels(){
      env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' into channel")
-			c <- o.String()
+			c <- o
   }
 
   return nil

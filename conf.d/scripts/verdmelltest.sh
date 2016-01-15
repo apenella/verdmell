@@ -1,0 +1,10 @@
+#!/bin/bash
+
+EXITCODE=$1
+WAITTIME=$2
+OUTPUT=$3
+
+sleep $WAITTIME 
+echo $OUTPUT $EXITCODE
+
+exit $EXITCODE

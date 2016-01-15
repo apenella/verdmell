@@ -1,0 +1,38 @@
+{
+	"checks": {
+		"first": {
+			"description": "The number one",
+			"command": "./conf.d/scripts/random.sh 4 first",
+			"expirationTime": 10,
+			"depend": ["second"],
+			"interval": 10
+		},
+		"second": {
+			"description": "The number two",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 second",
+			"expirationTime": 10,
+			"interval": 10
+		},
+		"third": {
+			"description": "The number three",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 third",
+			"expirationTime": 10,
+			"depend": ["first"]
+		},
+		"forth": {
+			"description": "The number four",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 forth",
+			"expirationTime": 10,
+			"depend": ["first","second","third"]
+		},
+		"eleventh": {
+			"description": "The number eleven",
+			"command": "./conf.d/scripts/verdmelltest.sh 0 0 eleventh",
+			"expirationTime": 10,
+			"depend": ["first","third"]
+		}
+	},
+	"checkgroups": {
+		"ordinals": ["first","eleventh"]
+	}
+}
