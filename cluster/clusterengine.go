@@ -28,7 +28,7 @@ var env *environment.Environment
 type ClusterEngine struct{
 	//Ui ui.UI
   Cluster *Cluster `json:"cluster"`
-  inputChannel chan *service.ServiceObject `json:"-"`
+  inputChannel chan interface{} `json:"-"`
   outputChannels map[chan []byte] bool `json:"-"`
 }
 //
@@ -59,7 +59,7 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
   // Initialize the outputSampleChannels
   cluster.outputChannels = make(map[chan []byte] bool)
 
-  if err := cluster.StartServiceReceiver(); err != nil {
+  if err := cluster.StartReceiver(); err != nil {
     return errors.New("(ClusterEngine::NewClusterEngine) The service receiver for could not be started"), nil  
   }
 
@@ -77,7 +77,7 @@ func (c *ClusterEngine) SetCluster(cluster *Cluster) {
 }
 //
 //# SetInputChannel: attribute from Cluster
-func (c *ClusterEngine) SetInputChannel(i chan *service.ServiceObject) {
+func (c *ClusterEngine) SetInputChannel(i chan interface{}) {
   env.Output.WriteChDebug("(ClusterEngine::SetInputChannel)")
   c.inputChannel = i
 }
@@ -95,7 +95,7 @@ func (c *ClusterEngine) GetCluster() *Cluster {
 }
 //
 //# GetInputChannel: attribute from Cluster
-func (c *ClusterEngine) GetInputChannel() chan *service.ServiceObject {
+func (c *ClusterEngine) GetInputChannel() chan interface{} {
   env.Output.WriteChDebug("(ClusterEngine::GetInputChannel)")
   return c.inputChannel
 }
@@ -130,20 +130,39 @@ func (c *ClusterEngine) AddNode(n *ClusterNode) error {
 }
 //
 //# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
-func (c *ClusterEngine) StartServiceReceiver() error {
-  c.inputChannel = make(chan *service.ServiceObject)
+func (c *ClusterEngine) StartReceiver() error {
+  c.inputChannel = make(chan interface{})
 
-  env.Output.WriteChDebug("(ClusterEngine::StartServiceReceiver) Starting services receiver")
+  env.Output.WriteChDebug("(ClusterEngine::StartReceiver) Starting services receiver")
   go func() {
     defer close (c.inputChannel)
     for{
       select{
-      case service := <-c.inputChannel:
-        env.Output.WriteChDebug("(ClusterEngine::StartServiceReceiver) New service status for'"+service.GetName()+"' received")
+
+      case unknownObject := <-c.inputChannel:
+        env.Output.WriteChDebug("(ClusterEngine::StartReceiver) Received")
+        switch object := unknownObject.(type){
+        case *service.ServiceObject:
+          c.handleServiceObject(object)
+        }  
       }
     }
   }()
   return nil
+}
+func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) {
+  cluster := c.GetCluster()
+  timestamp := s.GetTimestamp()
+
+  env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) ServiceObject received")
+  if env.Setup.Hostname == s.GetName() {
+    if err, node := cluster.GetNode(s.GetName()); err == nil {
+      env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Current node's status received")
+      if node.GetService() == nil || timestamp > node.GetService().GetTimestamp() {
+        node.SetService(s)
+      }        
+    }
+  }
 }
 //
 //# SendSample: method prepares the system to wait sample and calculate the results for services

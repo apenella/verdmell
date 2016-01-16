@@ -30,7 +30,7 @@ type CheckEngine struct{
   // Map to storage the checkgroups
   Cg *Checkgroups  `json:"checkgroups"`
   // Service Channel
-  outputSampleChannels map[chan *sample.CheckSample] bool `json: "-"`
+  outputChannels map[chan interface{}] bool `json: "-"`
 }
 //
 //# NewCheckEngine: return a CheckEngine instance to be run
@@ -69,8 +69,8 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
     return err, nil
   }
 
-  // Initialize the outputSampleChannels
-  cks.outputSampleChannels = make(map[chan *sample.CheckSample] bool)
+  // Initialize the outputChannels
+  cks.outputChannels = make(map[chan interface{}] bool)
 
   // Set the environment's check engine
   env.SetCheckEngine(cks)
@@ -95,10 +95,10 @@ func (c *CheckEngine) SetCheckgroups(cg *Checkgroups) {
   c.Cg = cg
 }
 //
-//# SetOutputSampleChannels: method sets the channels to write samples 
-func (c *CheckEngine) SetOutputSampleChannels(o map[chan *sample.CheckSample] bool) {
-  env.Output.WriteChDebug("(CheckEngine::SetOutputSampleChannels) Set value")
-  c.outputSampleChannels = o
+//# SetoutputChannels: method sets the channels to write samples 
+func (c *CheckEngine) SetOutputChannels(o map[chan interface{}] bool) {
+  env.Output.WriteChDebug("(CheckEngine::SetoutputChannels) Set value")
+  c.outputChannels = o
 }
 
 //
@@ -114,10 +114,10 @@ func (c *CheckEngine) GetCheckgroups() *Checkgroups{
   return c.Cg
 }
 //
-//# GetOutputSampleChannels: methods return the channels to write samples
-func (c *CheckEngine) GetOutputSampleChannels() map[chan *sample.CheckSample] bool {
-  env.Output.WriteChDebug("(CheckEngine::GetOutputSampleChannels) Get value")
-  return c.outputSampleChannels
+//# GetoutputChannels: methods return the channels to write samples
+func (c *CheckEngine) GetOutputChannels() map[chan interface{}] bool {
+  env.Output.WriteChDebug("(CheckEngine::GetoutputChannels) Get value")
+  return c.outputChannels
 }
 
 //#
@@ -131,14 +131,14 @@ func (sys *CheckEngine) SayHi() {
 }
 //
 //# AddOutputSampleChan:
-func (c *CheckEngine) AddOutputSampleChannel(o chan *sample.CheckSample) error {
-  env.Output.WriteChDebug("(CheckEngine::AddOutputSampleChannel)")
+func (c *CheckEngine) AddOutputChannel(o chan interface{}) error {
+  env.Output.WriteChDebug("(CheckEngine::AddOutputChannel)")
 
-  channels := c.GetOutputSampleChannels()
+  channels := c.GetOutputChannels()
   if _, exist := channels[o]; !exist {
     channels[o] = true
   } else {
-    return errors.New("(CheckEngine::AddOutputSampleChannel) You are trying to add an existing channel")
+    return errors.New("(CheckEngine::AddOutputChannel) You are trying to add an existing channel")
   }
 
   return nil
@@ -268,24 +268,24 @@ func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
   // GetSample return an error if no samples has been add before for that check
   if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
     // sending sample to service using the output channel
-    c.writeSamplesToChannels(s)
+    c.writeToOutputChannels(s)
   } else {
     // if a sample for that exist
     // the sample will not send to service system unless it has modified it exit status
     if sam.GetTimestamp() < s.GetTimestamp() {
       // sending sample to service using the output channel
-      c.writeSamplesToChannels(s)
+      c.writeToOutputChannels(s)
     }
   }
 
   return nil
 }
 //
-//# writeSamplesToChannels: function write samples to defined samples
-func (c *CheckEngine) writeSamplesToChannels(s *sample.CheckSample) {
-  env.Output.WriteChDebug("(CheckEngine::writeSamplesToChannels)")
-  for c,_ := range c.GetOutputSampleChannels(){
-    env.Output.WriteChDebug("(CheckEngine::writeSamplesToChannels) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Writing sample '"+s.GetCheck()+"' with exit '"+strconv.Itoa(s.GetExit())+"' into channel")
+//# writeToOutputChannels: function write samples to defined samples
+func (c *CheckEngine) writeToOutputChannels(s *sample.CheckSample) {
+  env.Output.WriteChDebug("(CheckEngine::writeToOutputChannels)")
+  for c,_ := range c.GetOutputChannels(){
+    env.Output.WriteChDebug("(CheckEngine::writeToOutputChannels) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Writing sample '"+s.GetCheck()+"' with exit '"+strconv.Itoa(s.GetExit())+"' into channel")
     c <- s
   }
 }

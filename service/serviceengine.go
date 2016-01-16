@@ -30,8 +30,8 @@ var env *environment.Environment
 //# ServiceEngine defines a map to store the maps
 type ServiceEngine struct{
 	Ss *Services `json:"servicesroot"`
-	inputSampleChan chan *sample.CheckSample `json:"-"`
-	outputChannels map[chan *ServiceObject] bool `json: "-"`
+	inputChannel chan interface{} `json:"-"`
+	outputChannels map[chan interface{}] bool `json: "-"`
 }
 
 //
@@ -66,10 +66,10 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	}
 
 	// Initialize the OutputChannels
-  sys.outputChannels = make(map[chan *ServiceObject] bool)
+  sys.outputChannels = make(map[chan interface{}] bool)
 
 	// start the sample receiver
-	sys.StartSampleReceiver()
+	sys.StartReceiver()
 
 	// Set the environments services engine
 	env.SetServiceEngine(sys)
@@ -87,13 +87,13 @@ func (s *ServiceEngine) SetServices(ss *Services) {
 	s.Ss = ss
 }
 //
-//# SetInputSampleChan: methods sets the inputSampleChan's value
-func (s *ServiceEngine) SetInputSampleChan(c chan *sample.CheckSample) {
-	s.inputSampleChan = c
+//# SetinputChannel: methods sets the inputChannel's value
+func (s *ServiceEngine) SetInputChannel(c chan interface{}) {
+	s.inputChannel = c
 }
 //
 //# SetOutputChannels: method sets the channels to write service status
-func (s *ServiceEngine) SetOutputChannels(o map[chan *ServiceObject] bool) {
+func (s *ServiceEngine) SetOutputChannels(o map[chan interface{}] bool) {
   env.Output.WriteChDebug("(ServiceEngine::SetOutputChannels) Set value")
   s.outputChannels = o
 }
@@ -104,13 +104,13 @@ func (s *ServiceEngine) GetServices() *Services {
 	return s.Ss
 }
 //
-//# GetInputSampleChan: methods sets the inputSampleChan's value
-func (s *ServiceEngine) GetInputSampleChan() chan *sample.CheckSample {
-	return s.inputSampleChan
+//# GetinputChannel: methods sets the inputChannel's value
+func (s *ServiceEngine) GetInputChannel() chan interface{} {
+	return s.inputChannel
 }
 //
 //# GetOutputChannels: methods return the channels to write samples
-func (s *ServiceEngine) GetOutputChannels() map[chan *ServiceObject] bool {
+func (s *ServiceEngine) GetOutputChannels() map[chan interface{}] bool {
   env.Output.WriteChDebug("(ServiceEngine::GetOutputChannels) Get value")
   return s.outputChannels
 }
@@ -126,21 +126,22 @@ func (s *ServiceEngine) SayHi() {
 }
 //
 //# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceEngine) StartSampleReceiver() error {
-	s.inputSampleChan = make(chan *sample.CheckSample)
+func (s *ServiceEngine) StartReceiver() error {
+	s.inputChannel = make(chan interface{})
 	services := s.GetServices()
 
-	env.Output.WriteChDebug("(ServiceEngine::StartSampleReceiver) Starting sample receiver")
+	env.Output.WriteChDebug("(ServiceEngine::StartReceiver) Starting sample receiver")
 	go func() {
-		defer close (s.inputSampleChan)
+		defer close (s.inputChannel)
 		for{
 			select{
-			case sample := <-s.inputSampleChan:
-				env.Output.WriteChDebug("(ServiceEngine::StartSampleReceiver) New sample received for '"+sample.GetCheck()+"'")
+			case obj := <-s.inputChannel:
+				sample := obj.(*sample.CheckSample)
+				env.Output.WriteChDebug("(ServiceEngine::StartReceiver) New sample received for '"+sample.GetCheck()+"'")
 				_,servicesCheck := s.GetServicesForCheck(sample.GetCheck())
 				for _,service := range servicesCheck {
 					_,srv := services.GetServiceObject(service)
-					env.Output.WriteChDebug("(ServiceEngine::StartSampleReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
+					env.Output.WriteChDebug("(ServiceEngine::StartReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
 					go srv.SendToSampleChannel(sample)
 				}
 			}
@@ -152,11 +153,11 @@ func (s *ServiceEngine) StartSampleReceiver() error {
 //# SendSample: method prepares the system to wait sample and calculate the results for services
 func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
 	env.Output.WriteChDebug("(ServiceEngine::SendSample) Send sample "+sample.String())
-	s.inputSampleChan <- sample
+	s.inputChannel <- sample
 }
 //
 //# AddOutputSampleChan: Add a new channel to write service status
-func (s *ServiceEngine) AddOutputChannel(o chan *ServiceObject) error {
+func (s *ServiceEngine) AddOutputChannel(o chan interface{}) error {
   env.Output.WriteChDebug("(ServiceEngine::AddOutputChannel)")
 
   channels := s.GetOutputChannels()

@@ -59,11 +59,11 @@ func main() {
 	
 	// Set the output sample channel for checks as the input's service one
 	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
-	if err := cks.AddOutputSampleChannel(srv.GetInputSampleChan()); err != nil {
+	if err := cks.AddOutputChannel(srv.GetInputChannel()); err != nil {
 		env.Output.WriteChWarn(err)
 	}
 	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
-	if err := cks.AddOutputSampleChannel(sam.GetInputSampleChan()); err != nil {
+	if err := cks.AddOutputChannel(sam.GetInputChannel()); err != nil {
 		env.Output.WriteChWarn(err)
 	}
 
@@ -71,8 +71,6 @@ func main() {
 	case "cluster":
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
-		servicesChan := make(chan *service.ServiceObject)
-		defer close(servicesChan)
 		
 		if err, cltr = cluster.NewClusterEngine(env); err != nil {
 		 	message.WriteError(err)
@@ -83,22 +81,12 @@ func main() {
 		// That's the way how cluster engine will receive either node or services status
 		srv.AddOutputChannel(cltr.GetInputChannel())
 
-
 		apisys := api.NewApiEngine(env)
 
 		if err = cks.StartCheckEngine(nil); err != nil {
 			env.Output.WriteChError(err)
 			os.Exit(4)
 		}
-
-		go func() {
-			for{
-				select{
-				case s := <- servicesChan:
-					env.Output.WriteChInfo(s.String())
-				}
-			}
-		}()
 
 		webconsole := ui.NewUI(listenaddr)
 		webconsole.AddRoutes(apisys.GetRoutes())

@@ -24,7 +24,7 @@ var env *environment.Environment
 //# SampleEngine defines a map to store the maps
 type SampleEngine struct{
   Samples map[string]*CheckSampleSync `json: "samples"`
-  inputSampleChan chan *CheckSample `json:"-"`
+  inputChannel chan interface{} `json:"-"`
 }
 
 type CheckSampleSync struct {
@@ -52,15 +52,15 @@ func NewSampleEngine(e *environment.Environment) (error, *SampleEngine) {
 }
 
 //
-//# SetInputSampleChan: methods sets the inputSampleChan's value
-func (s *SampleEngine) SetInputSampleChan(c chan *CheckSample) {
-  s.inputSampleChan = c
+//# SetInputChannel: methods sets the inputChannel's value
+func (s *SampleEngine) SetInputChannel(c chan interface{}) {
+  s.inputChannel = c
 }
 
 //
-//# GetInputSampleChan: methods sets the inputSampleChan's value
-func (s *SampleEngine) GetInputSampleChan() chan *CheckSample {
-  return s.inputSampleChan
+//# GetInputChannel: methods sets the inputChannel's value
+func (s *SampleEngine) GetInputChannel() chan interface{} {
+  return s.inputChannel
 }
 
 //#
@@ -76,13 +76,14 @@ func (sys *SampleEngine) SayHi() {
 //# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
 func (s *SampleEngine) StartSampleReceiver() error {
   env.Output.WriteChDebug("(SampleEngine::StartSampleReceiver) Starting sample receiver")
-  s.inputSampleChan = make(chan *CheckSample)
+  s.inputChannel = make(chan interface{})
 
   go func() {
-    defer close (s.inputSampleChan)
+    defer close (s.inputChannel)
     for{
       select{
-      case sample := <-s.inputSampleChan:
+      case obj := <-s.inputChannel:
+        sample := obj.(*CheckSample)
         env.Output.WriteChDebug("(SampleEngine::StartSampleReceiver) New sample received for '"+sample.GetCheck()+"'")
         s.AddSample(sample)
       }
@@ -94,7 +95,7 @@ func (s *SampleEngine) StartSampleReceiver() error {
 //# SendSample: method prepares the system to wait samples
 func (s *SampleEngine) SendSample(sample *CheckSample) {
   env.Output.WriteChDebug("(SampleEngine::SendSample) Send sample "+sample.String())
-  s.inputSampleChan <- sample
+  s.inputChannel <- sample
 }
 //
 // AddSample method creaty a new entry to CheckSample or modify its value

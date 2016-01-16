@@ -79,7 +79,19 @@ func (c *Cluster) GetServices() map[string] string {
 //# Specific methods
 //#---------------------------------------------------------------------
 
+//
+//# GetNode: return a node from the cluster
+func (c *Cluster) GetNode(name string) (error, *ClusterNode) {
+  env.Output.WriteChDebug("(Cluster::GetNode) Retrieve node '"+name+"' from cluster")
 
+  if node, exist := c.Nodes[name]; !exist {
+    msg := "(Cluster::GetNode) Node '"+name+"' does not exit on the cluster"
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  } else {
+    return nil, node
+  }
+}
 //
 //# AddNode: Add a new node into the cluster
 func (c *Cluster) AddNode(n *ClusterNode) error {
