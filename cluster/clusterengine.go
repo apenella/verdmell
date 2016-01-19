@@ -8,7 +8,10 @@ The package 'cluster' is used by verdmell to manage the cluster.
 -ClusterEngine
 -Cluster
 -ClusterNode
+-ClusterService
+-ClusterMessage
 */
+
 package cluster
 
 import (
@@ -150,6 +153,8 @@ func (c *ClusterEngine) StartReceiver() error {
   }()
   return nil
 }
+//
+//# handleServiceObject: handles the incoming serviceObject messages
 func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) {
   cluster := c.GetCluster()
   timestamp := s.GetTimestamp()
@@ -160,6 +165,11 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) {
       env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Current node's status received")
       if node.GetService() == nil || timestamp > node.GetService().GetTimestamp() {
         node.SetService(s)
+        if err, message := NewClusterMessage(s.GetName(),timestamp,s); err != nil {
+          env.Output.WriteChError("(ClusterEngine::handleServiceObject) "+err.Error())
+        }else{  
+          env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) "+message.String())
+        }
       }        
     }
   }

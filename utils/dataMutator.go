@@ -3,20 +3,21 @@ package utils
 import (
   "encoding/gob"
   "bytes"
-  "fmt"
   "github.com/apenella/messageOutput"
 )
 
-func GetInterfaceBytes(key interface{}) ([]byte, error) {
+//
+//#InterfaceToBytes: convert a interface{} to a []byte
+func InterfaceToBytes(key interface{}) (error, []byte) {
     var buf bytes.Buffer
     
-    message.WriteDebug("(GetInterfaceBytes)")
-    fmt.Println(key)
+    message.WriteDebug("(InterfaceToBytes)")
     
     enc := gob.NewEncoder(&buf)
     err := enc.Encode(key)
     if err != nil {
-        return nil, err
+        return err, nil
     }
-    return buf.Bytes(), nil
+    return nil, buf.Bytes()
 }
+

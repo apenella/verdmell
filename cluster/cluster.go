@@ -8,6 +8,8 @@ The package 'cluster' is used by verdmell to manage the cluster.
 -ClusterEngine
 -Cluster
 -ClusterNode
+-ClusterService
+-ClusterMessage
 */
 
 package cluster
