@@ -170,6 +170,17 @@ func (s *ServiceEngine) AddOutputChannel(o chan interface{}) error {
   return nil
 }
 //
+//# sendServicesStatus: method that send services to other engines
+func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
+  env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
+	for c,_ := range s.GetOutputChannels(){
+     env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' into channel")
+			c <- o
+  }
+
+  return nil
+}
+//
 //# RegisterService: register a new service for ServiceSysem
 func (s *ServiceEngine) RegisterService(name string, desc string, checks []string) error {
 	env.Output.WriteChDebug("(ServiceEngine::RegisterService) New service to register '"+name+"'")
@@ -311,18 +322,6 @@ func (s *ServiceEngine) GetServiceObject(name string) (error, *ServiceObject){
 //# GetServiceForCheck: method returns the services that a check is defined to
 func (s *ServiceEngine) GetServicesForCheck(check string) (error, []string) {
 	return s.Ss.GetServicesForCheck(check)
-}
-//
-//# sendServicesStatus: method that send services to other engines
-func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
-//	env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
-  env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
-	for c,_ := range s.GetOutputChannels(){
-     env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' into channel")
-			c <- o
-  }
-
-  return nil
 }
 
 //#

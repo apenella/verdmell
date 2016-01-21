@@ -16,6 +16,8 @@ package cluster
 
 import(
 	"errors"
+	"bytes"
+	"encoding/gob"
 	"verdmell/service"
 	"verdmell/utils"
 )
@@ -35,6 +37,8 @@ type ClusterMessage struct{
 func NewClusterMessage(f string, t int64, i interface{}) (error, *ClusterMessage){
 	env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) Creating a new ClusterMessage")
 
+	message := new(ClusterMessage)
+
 	// check for a valid timestamp
 	if t < 0 {
 		msg := "(ClusterMessage::NewClusterMessage) Not valid timestamp"
@@ -52,11 +56,9 @@ func NewClusterMessage(f string, t int64, i interface{}) (error, *ClusterMessage
 		return errors.New(msg),nil
 	}
 	
-	message := &ClusterMessage{
-		From: f,
-		Timestamp: t,
-		Data: i,
-	}
+	message.SetFrom(f)
+	message.SetTimestamp(t)
+	message.SetData(i)
 
 	return nil,	message
 }
@@ -104,10 +106,22 @@ func (m *ClusterMessage) GetData() interface{} {
 //#---------------------------------------------------------------------
 
 //
-//# GetData: attribute from ClusterMessage
-func (m *ClusterMessage) EncodeData() (error, interface{}) {
-	env.Output.WriteChDebug("(ClusterMessage::DecodeData)")
+//# EncodeData: attribute from ClusterMessage
+func EncodeData(m *ClusterMessage) (error, []byte) {
+	env.Output.WriteChDebug("(ClusterMessage::EncodeData)")
 	return utils.InterfaceToBytes(m.GetData())
+}
+//
+//# DecodeData: attribute from ClusterMessage
+func DecodeData(data []byte) (error, *ClusterMessage) {
+	env.Output.WriteChDebug("(ClusterMessage::DecodeData)")
+	message := new(ClusterMessage)
+ 
+ 	buffer := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buffer)
+	dec.Decode(message)
+
+	return nil, message
 }
 
 //#
