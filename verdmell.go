@@ -88,7 +88,7 @@ func main() {
 			os.Exit(4)
 		}
 
-		webconsole := ui.NewUI(listenaddr)
+		webconsole := ui.NewUI(env,listenaddr)
 		webconsole.AddRoutes(apisys.GetRoutes())
 		webconsole.StartUI()
 

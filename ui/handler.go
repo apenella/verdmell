@@ -2,8 +2,6 @@ package ui
 
 import(
 	"net/http"
-	"html/template"
-	"path"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -11,24 +9,16 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func WebUI(w http.ResponseWriter, r *http.Request){
+	env.Output.WriteChDebug("(UI::handler::WebUI)")
 
-	index := path.Join("ui","html", "index.html")
-	scripts := path.Join("ui","scripts", "scripts.js")
-	style := path.Join("ui","style", "verdmell.css")
-	header := path.Join("ui","html", "header.html")
-	content := path.Join("ui","html", "content.html")
-	footer := path.Join("ui","html", "footer.html")
-
-
- 	tmpl, err := template.ParseFiles(index,scripts,style,header,content,footer)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if ui := GetUI(); ui != nil {
+		// load template index.html
+		if err := ui.templates.ExecuteTemplate(w,"index.html",nil); err != nil {
+	 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	} else {
+		env.Output.WriteChError("(UI::handler::WebUI) The ui is null")		
 	}
-
-	 if err := tmpl.Execute(w,nil); err != nil {
-	 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	 }
 }
 
 //#######################################################################################################

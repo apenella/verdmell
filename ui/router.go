@@ -10,6 +10,7 @@ package ui
 //
 //# GenerateAPIRoutes: generate a set of routes to serve
 func (u* UI) GenerateRoutes() {
+	env.Output.WriteChDebug("(UI::router::GenerateRoutes)")
 	u.router.HandleFunc("/", Index)
 
 	u.AddRoute(GenerateRoute("Index","GET","/",Index))
@@ -19,6 +20,7 @@ func (u* UI) GenerateRoutes() {
 //
 //# AddRoutes: add a set of routes 
 func (u *UI) AddRoutes(routes []*Route){
+	env.Output.WriteChDebug("(UI::router::AddRoutes)")
 	for _,route := range routes {
 		u.AddRoute(route)
 	}
@@ -27,6 +29,7 @@ func (u *UI) AddRoutes(routes []*Route){
 //
 //# AddRoute: add one route to the router
 func (u *UI) AddRoute(route *Route) {
+	env.Output.WriteChDebug("(UI::router::AddRoute) Route name '"+route.Name+"'")
 	u.router.
 		Methods(route.Method).
 		Path(route.Pattern).

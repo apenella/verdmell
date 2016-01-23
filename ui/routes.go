@@ -17,6 +17,7 @@ type Route struct {
 //#---------------------------------------------------------------------
 
 func GenerateRoute(n string, m string, p string, h http.HandlerFunc) *Route {
+	
 	route := &Route{
 		Name: n,
 		Method: m,
