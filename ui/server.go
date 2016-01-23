@@ -33,4 +33,23 @@ func (u *UI) StartUI(){
 	log.Fatal(http.ListenAndServe(u.listenaddr, u.router))
 }
 
+//#
+//# Specific methods
+//#---------------------------------------------------------------------
+
+//
+//# apiWriter: write data to response writer
+func uiWriter(fn func (*http.Request)(error,[]byte)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request){
+
+		if err, data := fn(r); err != nil {
+			http.NotFound(w,r)
+		} else {
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusOK)
+			w.Write(data)
+		}
+	}
+}
+
 //#######################################################################################################
