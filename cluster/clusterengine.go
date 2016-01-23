@@ -159,10 +159,14 @@ func (c *ClusterEngine) StartReceiver() error {
         switch object := unknownObject.(type){
         // a ServiceObject is received from the own server
         case *service.ServiceObject:
-          c.handleServiceObject(object)
+          if err := c.handleServiceObject(object); err != nil {
+            env.Output.WriteChDebug("(ClusterEngine::StartReceiver) "+err.Error())
+          }
         // a []byte should be received from other cluster node
         case []byte:
-          c.handleClusterMessage(object)
+          if err := c.handleClusterMessage(object); err != nil {
+            env.Output.WriteChDebug("(ClusterEngine::StartReceiver) "+err.Error()) 
+          }
         }
       }
     }
@@ -171,7 +175,7 @@ func (c *ClusterEngine) StartReceiver() error {
 }
 //
 //# handleServiceObject: handles the incoming serviceObject messages, that messages are sent by own node
-func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) {
+func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
   cluster := c.GetCluster()
   timestamp := s.GetTimestamp()
 
@@ -182,39 +186,51 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) {
     if err, node := cluster.GetNode(s.GetName()); err == nil {
       env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Current node's status received ")
 
+      // the ClusterNode service will be set either it has never been set before or the new timestamp is greatter-equal than the set one
       if node.GetService() == nil || timestamp >= node.GetService().GetTimestamp() {
         // Set the node status
         node.SetService(s)
 
         // Prepare the message to be sent to the cluster
-        if err, message := NewClusterMessage(s.GetName(),timestamp,s); err == nil {
-          env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) "+message.String())
+        if err, message := NewClusterMessage(s.GetName(),timestamp, cluster); err == nil {
+          env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) New message ready to be sent")
+          // transform data as []byte before send it
           if err, messageBytes := utils.InterfaceToBytes(message); err == nil {
-            c.sendData(messageBytes)
+            // send data to the outputChannels
+            c.SendData(messageBytes)
           } else {
-            env.Output.WriteChError("(ClusterEngine::handleServiceObject) Error on sendData ("+err.Error()+")")
+            return errors.New("(ClusterEngine::handleServiceObject) "+err.Error())
           }
-        }else{  
-          env.Output.WriteChError("(ClusterEngine::handleServiceObject) Error on NewClusterMessage ("+err.Error()+")")
+        }else{
+          return errors.New("(ClusterEngine::handleServiceObject) "+err.Error())
         }
       }        
     }
   } else {
     env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Service '"+s.GetName()+"' status received")
   }
+
+  return nil
 }
 //
 //# handleServiceObject: handles the incoming serviceObject messages
-func (c *ClusterEngine) handleClusterMessage(data []byte) {
+func (c *ClusterEngine) handleClusterMessage(data []byte) error {
   env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) []byte received")
+  
   //TODO
+  if err, message := DecodeClusterMessage(data); err != nil {
+    return errors.New("(ClusterMessage::handleClusterMessage) "+err.Error())
+  } else {
+    env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Message: "+message.String())  
+  }
+  return nil
 }
 //
 //# sendServicesStatus: method that send services to other engines
-func (c *ClusterEngine) sendData(data []byte) error {
-  env.Output.WriteChDebug("(ClusterEngine::sendData)")
+func (c *ClusterEngine) SendData(data []byte) error {
+  env.Output.WriteChDebug("(ClusterEngine::SendData)")
   for c,_ := range c.GetOutputChannels(){
-     env.Output.WriteChDebug("(ClusterEngine::sendData) Writing data on channel")
+     env.Output.WriteChDebug("(ClusterEngine::SendData) Writing data on channel")
       c <- data
   }
 

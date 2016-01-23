@@ -18,7 +18,6 @@ import(
 	"errors"
 	"bytes"
 	"encoding/gob"
-	"verdmell/service"
 	"verdmell/utils"
 )
 
@@ -29,7 +28,7 @@ import(
 type ClusterMessage struct{
 	From string `json:"from"`
 	Timestamp int64 `json:"timestamp"`
-	Data interface{}	`json:"message"`
+	Data []byte	`json:"data"`
 }
 
 //
@@ -45,20 +44,36 @@ func NewClusterMessage(f string, t int64, i interface{}) (error, *ClusterMessage
 		env.Output.WriteChError(msg)
 		return errors.New(msg),nil
 	}
+	// check the cluster state
+	if i == nil {
+		msg := "(ClusterMessage::NewClusterMessage) The message requieres not empty Cluster"
+		env.Output.WriteChError(msg)
+		return errors.New(msg),nil	
+	}
+
 	switch i.(type) {
-	case *service.ServiceObject:
-		env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) New message for ServiceObject")
-	case *ClusterNode:
-		env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) New message for ServiceObject")
+	case []byte:
+		env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) []byte type arrived")
+		message.SetData(i.([]byte))
+	case *Cluster:
+		env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) *Cluster type arrived")
+		if err, data := utils.InterfaceToBytes(i); err != nil {
+			msg := "(ClusterMessage::NewClusterMessage) "+err.Error()
+			env.Output.WriteChError(msg)
+			return errors.New(msg),nil		
+		} else {
+			message.SetData(data)
+		}
 	default:
-		msg := "(ClusterMessage::NewClusterMessage) Not valid data type for message"
+		msg := "(ClusterMessage::NewClusterMessage) Not valid type to construct a message"
 		env.Output.WriteChError(msg)
 		return errors.New(msg),nil
 	}
+
 	
 	message.SetFrom(f)
 	message.SetTimestamp(t)
-	message.SetData(i)
+	
 
 	return nil,	message
 }
@@ -77,7 +92,7 @@ func (m *ClusterMessage) SetTimestamp(t int64) {
 }
 //
 //# SetData: attribute from ClusterMessage
-func (m *ClusterMessage) SetData(d interface{}) {
+func (m *ClusterMessage) SetData(d []byte) {
 	env.Output.WriteChDebug("(ClusterMessage::SetData)")
 	m.Data = d
 }
@@ -96,7 +111,7 @@ func (m *ClusterMessage) GetTimestamp() int64 {
 }
 //
 //# GetData: attribute from ClusterMessage
-func (m *ClusterMessage) GetData() interface{} {
+func (m *ClusterMessage) GetData() []byte {
 	env.Output.WriteChDebug("(ClusterMessage::GetData)")
 	return m.Data
 }
@@ -107,19 +122,35 @@ func (m *ClusterMessage) GetData() interface{} {
 
 //
 //# EncodeData: attribute from ClusterMessage
-func EncodeData(m *ClusterMessage) (error, []byte) {
+func EncodeData(m *Cluster) (error, []byte) {
 	env.Output.WriteChDebug("(ClusterMessage::EncodeData)")
-	return utils.InterfaceToBytes(m.GetData())
+	return utils.InterfaceToBytes(m)
 }
 //
-//# DecodeData: attribute from ClusterMessage
-func DecodeData(data []byte) (error, *ClusterMessage) {
+//# DecodeData: return a byted data
+func DecodeData(data []byte) (error, *Cluster) {
 	env.Output.WriteChDebug("(ClusterMessage::DecodeData)")
+	message := new(Cluster)
+ 
+ 	buffer := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buffer)
+	if err := dec.Decode(message); err != nil {
+		return errors.New("(ClusterMessage::DecodeData) "+err.Error()),nil
+	}
+
+	return nil, message
+}
+//
+//# DecodeClusterMessage: return a *ClusterMessaged data
+func DecodeClusterMessage(data []byte) (error, *ClusterMessage) {
+	env.Output.WriteChDebug("(ClusterMessage::DecodeClusterMessage)")
 	message := new(ClusterMessage)
  
  	buffer := bytes.NewBuffer(data)
 	dec := gob.NewDecoder(buffer)
-	dec.Decode(message)
+	if err := dec.Decode(message); err != nil {
+		return errors.New("(ClusterMessage::DecodeClusterMessage) "+err.Error()),nil
+	}
 
 	return nil, message
 }
