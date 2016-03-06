@@ -1,245 +1,316 @@
-{{ define "style" }}
+/*
+	Package 'ui' 
+	-server
+	-handler
+	-router
+	-routes
 
-	body {
-		margin: 0;
+	-html/
+	-images/
+	-pages/
+	-scripts/
+	-style/
 
-		background-color: #f7f6f4;
-		font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-	}
+*/
+body {
+	margin: 0;
 
-	header {
-		width: 99%;
-		padding: 1%;
-		margin-bottom: 1%;
-		border-bottom: 0.01em solid grey;
-		box-shadow:0em 0.01em 0.25em grey;											
-		background-color: #ecebe9;
-		
-	}
-	header .logo {
-		margin: auto;
-		float:left;
-		width: 10%;
-	}
+	background-color: #f4f3f1;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
 
-	header .title {
-		padding: 1%;
-		text-align: center;
-		float: left;
+header {
+	width: 99%;
+	padding: 1%;
+	margin-bottom: 1%;
+	border-bottom: 0.01em solid #444541;
 
-		color: #000000;
-		font-weight: bold;
-		font-size: 2em;
-	}
+	// box-shadow:0em 0.01em 0.25em #444541;											
+	// background-color: #ecebe9;
+}
+header .logo {
+	margin: auto;
+	float:left;
+	width: 10%;
+}
 
-	footer {
-		bottom: 0;
-		clear: both;
-		width: 99%;
-		height: 2em;
-		padding: 1%;
-		border-top: 0.01em solid grey;
-		text-align: center;
+header .title {
+	padding: 1%;
+	padding-bottom: 0%;
+	text-align: center;
+	float: left;
 
-		color: grey;
-		background-color: #ecebe9;
-	}
+	color: #000000;
+	font-weight: bold;
+	font-size: 2em;
+}
 
-	.datacontainer {
-		position:relative;
-		min-height: 100%;
-		margin-left: 8%;
-		margin-right: 8%;
+header .menu {
+	margin-top: 1%;
 
-		font-size: 1.05em;
-	}
+	color: #444541;
+	font-size: 1.2em;	
+}
+header .menuitem {
+	position: relative;
+	float:left;
 
-	.clusterlist {
-		float:left;
-		width: 25%;
+	padding-top: 0.5%;
+	padding-bottom: 0.5%;
+	padding-left: 1%;
+	padding-right: 1%;
+	margin-right: 0.5em;
+	margin-left: 0.5em;
 
-		color: #f7f6f4;
-	}
+	border-width: 0.1em;
+	border-style: solid;
+	border-color: #444541;
+}
+header .menuitem:hover {
+	background-color: #ecebe9;
+}
 
-	.clusternode {
-		/*border-radius: 0.25em;*/
-		border-width: 0.1em;
-		border-style: solid;
-		border-color: grey;
-		background-color: grey;
-		
-		color: #f7f6f4;
+footer {
+	bottom: 0;
+	clear: both;
+	width: 99%;
+	height: 10em;
+	padding: 1%;
+	margin-top: 15%;
 
-		padding: 0.5em;
-		margin: 0.5em;
-	}
+	border-top: 0.01em solid #444541;
+	text-align: center;
 
-	.clusternode[status="-1"]{
-		/*Unknown status: blue*/
-		border-color:  #2196f3;
-		background-color: #2196f3;
-	}
-	.clusternode[status="0"]{
-		/*OK status: green*/
-		border-color:  #4caf50;
-		background-color: #4caf50;
-	}
-	.clusternode[status="1"]{
-		/*WARN status: ambar*/
-		border-color:  #ffc107;
-		background-color: #ffc107;
-	}
-	.clusternode[status="2"]{
-		/*ERROR status: red*/
-		border-color:  #f44336;
-		background-color: #f44336;
-	}
+	color: #ecebe9;
+	background-color: #444541;
+}
 
-	.clusternode:hover {
-		border-color: grey;
-		background-color: #f7f6f4;
-		
-		color: grey;
-	}
+.message[type="info"] {
+	/*Info message: green*/
+	border-width: 0.1em;
+	border-style: solid;
+	border-color:  #444541;
+	background-color: #fef394;
+	color: #444541;
 
-	.clusternodedetails {
-		float:right;
-		width: 75%;
-	}
+	padding: 0.5em;
+	margin: 0.5em;
+}
 
-	.servicesdetails{
-		padding:1em;
-	}
-	.servicedetail{		
-		margin: 1em;
-		min-height: 100%;
-		/*border-radius: 0.25em;*/
-		border-width: 0.1em;
-		border-style: solid;
-		border-color: grey;
-	}
+.message[type="error"] {
+	/*Error message: green*/
+	border-width: 0.1em;
+	border-style: solid;
+	border-color: #f44336;
+	background-color: #fccbbd;
+	color: #f44336;
 
-	.servicedetail[status="-1"]{
-		/*Unknown status: blue*/
-		border-color: #2196f3;
-		border-width: 0.1em;
-	}
-	.servicedetail[status="0"]{
-		/*OK status: green*/
-		border-color: #4caf50;
-		border-width: 0.1em;
-	}
-	.servicedetail[status="1"]{
-		/*WARN status: ambar*/
-		border-color: #ffc107;
-		border-width: 0.1em;
-	}
-	.servicedetail[status="2"]{
-		/*ERROR status: red*/
-		border-color: #f44336;
-		border-width: 0.1em;
-	}
+	padding: 0.5em;
+	margin: 0.5em;
+}
 
-	.servicename{
-		padding: 0.5em;
+.datacontainer {
+	position:relative;
 
-		color: #f7f6f4;
-	}
+	min-height: 10em;
+	margin-left: 8%;
+	margin-right: 8%;
 
-	.servicedetail[status="-1"] > .servicename {
-		/*Unknown status: blue*/
-		background-color: #2196f3;
-	}
-	.servicedetail[status="0"] .servicename {
-		/*OK status: green*/
-		background-color: #4caf50;
-	}
-	.servicedetail[status="1"] .servicename {
-		/*WARN status: ambar*/
-		background-color: #ffc107;
-	}
-	.servicedetail[status="2"] .servicename {
-		/*ERROR status: red*/
-		background-color: #f44336;
-	}
+	font-size: 1.1em;
+}
 
-	.servicechecks{
-		padding: 0.5em;
+.clusterlist {
+	float:left;
+	width: 25%;
 
-		color: #f7f6f4;
-	}
+	color: #f4f3f1;
+}
 
-	.servicecheck {
-		padding: 0.5em;
-		margin: 0.5em;
-		float:left;
-		/*border-radius: 0.25em;*/		
-		border-width: 0.1em;
-		border-style: solid;
-		border-color: grey;
-		background-color: grey;
-	}
+.clusternode {
+	padding: 0.5em;
+	margin: 0.5em;
 
-	.servicecheck[status="-1"] {
-		/*Unknown status: blue*/
-		border-color:  #2196f3;
-		background-color: #2196f3;
-	}
-	.servicecheck[status="0"] {
-		/*OK status: green*/
-		border-color:  #4caf50;
-		background-color: #4caf50;
-	}
-	.servicecheck[status="1"] {
-		/*WARN status: ambar*/
-		border-color:  #ffc107;
-		background-color: #ffc107;
-	}
-	.servicecheck[status="2"] {
-		/*ERROR status: red*/
-		border-color:  #f44336;
-		background-color: #f44336;
-	}
+	/*border-radius: 0.25em;*/
+	border-width: 0.1em;
+	border-style: solid;
+	border-color: #444541;
+	background-color: #444541;
 	
-	.servicecheck:hover {
-		background-color: #f7f6f4;
-		border-width: 0.1em;
-		border-style: solid;
-		border-color: grey;
+	color: #f4f3f1;
+}
 
-		color: grey;		
-	}
+.clusternode[status="-1"]{
+	/*Unknown status: blue*/
+	border-color:  #2196f3;
+	background-color: #2196f3;
+}
+.clusternode[status="0"]{
+	/*OK status: green*/
+	border-color:  #4caf50;
+	background-color: #4caf50;
+}
+.clusternode[status="1"]{
+	/*WARN status: ambar*/
+	border-color:  #ffc107;
+	background-color: #ffc107;
+}
+.clusternode[status="2"]{
+	/*ERROR status: red*/
+	border-color:  #f44336;
+	background-color: #f44336;
+}
 
-	.servicecheckdetails {
-		width: 50%;
-		float:left;
+.clusternode:hover {
+	border-color: #444541;
+	background-color: #ecebe9;
+	
+	color: grey;
+}
 
-		color: grey;
-	}
-	.checkinfotitle {
-		font-weight: bold;
-	}
-	.checkinfo {
-		margin-left: 0.25em;
-		margin-bottom: 0.25em;
+.clusternodedetails {
+	float:right;
+	width: 75%;
+}
 
-		font-style: italic;
-	}
+.servicesdetails{
+	margin-left: 1em;
+	margin-right: 1em;
+}
+.servicedetail{		
+	margin: 0.5em;
+	min-height: 100%;
 
-	.servicechecksampledetails{
-		width: 50%;
-		float:left;
+	/*border-radius: 0.25em;*/
+	border-width: 0.1em;
+	border-style: solid;
+	border-color: #444541;
+}
 
-		color: grey;
-	}
-	.sampleinfotitle {
-		font-weight: bold;
-	}
-	.sampleinfo {
-		margin-left: 0.25em;
-		margin-bottom: 0.25em;
+.servicedetail[status="-1"]{
+	/*Unknown status: blue*/
+	border-color: #2196f3;
+	border-width: 0.1em;
+}
+.servicedetail[status="0"]{
+	/*OK status: green*/
+	border-color: #4caf50;
+	border-width: 0.1em;
+}
+.servicedetail[status="1"]{
+	/*WARN status: ambar*/
+	border-color: #ffc107;
+	border-width: 0.1em;
+}
+.servicedetail[status="2"]{
+	/*ERROR status: red*/
+	border-color: #f44336;
+	border-width: 0.1em;
+}
 
-		font-style: italic;
-	}
+.servicename{
+	padding: 0.5em;
 
-{{end}}
+	color: #f4f3f1;
+}
+
+.servicedetail[status="-1"] > .servicename {
+	/*Unknown status: blue*/
+	background-color: #2196f3;
+}
+.servicedetail[status="0"] .servicename {
+	/*OK status: green*/
+	background-color: #4caf50;
+}
+.servicedetail[status="1"] .servicename {
+	/*WARN status: ambar*/
+	background-color: #ffc107;
+}
+.servicedetail[status="2"] .servicename {
+	/*ERROR status: red*/
+	background-color: #f44336;
+}
+
+.servicechecks{
+	color: #f4f3f1;
+}
+
+.servicecheck {
+	padding: 0.5em;
+	margin: 0.5em;
+	float:left;
+	/*border-radius: 0.25em;*/		
+	border-width: 0.1em;
+	border-style: solid;
+	border-color: #444541;
+	background-color: #444541;
+}
+
+.servicecheck[status="-1"] {
+	/*Unknown status: blue*/
+	border-color:  #2196f3;
+	background-color: #2196f3;
+}
+.servicecheck[status="0"] {
+	/*OK status: green*/
+	border-color:  #4caf50;
+	background-color: #4caf50;
+}
+.servicecheck[status="1"] {
+	/*WARN status: ambar*/
+	border-color:  #ffc107;
+	background-color: #ffc107;
+}
+.servicecheck[status="2"] {
+	/*ERROR status: red*/
+	border-color:  #f44336;
+	background-color: #f44336;
+}
+
+.servicecheck:hover {
+	background-color: #f4f3f1;
+	border-width: 0.1em;
+	border-style: solid;
+	border-color: #444541;
+
+	color: #444541;		
+}
+
+.servicecheckalldetails {
+	padding-top: 2%;
+	padding-left: 2%;
+	padding-right: 2%;
+
+	font-family: monospace;
+
+	color: #f4f3f1;
+	background-color: #444541;
+}
+
+.servicecheckdetails {
+	width: 50%;
+	float:left;
+}
+
+.checkinfotitle {
+	font-weight: bold;
+}
+.checkinfo {
+	margin-left: 0.25em;
+	margin-bottom: 0.25em;
+
+	font-style: italic;
+}
+
+.servicechecksampledetails{
+	width: 50%;
+	float:left;
+}
+.sampleinfotitle {
+	font-weight: bold;
+}
+.sampleinfo {
+	margin-left: 0.25em;
+	margin-bottom: 0.25em;
+
+	font-style: italic;
+}

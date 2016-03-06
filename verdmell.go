@@ -1,3 +1,8 @@
+/*
+	Verdmell
+
+	Aleix Penella. 2016
+*/
 package main
 
 import (
@@ -88,11 +93,9 @@ func main() {
 			os.Exit(4)
 		}
 
-		webconsole := ui.NewUI(env,listenaddr)
+		webconsole := ui.NewUI(env, listenaddr)
 		webconsole.AddRoutes(apisys.GetRoutes())
 		webconsole.StartUI()
-
-		env.Output.WriteChInfo("Welcome to Verdmell's cluster mode. I'm waiting your request on http://"+context.Host+":"+strconv.Itoa(context.Port))
 
 		break
 	case "standalone":

@@ -71,6 +71,7 @@
 								servicesinfo += '<div class="servicecheck" url="'+baseUrl+'" name="'+service.checks[c]+'" status="">'+service.checks[c]+'</div>'
 							}
 							servicesinfo += '<div style="clear:both;"></div>';
+							
 							servicesinfo += '<div id="'+service.name+'" class="servicecheckalldetails" check="">';
 								servicesinfo += '<div class="servicecheckdetails"></div>';
 								servicesinfo += '<div class="servicechecksampledetails"></div>';

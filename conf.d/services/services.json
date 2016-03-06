@@ -4,7 +4,7 @@
 			"description": "Numbers from 0-9",
 			"checks": ["first","second","third","forth"]
 		},
-		"decens": {
+		"dozens": {
 			"description": "Numbers from 10-99",
 			"checks": ["eleventh"]
 		}

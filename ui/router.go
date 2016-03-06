@@ -1,3 +1,18 @@
+/*
+
+	Package 'ui' 
+	-server
+	-handler
+	-router
+	-routes
+
+	-html/
+	-images/
+	-pages/
+	-scripts/
+	-style/
+
+*/
 package ui
 
 
@@ -11,10 +26,10 @@ package ui
 //# GenerateAPIRoutes: generate a set of routes to serve
 func (u* UI) GenerateRoutes() {
 	env.Output.WriteChDebug("(UI::router::GenerateRoutes)")
-	u.router.HandleFunc("/", Index)
+	u.router.HandleFunc("/", u.uiHandlerFunc(Index))
 
-	u.AddRoute(GenerateRoute("Index","GET","/",Index))
-	u.AddRoute(GenerateRoute("WebUI","GET","/ui",WebUI))
+	u.AddRoute(GenerateRoute("Index","GET","/", u.uiHandlerFunc(Index)))
+	u.AddRoute(GenerateRoute("WebUI","GET","/ui", u.uiHandlerFunc(WebUI)))
 }
 
 //

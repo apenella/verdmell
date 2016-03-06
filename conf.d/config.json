@@ -1,11 +1,12 @@
 {
-	"hostname": "apenella.verdmell",
+	"hostname": "apenella",
 	"ip": "0.0.0.0",
 	"checksfolder": "checks",
 	"servicesfolder": "services",
 	"cluster": {
-		"apenella.verdmell": "http://localhost:5497",
-		"apenella1.verdmell": "http://localhost:5497",
-		"apenella2.verdmell": "http://localhost:5497"
+		"apenella": "http://0.0.0.0:5497",
+		"apenella1": "http://0.0.0.0:15497",
+
+		"apenella12": "http://2.2.2.2:5497"
 	}
 }

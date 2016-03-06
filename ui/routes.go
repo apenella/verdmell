@@ -1,3 +1,18 @@
+/*
+
+	Package 'ui' 
+	-server
+	-handler
+	-router
+	-routes
+
+	-html/
+	-images/
+	-pages/
+	-scripts/
+	-style/
+
+*/
 package ui
 
 import(
@@ -16,8 +31,7 @@ type Route struct {
 //# Specific methods
 //#---------------------------------------------------------------------
 
-func GenerateRoute(n string, m string, p string, h http.HandlerFunc) *Route {
-	
+func GenerateRoute(n string, m string, p string, h http.HandlerFunc) *Route {	
 	route := &Route{
 		Name: n,
 		Method: m,
