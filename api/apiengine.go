@@ -28,7 +28,7 @@ func NewApiEngine(e *environment.Environment) *ApiEngine {
   env = e
 
   sys.GenerateAPIRoutes()
-
+  e.Output.WriteChInfo("(ApiEngine::NewApiEngine) Hi! I'm your new API engine instance")
   return sys
 }
 //
@@ -48,6 +48,11 @@ func (a *ApiEngine) GetRoutes() []*ui.Route{
 //# Specific methods
 //#---------------------------------------------------------------------
 //
+//# SayHi: 
+func (sys *ApiEngine) SayHi() {
+  env.Output.WriteChInfo("(ApiEngine::SayHi) Hi! I'm your API engine instance")
+}
+//
 //# apiWriter: write data to response writer
 func apiWriter(fn func (*http.Request)(error,[]byte)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request){
@@ -65,7 +70,7 @@ func apiWriter(fn func (*http.Request)(error,[]byte)) http.HandlerFunc {
 //
 //# AddRoute: for include a new route to API Routes
 func (a* ApiEngine) AddRoute(route *ui.Route){
-	env.Output.WriteChDebug("(ApiEngine::AddRoute) Add new route")
+	env.Output.WriteChDebug("(ApiEngine::AddRoute) Add new route '"+route.Name+"'")
 	a.Routes = append(a.Routes, route)
 }
 //

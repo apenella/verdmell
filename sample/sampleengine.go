@@ -48,6 +48,8 @@ func NewSampleEngine(e *environment.Environment) (error, *SampleEngine) {
   // Set the environment's sample engine
   env.SetSampleEngine(sys)
 
+  env.Output.WriteChInfo("(SampleEngine::NewSampleEngine) Hi! I'm your new sample engine instance")
+
 	return nil, sys
 }
 
@@ -100,7 +102,7 @@ func (s *SampleEngine) SendSample(sample *CheckSample) {
 //
 // AddSample method creaty a new entry to CheckSample or modify its value
 func (sys *SampleEngine) AddSample(cs *CheckSample) error {
-  env.Output.WriteChDebug("(SampleEngine::AddSample) ["+strconv.Itoa(int(cs.GetTimestamp()))+"]' "+cs.GetCheck()+"'")
+  env.Output.WriteChDebug("(SampleEngine::AddSample) ["+strconv.Itoa(int(cs.GetTimestamp()))+"] '"+cs.GetCheck()+"'")
   var sam *CheckSampleSync
   var exist bool
 

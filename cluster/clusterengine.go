@@ -64,10 +64,10 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
         if err = cluster.AddNode(node); err != nil {
           return err, nil
         }
-        env.Output.WriteChDebug("(ClusterEngine::NewClusterEngine) The node '"+name+"' has been added into the cluster")
-        env.Output.WriteChDebug("(ClusterEngine::NewClusterEngine) The cluster nodes '"+cluster.Cluster.String()+"'")
+        env.Output.WriteChDebug("(ClusterEngine::NewClusterEngine) Node '"+name+"' has been added into the cluster")
       }
-    } 
+    }
+    env.Output.WriteChDebug("(ClusterEngine::NewClusterEngine) Cluster nodes '"+cluster.Cluster.String()+"'") 
   }
 
   // Initialize the outputSampleChannels
@@ -75,12 +75,12 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
 
   // Starting the method to receive data to handle
   if err := cluster.StartReceiver(); err != nil {
-    return errors.New("(ClusterEngine::NewClusterEngine) The service receiver for could not be started"), nil  
+    return errors.New("(ClusterEngine::NewClusterEngine) Service receiver for could not be started"), nil  
   }
 
   // the cluster engine is set to environment
   env.SetClusterEngine(cluster)
-  env.Output.WriteChDebug("(ClusterEngine::NewClusterEngine) I'm your new Cluster Engine instance.")
+  env.Output.WriteChInfo("(ClusterEngine::NewClusterEngine) I'm your new Cluster Engine instance.")
 
   return nil, cluster
 }
@@ -129,7 +129,7 @@ func (c *ClusterEngine) GetOutputChannels() map[chan []byte] bool {
 //
 //# SayHi: do nothing
 func (c *ClusterEngine) SayHi() {
-  env.Output.WriteChInfo("(ClusterEngine::SayHi) Hi! I'm your new Cluster Engine instance.")
+  env.Output.WriteChInfo("(ClusterEngine::SayHi) Hi! I'm your Cluster Engine instance.")
 }
 //
 //# AddNode: Add a new node into the cluster
@@ -143,6 +143,19 @@ func (c *ClusterEngine) AddNode(n *ClusterNode) error {
 
   return c.Cluster.AddNode(n)
 }
+//
+//# AddNode: Add a new node into the cluster
+func (c *ClusterEngine) AddService(s *ClusterService) error {
+  env.Output.WriteChDebug("(ClusterEngine::AddService) Add service '"+s.Name+"' to cluster")
+  
+  if c.Cluster == nil {
+    env.Output.WriteChDebug("(ClusterEngine::AddService) Initialize a Cluster instance")    
+    _,c.Cluster = NewCluster()
+  }
+
+  return c.Cluster.AddService(s)
+}
+
 //
 //# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
 func (c *ClusterEngine) StartReceiver() error {
@@ -159,6 +172,7 @@ func (c *ClusterEngine) StartReceiver() error {
         switch object := unknownObject.(type){
         // a ServiceObject is received from the own server
         case *service.ServiceObject:
+          // call handleServiceObject for current node
           if err := c.handleServiceObject(object); err != nil {
             env.Output.WriteChDebug("(ClusterEngine::StartReceiver) "+err.Error())
           }
@@ -176,42 +190,69 @@ func (c *ClusterEngine) StartReceiver() error {
 //
 //# handleServiceObject: handles the incoming serviceObject messages, that messages are sent by own node
 func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
+
+  var err error
+  var clusternode *ClusterNode
+  var clusterservice *ClusterService
+
   cluster := c.GetCluster()
   timestamp := s.GetTimestamp()
+  numberOfChecks := len(s.GetChecks())
 
-  env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) ServiceObject received. Service '"+s.GetName()+"' with timestamp:"+strconv.Itoa(int(timestamp)))
+  //
+  // update cuurent clusternode
+  // current clusternode has been added on clusterengine creation
+  if err, clusternode = cluster.GetNode(env.Setup.Hostname); err != nil {
+    msg := "(ClusterEngine::handleServiceObject) "+err.Error()
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg)
+  }
 
-  // The current service is the node service
-  if env.Setup.Hostname == s.GetName() {
-    if err, node := cluster.GetNode(s.GetName()); err == nil {
-      env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Current node's status received ")
-
-      // the ClusterNode service will be set either it has never been set before or the new timestamp is greatter-equal than the set one
-      if node.GetService() == nil || timestamp >= node.GetService().GetTimestamp() {
-        // Set the node status
-        node.SetService(s)
-
-        // Prepare the message to be sent to the cluster
-        if err, message := NewClusterMessage(s.GetName(),timestamp, cluster); err == nil {
-          env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) New message ready to be sent")
-          // transform data as []byte before send it
-          if err, messageBytes := utils.InterfaceToBytes(message); err == nil {
-            // send data to the outputChannels
-            c.SendData(messageBytes)
-          } else {
-            return errors.New("(ClusterEngine::handleServiceObject) "+err.Error())
-          }
-        }else{
-          return errors.New("(ClusterEngine::handleServiceObject) "+err.Error())
-        }
-      }        
+  if err, clusterservice = cluster.GetService(s.GetName()); err != nil {
+    env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Create new service '"+s.GetName()+"' on cluster node '"+clusternode.GetName()+"'")
+    if err, clusterservice = NewClusterService(s.GetName()); err != nil {
+      msg := "(ClusterEngine::handleServiceObject) "+err.Error()
+      env.Output.WriteChDebug(msg)
+      return errors.New(msg)
     }
+
+    c.AddService(clusterservice)
+  }
+
+  env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) ServiceObject received[node:"+clusternode.GetName()+", service:"+s.GetName()+", service timestamp:"+strconv.Itoa(int(timestamp))+", numchecks:"+strconv.Itoa(numberOfChecks)+"]")
+
+  // if clusternode has s service update its status
+  if err, service := clusternode.HasService(s.GetName()); err != nil {
+    env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Add new service '"+s.GetName()+"' on cluster node '"+clusternode.GetName()+"'")
+    clusternode.AddService(s)
+    clusterservice.AddNode(env.Setup.Hostname,s)
+    clusternode.IncreaseTimestamp()
   } else {
-    env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Service '"+s.GetName()+"' status received")
+    // clusternode doesn't already have s service
+    if timestamp >= service.GetTimestamp() ||  int(timestamp) <= numberOfChecks { 
+      //add service to node
+      env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Update service '"+service.GetName()+"' on cluster node '"+clusternode.GetName()+"'")
+      clusternode.AddService(s)
+      clusterservice.AddNode(env.Setup.Hostname,s)
+      clusternode.IncreaseTimestamp()   
+    }  
+  }
+
+  // Prepare the message to be sent to the cluster
+  if err, message := NewClusterMessage(s.GetName(),timestamp, cluster); err == nil {
+    env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) New message ready to be sent")
+    // transform data as []byte before send it
+    if err, messageBytes := utils.InterfaceToBytes(message); err == nil {
+      // send data to the outputChannels
+      c.SendData(messageBytes)
+    } else {
+      return errors.New("(ClusterEngine::handleServiceObject) "+err.Error())
+    }    
   }
 
   return nil
 }
+
 //
 //# handleServiceObject: handles the incoming serviceObject messages
 func (c *ClusterEngine) handleClusterMessage(data []byte) error {
@@ -264,7 +305,7 @@ func (c *ClusterEngine) GetClusterInfo() (error,[]byte) {
   var cluster *Cluster
 
   if cluster = c.GetCluster(); cluster == nil {
-    return errors.New("(ClusterEngine::GetClusterData) The cluster object has not been initialized"),nil
+    return errors.New("(ClusterEngine::GetClusterData) Cluster object has not been initialized"),nil
   }
 
   return nil,utils.ObjectToJsonByte(c.GetCluster())
@@ -276,7 +317,7 @@ func (c *ClusterEngine) GetClusterNodes() (error,[]byte) {
   var cluster *Cluster
 
   if cluster = c.GetCluster(); cluster == nil {
-    return errors.New("(ClusterEngine::GetClusterNodes) The cluster object has not been initialized"),nil
+    return errors.New("(ClusterEngine::GetClusterNodes) Cluster object has not been initialized"),nil
   }
 
   return nil,utils.ObjectToJsonByte(cluster.GetNodes())

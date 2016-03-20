@@ -13,7 +13,7 @@ import (
 //
 //# GenerateAPIRoutesForNode: generate a set of routes to serve
 func (a* ApiEngine) GenerateAPIRoutesForNode() {
-	env.Output.WriteChDebug("(ApiEngine::GenerateAPIRoutesForService)")
+	env.Output.WriteChDebug("(ApiEngine::GenerateAPIRoutesForNode)")
 	a.AddRoute(ui.GenerateRoute("NodeStatus","GET","/api/node",apiWriter(GetNodeInfo)))
 	a.AddRoute(ui.GenerateRoute("NodeStatus","GET","/api/node/status",apiWriter(GetNodeStatus)))
 	a.AddRoute(ui.GenerateRoute("StartCheckEngine","GET","/api/node/run",apiWriter(StartCheckEngine)))

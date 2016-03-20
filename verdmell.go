@@ -45,12 +45,16 @@ func main() {
 	// preparing to destroy the output system
 	defer output.DestroyInstance()
 
-	// Call to initialize the SampleEngine
+  // Call to initialize cluster engine
+	if err, cltr = cluster.NewClusterEngine(env); err != nil {
+	 	message.WriteError(err)
+	 	os.Exit(4)
+	}
+	// Call to initialize SampleEngine
   if err, sam = sample.NewSampleEngine(env); err != nil {
 		message.WriteError(err)
 		os.Exit(4)
   }
-  sam.SayHi()
 	// Call to initialize the CheckEngine
 	if err, cks = check.NewCheckEngine(env); err != nil {
 		message.WriteError(err)
@@ -61,7 +65,13 @@ func main() {
 		message.WriteError(err)
 		os.Exit(4)
 	}
-	
+	//
+	//
+	// Add the cluster engine's input channel as a service engine's output channel
+	// That's the way how cluster engine will receive either node or services status
+	if err :=	srv.AddOutputChannel(cltr.GetInputChannel()); err != nil {
+		env.Output.WriteChWarn(err)
+	}
 	// Set the output sample channel for checks as the input's service one
 	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
 	if err := cks.AddOutputChannel(srv.GetInputChannel()); err != nil {
@@ -77,15 +87,6 @@ func main() {
 		// prepare listen address for cluster node
 		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
 		
-		if err, cltr = cluster.NewClusterEngine(env); err != nil {
-		 	message.WriteError(err)
-		 	os.Exit(4)
-		}
-		//
-		// Add the cluster engine's input channel as a service engine's output channel
-		// That's the way how cluster engine will receive either node or services status
-		srv.AddOutputChannel(cltr.GetInputChannel())
-
 		apisys := api.NewApiEngine(env)
 
 		if err = cks.StartCheckEngine(nil); err != nil {

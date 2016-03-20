@@ -76,7 +76,7 @@ func (c *Checks) GetCheckObjectByName(checkname string) (error,*CheckObject) {
   checkObj := new(CheckObject)
   check := c.GetCheck()
 
-  env.Output.WriteChDebug("(Checks::GetCheckObjectByName) Looking for the check '"+checkname+"'")
+  env.Output.WriteChDebug("(Checks::GetCheckObjectByName) Looking for check '"+checkname+"'")
 
   if checkObj, err = check[checkname]; err == false {
     return errors.New("(Checks::GetCheckObjectByName) The check '"+checkname+"' has never been load before."),nil
@@ -178,7 +178,7 @@ func (c *Checks) StartCheckTaskPools() error {
 //# InitCheckTasks: is going to initialize a task for each check and its dependencies. 
 //# The task enqueu the check to be executed. All its dependencies have to be executed before it to be enqueued
 func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]interface{}) (error, *sample.CheckSample) {
-  env.Output.WriteChDebug("(Checks::InitCheckTasks) Initializing the tasks for the check '"+checkObj.GetName()+"'")
+  env.Output.WriteChDebug("(Checks::InitCheckTasks) Initializing the tasks for check '"+checkObj.GetName()+"'")
 
   var err error
   exitStatus := -1
@@ -213,7 +213,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
         } else {
           // get a CheckObject by its name
           if err,obj := checkengine.GetCheckObjectByName(dep); err == nil {
-            env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has a dependency to '"+dep+"'")        
+            env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' depends to '"+dep+"'")
             // the current check must be marked into runGraphList
             rgl[d] = nil
             if err, sampleDedend := c.InitCheckTasks(obj, rgl); err != nil {
@@ -275,6 +275,18 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
       outputMessage := "Wrong status for '"+checkObj.GetName()+"' because it depends to another check with "+sample.Itoa(exitStatus)+" status"
       env.Output.WriteChWarn("(Checks::InitCheckTasks) "+outputMessage)
       _,checksample = checkObj.GenerateCheckSample(-1,outputMessage,time.Duration(0)*time.Second, time.Duration(0)*time.Second, checkObj.GetTimestamp())
+
+      go func() {
+        env.Output.WriteChWarn("(Checks::InitCheckTasks) Countdown for '"+checkObj.GetName()+"'")
+        timeout := time.After(time.Duration(checkObj.GetInterval()) * time.Second)
+        for{
+          select{
+          case <-timeout:
+            c.InitCheckTasks(checkObj,runGraphList)
+          }
+        }
+      }()
+
     }
   }else{
     //

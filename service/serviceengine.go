@@ -46,14 +46,18 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	// folder that contains services definitions
 	folder := env.Setup.Servicesfolder
 	// Get defined services
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) RetrieveServices")
 	srv := RetrieveServices(folder)
 
 	// set the attribute CheckServiceMapReduce
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) GenerateCheckServices")
 	srv.GenerateCheckServices()
-
+	
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) ValidateServices")
 	if err := srv.ValidateServices(); err != nil {
 		return err, nil
 	}
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) SetServices")
 	sys.SetServices(srv)
 
 	// Set description for default service
@@ -66,13 +70,15 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	}
 
 	// Initialize the OutputChannels
-  sys.outputChannels = make(map[chan interface{}] bool)
+  	sys.outputChannels = make(map[chan interface{}] bool)
 
 	// start the sample receiver
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) StartReceiver")
 	sys.StartReceiver()
 
 	// Set the environments services engine
 	env.SetServiceEngine(sys)
+	env.Output.WriteChInfo("(ServiceEngine::NewServiceEngine) Hi! I'm your new service engine instance")
 
 	return nil, sys
 }
@@ -94,7 +100,7 @@ func (s *ServiceEngine) SetInputChannel(c chan interface{}) {
 //
 //# SetOutputChannels: method sets the channels to write service status
 func (s *ServiceEngine) SetOutputChannels(o map[chan interface{}] bool) {
-  env.Output.WriteChDebug("(ServiceEngine::SetOutputChannels) Set value")
+  env.Output.WriteChDebug("(ServiceEngine::SetOutputChannels)")
   s.outputChannels = o
 }
 
@@ -111,7 +117,7 @@ func (s *ServiceEngine) GetInputChannel() chan interface{} {
 //
 //# GetOutputChannels: methods return the channels to write samples
 func (s *ServiceEngine) GetOutputChannels() map[chan interface{}] bool {
-  env.Output.WriteChDebug("(ServiceEngine::GetOutputChannels) Get value")
+  env.Output.WriteChDebug("(ServiceEngine::GetOutputChannels)")
   return s.outputChannels
 }
 
@@ -181,7 +187,7 @@ func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
   return nil
 }
 //
-//# RegisterService: register a new service for ServiceSysem
+//# RegisterService: register a new service for service engine
 func (s *ServiceEngine) RegisterService(name string, desc string, checks []string) error {
 	env.Output.WriteChDebug("(ServiceEngine::RegisterService) New service to register '"+name+"'")
 	var serviceObj *ServiceObject
@@ -196,7 +202,7 @@ func (s *ServiceEngine) RegisterService(name string, desc string, checks []strin
 	// set the attribute CheckServiceMapReduce
 	srv.GenerateCheckServices()
 
-	env.Output.WriteChDebug("(ServiceEngine::RegisterService) Service '"+env.Setup.Hostname+"' registered properly")
+	env.Output.WriteChDebug("(ServiceEngine::RegisterService) Service '"+name+"' registered properly")
 
 	return nil
 }

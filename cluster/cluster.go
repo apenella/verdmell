@@ -25,9 +25,9 @@ import (
 //# Cluster is a set of nodes
 type Cluster struct{
   //map to store the nodes that belong to the cluster
-  Nodes map[string]*ClusterNode `json:"nodes"`
+  Nodes map[string] *ClusterNode `json:"nodes"`
   //map to store the services that belong to the cluster
-  Services map[string] string `json:"services"` 
+  Services map[string] *ClusterService `json:"services"` 
 }
 
 //
@@ -65,14 +65,14 @@ func (c *Cluster) GetNodes() map[string]*ClusterNode {
 
 //
 //# SetServices: set attribute from Cluster
-func (c *Cluster) SetServices(services map[string] string) {
+func (c *Cluster) SetServices(services map[string] *ClusterService) {
   env.Output.WriteChDebug("(Cluster::SetServices) Set Services' value")
   c.Services = services
 }
 
 //
 //# GetServices: get attribute from Cluster
-func (c *Cluster) GetServices() map[string] string {
+func (c *Cluster) GetServices() map[string] *ClusterService {
   env.Output.WriteChDebug("(Cluster::GetNodes) Get Services' value")
   return c.Services
 }
@@ -109,12 +109,49 @@ func (c *Cluster) AddNode(n *ClusterNode) error {
   }
 
   if _,exist := c.Nodes[n.Name]; exist {
-    env.Output.WriteChWarn("(Cluster::AddNode) The node "+n.Name+" does already exist and will be overwritten.")
+    env.Output.WriteChWarn("(Cluster::AddNode) Node "+n.Name+" does already exist and will be overwritten.")
   }
   c.Nodes[n.Name] = n
 
   return nil
 }
+
+
+//
+//# GetService: return a service from the cluster
+func (c *Cluster) GetService(name string) (error, *ClusterService) {
+  env.Output.WriteChDebug("(Cluster::GetService) Retrieve service '"+name+"' from cluster")
+
+  if service, exist := c.Services[name]; !exist {
+    msg := "(Cluster::GetService) Service '"+name+"' does not exit on the cluster"
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  } else {
+    return nil, service
+  }
+}
+//
+//# AddNode: Add a new node into the cluster
+func (c *Cluster) AddService(s *ClusterService) error {
+  env.Output.WriteChDebug("(Cluster::AddService) Add service '"+s.Name+"' to cluster")
+
+  if c == nil {
+      return errors.New("(Cluster::AddService) Cluster not initialized")    
+  }
+
+  if c.Services == nil {
+    env.Output.WriteChDebug("(Cluster::AddService) Initializing cluster's Nodes")
+    c.Services = make(map[string]*ClusterService)
+  }
+
+  if _,exist := c.Services[s.Name]; exist {
+    env.Output.WriteChWarn("(Cluster::AddService) Service "+s.Name+" does already exist and will be overwritten.")
+  }
+  c.Services[s.Name] = s
+
+  return nil
+}
+
 
 //#
 //# Common methods

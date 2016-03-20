@@ -122,13 +122,14 @@ function createContainerClusterList(data, item) {
 //# createNodeForClusterList
 function createNodeForClusterList(parent, nodename, clusternode) {
 	node = new pageObject(parent,function(parent){
+		
 		nodeurl = clusternode.URL + "/api/node";
-		if (clusternode.service != null ) {
+		if (clusternode.services[nodename] != null ) {
 			$('<div/>', {
 				class: 'clusternode',
 				id: nodename,
 				url: nodeurl,
-				status: clusternode.service.status,
+				status: clusternode.services[nodename].status,
 				text: nodename
 			}).appendTo(parent);
 		} else {
@@ -153,7 +154,7 @@ function setActionToNode(node, nodename, nodeurl) {
 		} else {
 			// it generates servicesdetails div
 			createContainerServicesDetails('.clusternodedetails',nodename);
-			fillContainerServicesDetails('.servicesdetails',object.attr("url"));
+			fillContainerServicesDetails('.servicesdetails',nodeurl);
 		}
 	// end page::generateObjects --> node setOnClickAction
 	});
@@ -219,8 +220,9 @@ function fillContainerServicesDetails(parent,url) {
 	d = new pageObject(parent, function(parent){
 		//get JSON from /api/node
 		$.getJSON(url, function(data){
+
 			if (data.services.servicesroot.services != null) {
-				// path to get services from /api/node				 				
+				// path to get services from /api/node		 				
 				$.each(data.services.servicesroot.services, function(servicename, servicedetail){
 					//create servicedetail for node
 					createContainerServiceDetail(data,'.servicesdetails',servicename,servicedetail);
@@ -289,7 +291,14 @@ function createContainerServiceChecks(data, parent, servicename, checks) {
 	//				 					
 	//create servicecheck for servicechecks
 	$.each(checks,function(it,check){
-		createContainerCheck(data, servicename, check, data.samples.Samples[check].Sample.exit);
+
+		if ( data.samples.Samples[check] != null ){
+			createContainerCheck(data, servicename, check, data.samples.Samples[check].Sample.exit);			
+		} else {
+			//console.log("No sample for "+check);
+			createContainerCheck(data, servicename, check, "-1");
+		}
+
 		// end for each servicedetail.checks
 	});
 		
@@ -344,8 +353,8 @@ function createContainerCheckAllDetails(data, servicename, checkname){
 		});
 
 		createContainerCheckADetails(data.checks.checks.checks[checkname], servicename, checkname);
-		createContainerCheckSampleDetails(data.samples.Samples[checkname].Sample, servicename, checkname)
-
+		createContainerCheckSampleDetails(data.samples.Samples[checkname], servicename, checkname);		
+		
 		clear = new pageObject('.servicechecks#'+servicename,function(parent) {
 			$('<div/>',{
 				style: 'clear:both;'
@@ -365,48 +374,51 @@ function createContainerCheckADetails(data, servicename, checkname){
 		}).appendTo(parent);
 	});
 
-	// clear = new pageObject('.servicecheckalldetails#'+servicename+'_'+checkname,function(parent) {
-	// 	$('<div/>',{
-	// 		style: 'clear:both;'
-	// 	}).appendTo(parent);
-	// // end pageObject clear
-	// });
-
-	detailcontent = new pageObject('.servicecheckdetails#'+servicename+'_'+checkname, function(parent){
-		// Name
-		$('<div/>',{
-			class: 'checkinfotitle',
-			id: servicename+"_"+checkname,
-			text: 'Check'
-		}).appendTo(parent);
-		$('<div/>',{
-			class: 'checkinfo',
-			id: servicename+"_"+checkname,
-			text: data.name
-		}).appendTo(parent);
-		// Description
-		$('<div/>',{
-			class: 'checkinfotitle',
-			id: servicename+"_"+checkname,
-			text: 'Description'
-		}).appendTo(parent);
-		$('<div/>',{
-			class: 'checkinfo',
-			id: servicename+"_"+checkname,
-			text: data.description
-		}).appendTo(parent);
-		// Command
-		$('<div/>',{
-			class: 'checkinfotitle',
-			id: servicename+"_"+checkname,
-			text: 'Command'
-		}).appendTo(parent);
-		$('<div/>',{
-			class: 'checkinfo',
-			id: servicename+"_"+checkname,
-			text: data.command
-		}).appendTo(parent);
-	});
+	if (data != null) {
+		detailcontent = new pageObject('.servicecheckdetails#'+servicename+'_'+checkname, function(parent){
+			// Name
+			$('<div/>',{
+				class: 'checkinfotitle',
+				id: servicename+"_"+checkname,
+				text: 'Check'
+			}).appendTo(parent);
+			$('<div/>',{
+				class: 'checkinfo',
+				id: servicename+"_"+checkname,
+				text: data.name
+			}).appendTo(parent);
+			// Description
+			$('<div/>',{
+				class: 'checkinfotitle',
+				id: servicename+"_"+checkname,
+				text: 'Description'
+			}).appendTo(parent);
+			$('<div/>',{
+				class: 'checkinfo',
+				id: servicename+"_"+checkname,
+				text: data.description
+			}).appendTo(parent);
+			// Command
+			$('<div/>',{
+				class: 'checkinfotitle',
+				id: servicename+"_"+checkname,
+				text: 'Command'
+			}).appendTo(parent);
+			$('<div/>',{
+				class: 'checkinfo',
+				id: servicename+"_"+checkname,
+				text: data.command
+			}).appendTo(parent);
+		});
+	} else {
+		createMessageForUser('.servicecheckdetails#'+servicename+'_'+checkname,"info","No information for '"+checkname+"'")
+		clear = new pageObject('.servicecheckalldetails#'+servicename+'_'+checkname,function(parent) {
+			$('<div/>',{
+				style: 'clear:both;'
+			}).appendTo(parent);
+			// end pageObject clear
+		});
+	}
 
 	clear = new pageObject('.servicecheckdetails#'+servicename+'_'+checkname,function(parent) {
 		$('<div/>',{
@@ -426,63 +438,73 @@ function createContainerCheckSampleDetails(data, servicename, checkname){
 		}).appendTo(parent);
 	});
 
-	detailcontent = new pageObject('.servicechecksampledetails#'+servicename+'_'+checkname, function(parent){
-		// Sample date
-		$('<div/>',{
-			class: 'sampleinfotitle',
-			id: servicename+"_"+checkname,
-			text: 'Sample time'
-		}).appendTo(parent);
-		$('<div/>',{
-			class: 'sampleinfo',
-			id: servicename+"_"+checkname,
-			text: data.sampletime
-		}).appendTo(parent);
-		// Exit value
-		$('<div/>',{
-			class: 'sampleinfotitle',
-			id: servicename+"_"+checkname,
-			text: 'Exit value'
-		}).appendTo(parent);
-		$('<div/>',{
-			class: 'sampleinfo',
-			id: servicename+"_"+checkname,
-			text: data.exit
-		}).appendTo(parent);
-		// Exit value
-		$('<div/>',{
-			class: 'sampleinfotitle',
-			id: servicename+"_"+checkname,
-			text: 'Elapsed time (ns)'
-		}).appendTo(parent);
-		$('<div/>',{
-			class: 'sampleinfo',
-			id: servicename+"_"+checkname,
-			text: data.elapsedtime
-		}).appendTo(parent);
-		// Output
-		$('<div/>',{
-			class: 'sampleinfotitle',
-			id: servicename+"_"+checkname,
-			text: 'Output'
-		}).appendTo(parent);
-		$('<div/>',{
-			class: 'sampleinfo',
-			id: servicename+"_"+checkname,
-			text: data.output
-		}).appendTo(parent);
-		// Timestamp
-		$('<div/>',{
-			class: 'sampleinfotitle',
-			id: servicename+"_"+checkname,
-			text: 'Timestamp'
-		}).appendTo(parent);
-		$('<div/>',{
-			class: 'sampleinfo',
-			id: servicename+"_"+checkname,
-			text: data.timestamp
-		}).appendTo(parent);
-	});
+	if (data != null) {
+		detailcontent = new pageObject('.servicechecksampledetails#'+servicename+'_'+checkname, function(parent){
+			// Sample date
+			$('<div/>',{
+				class: 'sampleinfotitle',
+				id: servicename+"_"+checkname,
+				text: 'Sample time'
+			}).appendTo(parent);
+			$('<div/>',{
+				class: 'sampleinfo',
+				id: servicename+"_"+checkname,
+				text: data.Sample.sampletime
+			}).appendTo(parent);
+			// Exit value
+			$('<div/>',{
+				class: 'sampleinfotitle',
+				id: servicename+"_"+checkname,
+				text: 'Exit value'
+			}).appendTo(parent);
+			$('<div/>',{
+				class: 'sampleinfo',
+				id: servicename+"_"+checkname,
+				text: data.Sample.exit
+			}).appendTo(parent);
+			// Exit value
+			$('<div/>',{
+				class: 'sampleinfotitle',
+				id: servicename+"_"+checkname,
+				text: 'Elapsed time (ns)'
+			}).appendTo(parent);
+			$('<div/>',{
+				class: 'sampleinfo',
+				id: servicename+"_"+checkname,
+				text: data.Sample.elapsedtime
+			}).appendTo(parent);
+			// Output
+			$('<div/>',{
+				class: 'sampleinfotitle',
+				id: servicename+"_"+checkname,
+				text: 'Output'
+			}).appendTo(parent);
+			$('<div/>',{
+				class: 'sampleinfo',
+				id: servicename+"_"+checkname,
+				text: data.Sample.output
+			}).appendTo(parent);
+			// Timestamp
+			$('<div/>',{
+				class: 'sampleinfotitle',
+				id: servicename+"_"+checkname,
+				text: 'Timestamp'
+			}).appendTo(parent);
+			$('<div/>',{
+				class: 'sampleinfo',
+				id: servicename+"_"+checkname,
+				text: data.Sample.timestamp
+			}).appendTo(parent);
+		});
+	} else {
+		createMessageForUser('.servicecheckdetails#'+servicename+'_'+checkname,"info","No sample for '"+checkname+"'")
+		clear = new pageObject('.servicecheckalldetails#'+servicename+'_'+checkname,function(parent) {
+			$('<div/>',{
+				style: 'clear:both;'
+			}).appendTo(parent);
+			// end pageObject clear
+		});
+	}
 
 	clear = new pageObject('.servicechecksampledetails#'+servicename+'_'+checkname,function(parent) {
 		$('<div/>',{
@@ -490,7 +512,6 @@ function createContainerCheckSampleDetails(data, servicename, checkname){
 		}).appendTo(parent);
 	// end pageObject clear
 	});
-
 
 	// clear the servicecheckalldetail once all data have been written into content
 	clear = new pageObject('.servicecheckalldetails#'+servicename+'_'+checkname,function(parent) {
@@ -562,52 +583,8 @@ function cluster(url) {
 //end cluster object	
 }
 
-
 //
-//# Object to handle the elements from cluster list 
-//# clusterlist
-function clusterlist(l) {
-	this.listenaddr = l;
-	this.proto = "http://"
-	this.apiClusterNodes = "/api/cluster/nodes";
-	this.apiClusterServices = "/api/cluster/services";
-
-	//
-	//# renderClusterNodes
-	this.renderClusterNodes = function() {
-		var urlbase = this.proto+this.listenaddr; 
-		var urlapi = urlbase+this.apiClusterNodes;
-		var clusternode = ""
-
-		$.getJSON(urlapi, function (data) {
-			$.each(data, function(nodename, clusternode){
-				if (clusternode.service != null ) {
-					$('<div/>', {
-						class: 'clusternode',
-						url: urlbase,
-						status: clusternode.service.status,
-						text: nodename 
-					}).appendTo(".clusterlist");
-					//div_clusternode = '<div class="clusternode" url="'+urlbase+'" status="'+clusternode.service.status+'">'+nodename+'</div>';						
-				} else {
-					$('<div/>', {
-						class: 'clusternode',
-						url: urlbase,
-						text: nodename 
-					}).appendTo(".clusterlist");
-				}
-			//end each node
-			});	
-		//end getJSON
-		});
-	}
-	// //
-	// //# renderClusterServices
-	// this.renderClusterServices = function() {
-		
-	// }
-}
-
+//-- Ready --
 //
 // This function is run as soon the document is ready
 $(document).ready(function(){

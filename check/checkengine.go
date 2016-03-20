@@ -74,6 +74,7 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
 
   // Set the environment's check engine
   env.SetCheckEngine(cks)
+  env.Output.WriteChInfo("(CheckEngine::NewCheckEngine) Hi! I'm your new check engine instance")
 
 	return err, cks
 }
@@ -116,7 +117,7 @@ func (c *CheckEngine) GetCheckgroups() *Checkgroups{
 //
 //# GetoutputChannels: methods return the channels to write samples
 func (c *CheckEngine) GetOutputChannels() map[chan interface{}] bool {
-  env.Output.WriteChDebug("(CheckEngine::GetoutputChannels) Get value")
+  env.Output.WriteChDebug("(CheckEngine::GetOutputChannels)")
   return c.outputChannels
 }
 
@@ -147,6 +148,7 @@ func (c *CheckEngine) AddOutputChannel(o chan interface{}) error {
 //
 //# InitCheckRunningQueues: prepares each checkobject to be run
 func (c *CheckEngine) InitCheckRunningQueues() error {
+        env.Output.WriteChDebug("(CheckEngine::InitCheckRunningQueues)")
   cs := c.GetChecks()
 
   for _,obj := range cs.GetCheck() {
