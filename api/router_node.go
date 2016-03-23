@@ -16,7 +16,7 @@ func (a* ApiEngine) GenerateAPIRoutesForNode() {
 	env.Output.WriteChDebug("(ApiEngine::GenerateAPIRoutesForNode)")
 	a.AddRoute(ui.GenerateRoute("NodeStatus","GET","/api/node",apiWriter(GetNodeInfo)))
 	a.AddRoute(ui.GenerateRoute("NodeStatus","GET","/api/node/status",apiWriter(GetNodeStatus)))
-	a.AddRoute(ui.GenerateRoute("StartCheckEngine","GET","/api/node/run",apiWriter(StartCheckEngine)))
+	//a.AddRoute(ui.GenerateRoute("StartCheckEngine","GET","/api/node/run",apiWriter(StartCheckEngine)))
 	//node checks
 	a.AddRoute(ui.GenerateRoute("allchecks","GET","/api/node/checks",apiWriter(GetAllChecks)))
 	a.AddRoute(ui.GenerateRoute("check","GET","/api/node/checks/{check}",apiWriter(GetCheck)))

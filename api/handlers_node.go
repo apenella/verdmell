@@ -27,7 +27,6 @@ func StartCheckEngine(r *http.Request) (error,[]byte) {
 	env.Output.WriteChDebug("(ApiEngine::StartCheckEngine)")
 	checks := env.GetCheckEngine().(*check.CheckEngine)
 	
-
 	if err := checks.StartCheckEngine(nil); err != nil {
 		return errors.New("(ApiEngine::StartCheckEngine) "+err.Error()),nil
 	}
