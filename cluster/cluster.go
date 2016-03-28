@@ -59,7 +59,6 @@ func (c *Cluster) SetNodes(nodes map[string]*ClusterNode) {
 //# GetNodes: get attribute from Cluster
 func (c *Cluster) GetNodes() map[string]*ClusterNode {
   env.Output.WriteChDebug("(Cluster::GetNodes) Get Nodes' value")
-  env.Output.WriteChDebug(c.Nodes)
   return c.Nodes
 }
 
@@ -115,8 +114,6 @@ func (c *Cluster) AddNode(n *ClusterNode) error {
 
   return nil
 }
-
-
 //
 //# GetService: return a service from the cluster
 func (c *Cluster) GetService(name string) (error, *ClusterService) {

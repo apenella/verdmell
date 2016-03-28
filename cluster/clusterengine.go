@@ -114,7 +114,7 @@ func (c *ClusterEngine) SetOutputChannels(o map[chan []byte] bool) {
 //
 //# GetCluster: attribute from ClusterNode
 func (c *ClusterEngine) GetCluster() *Cluster {
-  env.Output.WriteChDebug("(ClusterEngine::GetCluster) Get value '"+c.Cluster.String()+"'")
+  env.Output.WriteChDebug("(ClusterEngine::GetCluster) Get value")
   return c.Cluster
 }
 //
@@ -241,61 +241,150 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
       c.updateCluster(clusternode,clusterservice,env.Setup.Hostname,s)
     }  
   }
-
   return nil
 }
 //
 //# handleServiceObject: handles the incoming serviceObject messages
 func (c *ClusterEngine) handleClusterMessage(data []byte) error {
   env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage)")
-
-  var clusternode *ClusterNode
-  
-  //TODO
+   
+  //
+  // Decoding received []byte to a cluster message
   if err, message := DecodeClusterMessage(data); err != nil {
+    // When the data could not be decoded an error is thrown
     return errors.New("(ClusterMessage::handleClusterMessage) "+err.Error())
   } else {
     env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Message from '"+message.GetFrom()+"'")
-    
+    // Decoding data from message
     if err, messageData := DecodeData(message.GetData()); err != nil {
+      // When data coul not be decoded an error is thrown
       msg := "(ClusterEngine::handleClusterMessage) "+err.Error()
       env.Output.WriteChError(msg)
       return errors.New(msg)
     } else {
       cluster := c.GetCluster()
-      // get the message timestamp
+      //
+      // Read data from the message: 
+      // get the reviced message timestamp
       messageTimestamp := message.GetTimestamp()
-      //
-      // update from clusternode
-      if err, clusternode = cluster.GetNode(message.GetFrom()); err != nil {
-        msg := "(ClusterEngine::handleClusterMessage) "+err.Error()
-        env.Output.WriteChError(msg)
-        return errors.New(msg)
-      }
-      env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) The node '"+message.GetFrom()+"' has data on cluster")
-      // get received node from stored timestamp
-      nodeTimestamp := clusternode.GetTimestamp()
-      //
-      // if message timestamp is greater than nodeTimestamp means that the information from this node is newer
-      if messageTimestamp > nodeTimestamp {
+      // get sender clusternode's stored data
+      if err, clusternode := cluster.GetNode(message.GetFrom()); err != nil {
+        env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Received a message from new node '"+message.GetFrom()+"', and will be added on cluster")
+        //
         // update information from nodes
-        for _,node := range messageData.GetNodes(){
-          // get stored node's data from cluster
-          if err, storedNode := cluster.GetNode(node.GetName()); err != nil {
-            env.Output.WriteChWarn("(ClusterEngine::handleClusterMessage) Node '"+node.GetName()+"' as stored node")
+        if err := c.updateClusterNodes(messageData); err != nil {
+          env.Output.WriteChError("(ClusterEngine::handleClusterMessage) "+err.Error())
+        }
+        //
+        //update services
+      } else {
+        env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Node '"+message.GetFrom()+"' has data on cluster")
+        // get received node from stored timestamp
+        nodeTimestamp := clusternode.GetTimestamp()
+        //
+        // if message timestamp is greater than nodeTimestamp means that the information from this node is newer
+        if messageTimestamp > nodeTimestamp {
+          // update information from nodes
+          if err := c.updateClusterNodes(messageData); err != nil {
+            env.Output.WriteChError("(ClusterEngine::handleClusterMessage) "+err.Error())
+          }
+        }
+      }
+    }
+  }
+  return nil
+}
+//
+//# updateClusterNodes: method to update stored nodes information
+func (c *ClusterEngine) updateClusterNodes(clusterFrom *Cluster) error {
+  env.Output.WriteChDebug("(ClusterEngine::updateClusterNodes)")
+  modified := false
+  cluster := c.GetCluster()
+
+  for _,nodeFrom := range clusterFrom.GetNodes(){
+    // get stored node's data from cluster
+    if err, nodeStored := cluster.GetNode(nodeFrom.GetName()); err != nil {
+      env.Output.WriteChWarn("(ClusterEngine::updateClusterNodes) Node '"+nodeFrom.GetName()+"' will be added as controled node")
+      // add the node to cluster
+      cluster.AddNode(nodeFrom)
+      //
+      // for each service defined on node, check it's status
+      for _,serviceFrom := range nodeFrom.GetNodeServices(){
+        // get cluster service stored for serviceFrom
+        if err, clusterService := cluster.GetService(serviceFrom.GetName()); err != nil {
+          env.Output.WriteChWarn("(ClusterEngine::updateClusterNodes) Service '"+serviceFrom.GetName()+"' will be added as controled service")
+          // Create cluster service
+          if err, clusterservice := NewClusterService(serviceFrom.GetName()); err != nil {
+            env.Output.WriteChError("(ClusterEngine::updateClusterNodes) "+err.Error())
           } else {
-            // update stored node when received timestamp from node is greater
-            if ( node.GetTimestamp() > storedNode.GetTimestamp()) {
-              env.Output.WriteChInfo("(ClusterEngine::handleClusterMessage) Node '"+node.GetName()+"' has updated its status")
-              cluster.AddNode(node)
+            c.AddService(clusterservice)
+            clusterservice.AddServiceNode(nodeFrom.GetName(),serviceFrom)
+          }
+        } else {
+          // get stored data for the cluster service
+          if err, serviceStored := clusterService.GetServiceNode(nodeFrom.GetName()); err != nil{
+            env.Output.WriteChError("(ClusterEngine::updateClusterNodes) "+err.Error())
+          } else {
+            // update service whem serviceFrom timestamp is greater than the stored one
+            if serviceFrom.GetTimestamp() > serviceStored.GetTimestamp() {
+              clusterService.AddServiceNode(nodeFrom.GetName(),serviceFrom)
             }
           }
         }
-        // update information from services
-        //for service := range messageData.Services(){
-          
-        // }
+      }
+      modified = true
+    } else {
+      // update stored node when received timestamp from node is greater
+      if ( nodeFrom.GetTimestamp() > nodeStored.GetTimestamp()) {
+        env.Output.WriteChDebug("(ClusterEngine::updateClusterNodes) Node '"+nodeFrom.GetName()+"' has updated its status")
+        cluster.AddNode(nodeFrom)
+        //
+        // for each service defined on node, check it's status
+        for _,serviceFrom := range nodeFrom.GetNodeServices(){
+          // get cluster service stored for serviceFrom
+          if err, clusterService := cluster.GetService(serviceFrom.GetName()); err != nil {
+            env.Output.WriteChWarn("(ClusterEngine::updateClusterNodes) Service '"+serviceFrom.GetName()+"' will be added as controled service")
+            // Create cluster service
+            if err, clusterservice := NewClusterService(serviceFrom.GetName()); err != nil {
+              env.Output.WriteChError("(ClusterEngine::updateClusterNodes) "+err.Error())
+            } else {
+              c.AddService(clusterservice)
+              clusterservice.AddServiceNode(nodeFrom.GetName(),serviceFrom)
+            }
+          } else {
+            // get stored data for the cluster service
+            if err, serviceStored := clusterService.GetServiceNode(nodeFrom.GetName()); err != nil{
+              env.Output.WriteChError("(ClusterEngine::updateClusterNodes) "+err.Error())
+            } else {
+              // update service whem serviceFrom timestamp is greater than the stored one
+              if serviceFrom.GetTimestamp() > serviceStored.GetTimestamp() {
+                clusterService.AddServiceNode(nodeFrom.GetName(),serviceFrom)
+              }            
+            }
+          }
+        }
+        modified = true
+      }
+    }
+  }
 
+  // On changes, increase timestamp and deploy clusterMessage to cluster
+  if modified {
+    if err, clusternode := cluster.GetNode(env.Setup.Hostname); err != nil {
+      env.Output.WriteChError("(ClusterEngine::updateClusterNodes) Cluster status has changed but ClusterMessage could not be deploy due an error: "+err.Error())
+    } else {
+      clusternode.IncreaseTimestamp()
+
+     // Prepare the message to be sent to the cluster
+      if err, message := NewClusterMessage(env.Setup.Hostname, clusternode.GetTimestamp(),cluster); err == nil {
+        env.Output.WriteChDebug("(ClusterEngine::updateClusterNodes) New message ready to be sent")
+        // transform data as []byte before send it
+        if err, messageBytes := utils.InterfaceToBytes(message); err == nil {
+          // send data to the outputChannels
+          c.SendData(messageBytes)
+        } else {
+          env.Output.WriteChError("(ClusterEngine::updateClusterNodes) "+err.Error())
+        }    
       }
     }
   }
@@ -308,7 +397,7 @@ func (c *ClusterEngine) updateCluster(clusternode *ClusterNode, clusterservice *
   cluster := c.GetCluster()
 
   clusternode.AddService(s)
-  clusterservice.AddNode(n,s)
+  clusterservice.AddServiceNode(n,s)
   // any change changes clusternode timestamp
   clusternode.IncreaseTimestamp()
 
@@ -394,6 +483,7 @@ func (c *ClusterEngine) GetClusterServices() (error,[]byte) {
 
 //
 // Gossip
+//-----------------------------------------------------------------------
 
 //# SelectNodesToGossip
 func (c *ClusterEngine) SelectNodesToGossip() (error, map[string]*ClusterNode) {

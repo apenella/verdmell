@@ -15,7 +15,7 @@ The package 'cluster' is used by verdmell to manage the cluster.
 package cluster
 
 import (
-  // "errors"
+  "errors"
   "verdmell/service"
   "verdmell/utils"
 )
@@ -77,11 +77,25 @@ func (c *ClusterService) GetCandidateForDelation() bool {
 //#---------------------------------------------------------------------
 //
 //# AddService: method add a service for the current node
-func (c *ClusterService) AddNode(n string, s *service.ServiceObject) error {
+func (c *ClusterService) AddServiceNode(n string, s *service.ServiceObject) error {
   env.Output.WriteChDebug("(ClusterService::AddNode) Add node '"+n+"' to service '"+c.GetName()+"'")
   c.ServiceNodes[n] = s
 	return nil
 }
+//
+//# GetServiceNode: get service from specifc node
+func (c *ClusterService) GetServiceNode(n string) (error, *service.ServiceObject) {
+  env.Output.WriteChDebug("(ClusterService::GetServiceNode) Get service '"+c.GetName()+"' from node '"+n+"'")
+  
+  if srv, exist := c.ServiceNodes[n]; !exist {
+    msg := "(ClusterService::GetServiceNode) Service '"+c.GetName()+"' not exit for node '"+n+"'"
+    env.Output.WriteChDebug(msg)
+    return errors.New(msg), nil
+  } else {
+    return nil, srv    
+  }
+}
+
 
 //#
 //# Common methods
