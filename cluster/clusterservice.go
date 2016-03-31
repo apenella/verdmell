@@ -26,6 +26,7 @@ import (
 //# ClusterService is defined by a node name and its URL
 type ClusterService struct{
 	Name string `json:"name"`
+  Status int `json:"status"`
 	ServiceNodes map[string]*service.ServiceObject `json:"nodes"`
 	CandidateForDelation bool `json:"candidatefordeletion"`
 }
@@ -36,6 +37,7 @@ func NewClusterService(name string) (error, *ClusterService) {
   srv := new(ClusterService)
 
   srv.SetName(name)
+  srv.SetStatus(-1)
   srv.SetCandidateForDelation(false)
 
   srv.ServiceNodes = make( map[string] *service.ServiceObject )
@@ -54,6 +56,18 @@ func (c *ClusterService) SetName(name string) {
   c.Name = name
 }
 //
+//# SetStatus: attribute from ClusterService
+func (c *ClusterService) SetStatus(status int) {
+  env.Output.WriteChDebug("(ClusterService::SetStatus) Set value")
+  c.Status = status
+}
+//
+//# SetServiceNodes: attribute from ClusterService
+func (c *ClusterService) SetServiceNodes(s map[string] *service.ServiceObject) {
+  env.Output.WriteChDebug("(ClusterService::SetServiceNodes) Set value")
+  c.ServiceNodes = s
+}
+//
 //# SetCandidateForDelation: attribute from ClusterNode
 func (c *ClusterService) SetCandidateForDelation(d bool) {
   env.Output.WriteChDebug("(ClusterService::SetCandidateForDelation)")
@@ -64,6 +78,18 @@ func (c *ClusterService) SetCandidateForDelation(d bool) {
 func (c *ClusterService) GetName() string {
   env.Output.WriteChDebug("(ClusterService::GetName) Get value '"+c.Name+"'")
   return c.Name
+}
+//
+//# GetStatus: attribute from ClusterService
+func (c *ClusterService) GetStatus() int {
+  env.Output.WriteChDebug("(ClusterService::SetStatus) Get value")
+  return c.Status
+}
+//
+//# GetServiceNodes: attribute from ClusterService
+func (c *ClusterService) GetServiceNodes() map[string] *service.ServiceObject {
+  env.Output.WriteChDebug("(ClusterService::GetServiceNodes) Get value")
+  return c.ServiceNodes
 }
 //
 //# SetCandidateForDelation: attribute from ClusterNode
@@ -80,6 +106,7 @@ func (c *ClusterService) GetCandidateForDelation() bool {
 func (c *ClusterService) AddServiceNode(n string, s *service.ServiceObject) error {
   env.Output.WriteChDebug("(ClusterService::AddNode) Add node '"+n+"' to service '"+c.GetName()+"'")
   c.ServiceNodes[n] = s
+  c.CalculateStatusForClusterService()
 	return nil
 }
 //
@@ -96,6 +123,31 @@ func (c *ClusterService) GetServiceNode(n string) (error, *service.ServiceObject
   }
 }
 
+//
+//# CalculateStatusForClusterService: method sends a sample to the sample channel
+func (c *ClusterService) CalculateStatusForClusterService() error {
+  env.Output.WriteChDebug("(ClusterService::CalculateStatusForClusterService) Calculate ClusterService '"+c.GetName()+"' status")
+  //Exit codes
+  // OK: 0
+  // WARN: 1
+  // ERROR: 2
+  // UNKNOWN: others (-1)
+  //
+  currentStatus := -1
+
+  for _,service := range c.GetServiceNodes() {
+    status := service.GetStatus()
+    //exitStatus calculates the status
+    if currentStatus < status {
+      currentStatus = status
+    }
+  }
+  env.Output.WriteChDebug("(ClusterService::CalculateStatusForClusterService) Status for '"+c.GetName()+"' has changed")
+
+  c.SetStatus(currentStatus)
+
+  return nil
+}
 
 //#
 //# Common methods

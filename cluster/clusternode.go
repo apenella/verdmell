@@ -28,7 +28,7 @@ type ClusterNode struct{
 	Name string `json:"name"`
 	URL string	`json:"URL"`
   Timestamp int64 `json:"timestamp"`
-  //Service *service.ServiceObject `json:"service"`
+  Status int `json:"status"`
   NodeServices map[string] *service.ServiceObject `json:"services"`
   CandidateForDetelion bool `json:"candidatefordeletion"`
 }
@@ -40,6 +40,7 @@ func NewClusterNode(name string, url string) (error, *ClusterNode) {
 
 	node.SetName(name)
 	node.SetURL(url)
+  node.SetTimestamp(-1)
   node.SetTimestamp(0)
   node.SetCandidateForDelation(false)
 
@@ -65,17 +66,17 @@ func (c *ClusterNode) SetURL(url string) {
   c.URL = url
 }
 //
+//# SetStatus: attribute from ClusterNode
+func (c *ClusterNode) SetStatus(status int) {
+  env.Output.WriteChDebug("(ClusterNode::SetStatus) Set value")
+  c.Status = status
+}
+//
 //# SetTimestamp: attribute from ClusterNode
 func (c *ClusterNode) SetTimestamp(t int64) {
   env.Output.WriteChDebug("(ClusterNode::SetTimestamp)")
   c.Timestamp = t
 }
-//
-//# SetService: attribute from ClusterNode
-// func (c *ClusterNode) SetService(s *service.ServiceObject) {
-//   env.Output.WriteChDebug("(ClusterNode::SetService)")
-//   c.Service = s
-// }
 //
 //# SetNodeServices: attribute from ClusterNode
 func (c *ClusterNode) SetNodeServices(s map[string] *service.ServiceObject) {
@@ -101,17 +102,17 @@ func (c *ClusterNode) GetURL() string {
   return c.URL
 }
 //
+//# GetStatus: attribute from ClusterNode
+func (c *ClusterNode) GetStatus() int {
+  env.Output.WriteChDebug("(ClusterNode::GetStatus) Get value")
+  return c.Status
+}
+//
 //# GetTimestamp: attribute from ClusterNode
 func (c *ClusterNode) GetTimestamp() int64 {
   env.Output.WriteChDebug("(ClusterNode::GetTimestamp)")
   return c.Timestamp
 }
-//
-//# GetService: attribute from ClusterNode
-// func (c *ClusterNode) GetService() *service.ServiceObject {
-//   env.Output.WriteChDebug("(ClusterNode::GetService)")
-//   return c.Service
-// }
 //
 //# GetNodeServices: attribute from ClusterNode
 func (c *ClusterNode) GetNodeServices() map[string] *service.ServiceObject {
@@ -130,17 +131,17 @@ func (c *ClusterNode) GetCandidateForDelation() bool {
 
 //
 //# GetNodeStatus: method sets the Status value for the ServiceObject
-func (c *ClusterNode) GetNodeStatus() (error, int) {
-  env.Output.WriteChDebug("(ClusterNode::GetNodeStatus)")
-  var err error
-  var service *service.ServiceObject
+// func (c *ClusterNode) GetNodeStatus() (error, int) {
+//   env.Output.WriteChDebug("(ClusterNode::GetNodeStatus)")
+//   var err error
+//   var service *service.ServiceObject
 
-  if err, service = c.HasService(c.GetName()); err != nil {
-    return errors.New("(ClusterNode::GetNodeStatus) "+err.Error()),-1
-  }
+//   if err, service = c.HasService(c.GetName()); err != nil {
+//     return errors.New("(ClusterNode::GetNodeStatus) "+err.Error()),-1
+//   }
 
-  return nil, service.GetStatus()
-}
+//   return nil, service.GetStatus()
+// }
 //
 //# HasService: method return if a service is defined on cluster node
 func (c *ClusterNode) HasService(s string) (error, *service.ServiceObject) {
@@ -161,6 +162,10 @@ func (c *ClusterNode) AddService(s *service.ServiceObject) error {
   if err,_ := c.HasService(s.GetName()); err != nil {
     c.NodeServices[s.GetName()] = s
     env.Output.WriteChDebug("(ClusterNode::AddService) Service '"+s.GetName()+"' added on node '"+c.GetName()+"'")
+    if s.GetName() == c.GetName() {
+      c.SetStatus(s.GetStatus())
+      env.Output.WriteChDebug("(ClusterNode::AddService) Node '"+c.GetName()+"' has changed its status")
+    }
   } else {
     return err
   }
