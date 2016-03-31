@@ -18,6 +18,7 @@ import (
   "bytes"
   "errors"
 //  "strconv"
+  "strings"
   "net/http"
 	"verdmell/environment"
   "verdmell/service"
@@ -553,8 +554,16 @@ func (c *ClusterEngine) StartClusterGossip() error {
           for _, clusternode := range nodes {
             go func() {
               env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) Send message to node '"+clusternode.GetName()+"'")
-              if err := c.SendGossipMessage(clusternode.GetURL(),message); err != nil {
-                env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) "+err.Error())
+              
+              e := strings.Split(clusternode.GetURL(),"://")
+              env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) endpoint: "+e[1])
+              if err := utils.CheckEndpoint("tcp",e[1]); err != nil {
+                env.Output.WriteChError("(ClusterEngine::StartClusterGossip) "+err.Error())
+                clusternode.SetCandidateForDelation(true)
+              } else {
+                if err := c.SendGossipMessage(clusternode.GetURL(),message); err != nil {
+                  env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) "+err.Error())
+                }
               }
             }()
           }
