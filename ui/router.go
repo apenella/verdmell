@@ -30,6 +30,7 @@ func (u* UI) GenerateRoutes() {
 
 	u.AddRoute(GenerateRoute("Index","GET","/", u.uiHandlerFunc(Index)))
 	u.AddRoute(GenerateRoute("WebUI","GET","/ui", u.uiHandlerFunc(WebUI)))
+	u.AddRoute(GenerateRoute("WebUI","GET","/sse", u.uiHandlerFunc(SSE)))
 }
 
 //

@@ -95,6 +95,9 @@ func main() {
 		}
 
 		webconsole := ui.NewUI(env, listenaddr)
+		if err := cltr.AddOutputChannel(webconsole.GetInputChannel()); err != nil {
+			env.Output.WriteChError(err.Error())
+		}
 		webconsole.AddRoutes(apisys.GetRoutes())
 		webconsole.StartUI()
 

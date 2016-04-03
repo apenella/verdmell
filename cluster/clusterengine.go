@@ -17,7 +17,7 @@ package cluster
 import (
   "bytes"
   "errors"
-//  "strconv"
+  "strconv"
   "strings"
   "net/http"
 	"verdmell/environment"
@@ -37,7 +37,7 @@ type ClusterEngine struct{
   Cluster *Cluster `json:"cluster"`
   inputChannel chan interface{} `json:"-"`
   outputChannels map[chan []byte] bool `json:"-"`
-  inputGossipChannel chan []byte `json:"-"`
+  inputSyncChannel chan []byte `json:"-"`
 }
 //
 //# NewClusterEngine: return a CheckEngine instance to be run
@@ -82,10 +82,10 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
     return errors.New("(ClusterEngine::NewClusterEngine) Service receiver for could not be started"), nil  
   }
 
-  // Initialize Gossip 
-  cluster.inputGossipChannel = make(chan []byte)
-  cluster.AddOutputChannel(cluster.inputGossipChannel)
-  cluster.StartClusterGossip()
+  // Initialize Sync 
+  cluster.inputSyncChannel = make(chan []byte)
+  cluster.AddOutputChannel(cluster.inputSyncChannel)
+  cluster.StartClusterSync()
 
   // the cluster engine is set to environment
   env.SetClusterEngine(cluster)
@@ -93,6 +93,10 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
 
   return nil, cluster
 }
+
+//#
+//# Getters/Setters methods for Checks object
+//#---------------------------------------------------------------------
 
 //
 //# SetCluster: attribute from Cluster
@@ -164,7 +168,6 @@ func (c *ClusterEngine) AddService(s *ClusterService) error {
 
   return c.Cluster.AddService(s)
 }
-
 //
 //# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
 func (c *ClusterEngine) StartReceiver() error {
@@ -197,10 +200,47 @@ func (c *ClusterEngine) StartReceiver() error {
   return nil
 }
 //
+//# SendData: method that send services to other engines
+func (c *ClusterEngine) SendData(data []byte) error {
+  env.Output.WriteChDebug("(ClusterEngine::SendData)")
+  for c,_ := range c.GetOutputChannels(){
+    env.Output.WriteChDebug("(ClusterEngine::SendData) Writing data on channel")
+    c <- data
+  }
+  return nil
+}
+//
+//# ReceiveData: method to receive data from the outdoor
+func (c *ClusterEngine) ReceiveData(data interface{} ) {
+  env.Output.WriteChDebug("(ClusterEngine::ReceiveData) Data received to be queued")
+  c.inputChannel <- data
+}
+//
+//# AddOutputSampleChan: Add a new channel to write service status
+func (c *ClusterEngine) AddOutputChannel(o chan []byte) error {
+  env.Output.WriteChDebug("(ClusterEngine::AddOutputChannel) ")
+
+  if o == nil {
+    msg := "(ClusterEngine::AddOutputChannel) Null outputChannel"
+    env.Output.WriteChError(msg)
+    return errors.New(msg)
+  }
+
+  channels := c.GetOutputChannels()
+  if _, exist := channels[o]; !exist {
+    env.Output.WriteChDebug("(ClusterEngine::AddOutputChannel) New outputChannel registered")    
+    channels[o] = true
+  } else {
+    return errors.New("(ClusterEngine::AddOutputChannel) You are trying to add an existing channel")
+  }
+  return nil
+}
+//
 //# handleServiceObject: handles the incoming serviceObject messages, that messages are sent by own node
 func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
   env.Output.WriteChDebug("(ClusterEngine::handleServiceObject)")
   var clusternode *ClusterNode
+  var newclusternode *ClusterNode
   var clusterservice *ClusterService
   nodename := env.Setup.Hostname
 
@@ -212,9 +252,16 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
       env.Output.WriteChDebug(msg)
       return errors.New(msg)
     }
-    clusternode.AddService(s)
-    cluster.AddNode(clusternode)
-
+    if err, newclusternode = NewClusterNode(clusternode.GetName(),clusternode.GetURL()); err != nil {
+      return errors.New("(ClusterEngine::handleServiceObject) "+err.Error())
+    }
+    // clone node
+    // to updateCluster, timestamp have to be increased
+    newclusternode.SetTimestamp(clusternode.GetTimestamp()+1)
+    newclusternode.SetNodeServices(clusternode.GetNodeServices())
+    newclusternode.AddService(s)
+   
+    cluster.AddNode(newclusternode)
 
     if err, clusterservice = NewClusterService(s.GetName()); err != nil {
       msg := "(ClusterEngine::handleServiceObject) "+err.Error()
@@ -232,53 +279,6 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
   }
   return nil
 }
-
-// func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
-//   env.Output.WriteChDebug("(ClusterEngine::handleServiceObject)")
-
-//   var err error
-//   var clusternode *ClusterNode
-//   var clusterservice *ClusterService
-
-//   cluster := c.GetCluster()
-//   timestamp := s.GetTimestamp()
-//   numberOfChecks := len(s.GetChecks())
-
-//   //
-//   // update cuurent clusternode
-//   // current clusternode has been added on clusterengine creation
-//   if err, clusternode = cluster.GetNode(env.Setup.Hostname); err != nil {
-//     msg := "(ClusterEngine::handleServiceObject) "+err.Error()
-//     env.Output.WriteChDebug(msg)
-//     return errors.New(msg)
-//   }
-
-//   if err, clusterservice = cluster.GetService(s.GetName()); err != nil {
-//     env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Create new service '"+s.GetName()+"' on cluster node '"+clusternode.GetName()+"'")
-//     if err, clusterservice = NewClusterService(s.GetName()); err != nil {
-//       msg := "(ClusterEngine::handleServiceObject) "+err.Error()
-//       env.Output.WriteChDebug(msg)
-//       return errors.New(msg)
-//     }
-//     c.AddService(clusterservice)
-//   }
-
-//   env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) ServiceObject received[node:"+clusternode.GetName()+", service:"+s.GetName()+", service timestamp:"+strconv.Itoa(int(timestamp))+", numchecks:"+strconv.Itoa(numberOfChecks)+"]")
-//   //
-//   // if clusternode has s service update its status
-//   if err, service := clusternode.HasService(s.GetName()); err != nil {
-//     env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Add new service '"+s.GetName()+"' on cluster node '"+clusternode.GetName()+"'")
-//     c.updateCluster(clusternode,clusterservice,env.Setup.Hostname,s)
-//   } else {
-//     // clusternode doesn't already have s service
-//     if timestamp >= service.GetTimestamp() ||  int(timestamp) <= numberOfChecks { 
-//       //add service to node
-//       env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Update service '"+service.GetName()+"' on cluster node '"+clusternode.GetName()+"'")
-//       c.updateCluster(clusternode,clusterservice,env.Setup.Hostname,s)
-//     }  
-//   }
-//   return nil
-// }
 //
 //# handleServiceObject: handles the incoming serviceObject messages
 func (c *ClusterEngine) handleClusterMessage(data []byte) error {
@@ -343,6 +343,7 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
     env.Output.WriteChDebug("(ClusterEngine::updateCluster) Received data from node '"+nodeFrom.GetName()+"' will be analized")
     if err, nodeStored := cluster.GetNode(nodeFrom.GetName()); err != nil {
       env.Output.WriteChWarn("(ClusterEngine::updateCluster) Node '"+nodeFrom.GetName()+"' will be added as controled node")
+      modified = true
       // add the node to cluster
       cluster.AddNode(nodeFrom)
       //
@@ -364,23 +365,30 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
             env.Output.WriteChError("(ClusterEngine::updateCluster) "+err.Error())
           } else {
             // update service whem serviceFrom timestamp is greater than the stored one
+            env.Output.WriteChDebug("(ClusterEngine::updateCluster) serviceFrom timestamp:"+strconv.Itoa(int(serviceFrom.GetTimestamp())))
+            env.Output.WriteChDebug("(ClusterEngine::updateCluster) serviceStored timestamp:"+strconv.Itoa(int(serviceStored.GetTimestamp())))
             if serviceFrom.GetTimestamp() > serviceStored.GetTimestamp() {
               clusterService.AddServiceNode(nodeFrom.GetName(),serviceFrom)
             }
           }
         }
       }
-      modified = true
     } else {
       // update stored node when received timestamp from node is greater
       env.Output.WriteChDebug("(ClusterEngine::updateCluster) Node '"+nodeFrom.GetName()+"' already exist on cluster")
       if err, nodeFromService := nodeFrom.HasService(nodeFrom.GetName()); err != nil {
         env.Output.WriteChDebug("(ClusterEngine::updateCluster) Could not load service from '"+nodeFrom.GetName()+"'."+err.Error())
       } else {
+        
         // get number of checks from the service. Is possible to detect a restart when number of checks is lower than timestamp
         numberOfChecks := len(nodeFromService.GetChecks())
+        env.Output.WriteChDebug("(ClusterEngine::updateCluster) numberOfChecks:"+strconv.Itoa(numberOfChecks))
+        env.Output.WriteChDebug("(ClusterEngine::updateCluster) nodeFrom timestamp:"+strconv.Itoa(int(nodeFrom.GetTimestamp())))
+        env.Output.WriteChDebug("(ClusterEngine::updateCluster) nodeStored timestamp:"+strconv.Itoa(int(nodeStored.GetTimestamp())))
+
         if ( nodeFrom.GetTimestamp() > nodeStored.GetTimestamp()) || int(nodeFrom.GetTimestamp()) <= numberOfChecks {
           env.Output.WriteChDebug("(ClusterEngine::updateCluster) Node '"+nodeFrom.GetName()+"' will be updated")
+          modified = true
           cluster.AddNode(nodeFrom)
           //
           // for each service defined on node, check it's status
@@ -407,7 +415,8 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
               }
             }
           }
-          modified = true
+        } else {
+          env.Output.WriteChError("(ClusterEngine::updateCluster) Cluster will no be updated")
         }
       }
     }
@@ -425,6 +434,7 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
         env.Output.WriteChDebug("(ClusterEngine::updateCluster) New message ready to be sent")
         // transform data as []byte before send it
         if err, messageBytes := utils.InterfaceToBytes(message); err == nil {
+          env.Output.WriteChDebug("(ClusterEngine::updateCluster) Send data to outputChannels")
           // send data to the outputChannels
           c.SendData(messageBytes)
         } else {
@@ -435,62 +445,6 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
   }
   return nil
 }
-//updateservice status
-
-//
-//# updateCluster: method set new values to node and service
-// func (c *ClusterEngine) updateCluster(clusternode *ClusterNode, clusterservice *ClusterService, n string, s *service.ServiceObject) error {
-//   env.Output.WriteChDebug("(ClusterEngine::updateCluster) Update node '"+n+"' and service '"+s.GetName()+"'")
-//   cluster := c.GetCluster()
-
-//   clusternode.AddService(s)
-//   clusterservice.AddServiceNode(n,s)
-//   // any change changes clusternode timestamp
-//   clusternode.IncreaseTimestamp()
-
-//   // Prepare the message to be sent to the cluster
-//   if err, message := NewClusterMessage(n,clusternode.GetTimestamp(),cluster); err == nil {
-//     env.Output.WriteChDebug("(ClusterEngine::updateCluster) New message ready to be sent")
-//     // transform data as []byte before send it
-//     if err, messageBytes := utils.InterfaceToBytes(message); err == nil {
-//       // send data to the outputChannels
-//       c.SendData(messageBytes)
-//     } else {
-//       return errors.New("(ClusterEngine::updateCluster) "+err.Error())
-//     }    
-//   }
-//   return nil
-// }
-//
-//# SendData: method that send services to other engines
-func (c *ClusterEngine) SendData(data []byte) error {
-  env.Output.WriteChDebug("(ClusterEngine::SendData)")
-  for c,_ := range c.GetOutputChannels(){
-    env.Output.WriteChDebug("(ClusterEngine::SendData) Writing data on channel")
-    c <- data
-  }
-  return nil
-}
-//
-//# ReceiveData: method to receive data from the outdoor
-func (c *ClusterEngine) ReceiveData(data interface{} ) {
-  env.Output.WriteChDebug("(ClusterEngine::ReceiveData) Data received to be queued")
-  c.inputChannel <- data
-}
-//
-//# AddOutputSampleChan: Add a new channel to write service status
-func (c *ClusterEngine) AddOutputChannel(o chan []byte) error {
-  env.Output.WriteChDebug("(ClusterEngine::AddOutputChannel)")
-
-  channels := c.GetOutputChannels()
-  if _, exist := channels[o]; !exist {
-    channels[o] = true
-  } else {
-    return errors.New("(ClusterEngine::AddOutputChannel) You are trying to add an existing channel")
-  }
-  return nil
-}
-
 //
 //# GetCluster: get whole information from cluster
 func (c *ClusterEngine) GetClusterInfo() (error,[]byte) {
@@ -500,7 +454,7 @@ func (c *ClusterEngine) GetClusterInfo() (error,[]byte) {
   if cluster = c.GetCluster(); cluster == nil {
     return errors.New("(ClusterEngine::GetClusterData) Cluster object has not been initialized"),nil
   }
-
+  
   return nil,utils.ObjectToJsonByte(c.GetCluster())
 }
 //
@@ -529,40 +483,40 @@ func (c *ClusterEngine) GetClusterServices() (error,[]byte) {
 }
 
 //
-// Gossip
+// Sync
 //-----------------------------------------------------------------------
 
-//# SelectNodesToGossip
-func (c *ClusterEngine) SelectNodesToGossip() (error, map[string]*ClusterNode) {
+//# SelectNodesToSync
+func (c *ClusterEngine) SelectNodesToSync() (error, map[string]*ClusterNode) {
   cluster := c.GetCluster()
   return nil,cluster.GetNodes()
 }
 
 //
-//# StartClusterGossip
-func (c *ClusterEngine) StartClusterGossip() error {
-  env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) Starting cluster gossip")
+//# StartClusterSync
+func (c *ClusterEngine) StartClusterSync() error {
+  env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) Starting cluster Sync")
   
   
   go func() {
-    defer close (c.inputGossipChannel)
+    defer close (c.inputSyncChannel)
     for{
       select{
-      case message := <-c.inputGossipChannel:
-        env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) New message to gossip")
-        if err, nodes := c.SelectNodesToGossip(); err == nil {
+      case message := <-c.inputSyncChannel:
+        env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) New message to Sync")
+        if err, nodes := c.SelectNodesToSync(); err == nil {
           for _, clusternode := range nodes {
             go func() {
-              env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) Send message to node '"+clusternode.GetName()+"'")
+              env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) Send message to node '"+clusternode.GetName()+"'")
               
               e := strings.Split(clusternode.GetURL(),"://")
-              env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) endpoint: "+e[1])
+              env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) endpoint: "+e[1])
               if err := utils.CheckEndpoint("tcp",e[1]); err != nil {
-                env.Output.WriteChError("(ClusterEngine::StartClusterGossip) "+err.Error())
+                env.Output.WriteChError("(ClusterEngine::StartClusterSync) "+err.Error())
                 clusternode.SetCandidateForDelation(true)
               } else {
-                if err := c.SendGossipMessage(clusternode.GetURL(),message); err != nil {
-                  env.Output.WriteChDebug("(ClusterEngine::StartClusterGossip) "+err.Error())
+                if err := c.SendSyncMessage(clusternode.GetURL(),message); err != nil {
+                  env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) "+err.Error())
                 }
               }
             }()
@@ -574,12 +528,12 @@ func (c *ClusterEngine) StartClusterGossip() error {
   return nil
 }
 //
-//# SendGossipMessage
-func (c *ClusterEngine) SendGossipMessage(url string, message []byte) error {
+//# SendSyncMessage
+func (c *ClusterEngine) SendSyncMessage(url string, message []byte) error {
   
   uri := "/api/cluster"
   url = url + uri
-  env.Output.WriteChDebug("(ClusterEngine::SendGossipMessage) Message to '"+url+"'")
+  env.Output.WriteChDebug("(ClusterEngine::SendSyncMessage) Message to '"+url+"'")
 
   req, err := http.NewRequest("PUT", url, bytes.NewBuffer(message))
   req.Header.Set("X-Verdmell-From", env.Setup.Hostname)
@@ -590,7 +544,7 @@ func (c *ClusterEngine) SendGossipMessage(url string, message []byte) error {
 
 
   if err != nil {
-    msg := "(ClusterEngine::SendGossipMessage) "+err.Error()
+    msg := "(ClusterEngine::SendSyncMessage) "+err.Error()
     env.Output.WriteChError(msg)
     return errors.New(msg)
   }
