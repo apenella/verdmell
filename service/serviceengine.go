@@ -180,8 +180,8 @@ func (s *ServiceEngine) AddOutputChannel(o chan interface{}) error {
 func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
   env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
 	for c,_ := range s.GetOutputChannels(){
-     env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' into channel")
-			c <- o
+    env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' into channel")
+		c <- o
   }
 
   return nil

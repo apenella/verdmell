@@ -16,6 +16,7 @@ package cluster
 
 import (
   "errors"
+  "strconv"
   "verdmell/service"
   "verdmell/utils"
 )
@@ -104,7 +105,7 @@ func (c *ClusterService) GetCandidateForDelation() bool {
 //
 //# AddService: method add a service for the current node
 func (c *ClusterService) AddServiceNode(n string, s *service.ServiceObject) error {
-  env.Output.WriteChDebug("(ClusterService::AddNode) Add node '"+n+"' to service '"+c.GetName()+"'")
+  env.Output.WriteChDebug("(ClusterService::AddNode) Add node '"+n+"' to service '"+c.GetName()+"'["+strconv.Itoa(int(s.GetTimestamp()))+"]")
   c.ServiceNodes[n] = s
   c.CalculateStatusForClusterService()
 	return nil

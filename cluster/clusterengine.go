@@ -242,6 +242,7 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
   var clusternode *ClusterNode
   var newclusternode *ClusterNode
   var clusterservice *ClusterService
+  modify := false
   nodename := env.Setup.Hostname
 
   if err, cluster := NewCluster(); err != nil {
@@ -252,29 +253,40 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
       env.Output.WriteChDebug(msg)
       return errors.New(msg)
     }
-    if err, newclusternode = NewClusterNode(clusternode.GetName(),clusternode.GetURL()); err != nil {
-      return errors.New("(ClusterEngine::handleServiceObject) "+err.Error())
+    // to avoid traffic is check timestamp
+    if err, nodeFromService := clusternode.HasService(s.GetName()); err != nil {
+      modify = true
+    } else {
+      env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) '"+s.GetName()+"' serviceStored timestamp:"+strconv.Itoa(int(nodeFromService.GetTimestamp())))
+      env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) '"+s.GetName()+"' serviceFrom timestamp:"+strconv.Itoa(int(s.GetTimestamp())))
+      if s.GetTimestamp() > nodeFromService.GetTimestamp() {
+        modify = true
+      }
     }
-    // clone node
-    // to updateCluster, timestamp have to be increased
-    newclusternode.SetTimestamp(clusternode.GetTimestamp()+1)
-    newclusternode.SetNodeServices(clusternode.GetNodeServices())
-    newclusternode.AddService(s)
-   
-    cluster.AddNode(newclusternode)
+    // modify when is required
+    if modify {
 
-    if err, clusterservice = NewClusterService(s.GetName()); err != nil {
-      msg := "(ClusterEngine::handleServiceObject) "+err.Error()
-      env.Output.WriteChDebug(msg)
-      return errors.New(msg)
-    }
-    clusterservice.AddServiceNode(nodename,s)
-    cluster.AddService(clusterservice)
+      newclusternode = clusternode.CopyClusterNode()
+      newclusternode.AddService(s.CopyServiceObject())
+      newclusternode.IncreaseTimestamp()
+      cluster.AddNode(newclusternode)
 
-    env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Cluster prepared to be updated with service '"+s.GetName()+"'")
+      if err, clusterservice = NewClusterService(s.GetName()); err != nil {
+        msg := "(ClusterEngine::handleServiceObject) "+err.Error()
+        env.Output.WriteChDebug(msg)
+        return errors.New(msg)
+      }
+      clusterservice.AddServiceNode(nodename,s)
+      cluster.AddService(clusterservice)
 
-    if err := c.updateCluster(cluster); err != nil {
-      env.Output.WriteChError("(ClusterEngine::handleServiceObject) "+err.Error())
+      env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Cluster prepared to be updated with service '"+s.GetName()+"'")
+
+      if err := c.updateCluster(cluster); err != nil {
+        env.Output.WriteChError("(ClusterEngine::handleServiceObject) "+err.Error())
+      }
+
+    } else {
+      env.Output.WriteChError("(ClusterEngine::handleServiceObject) Service '"+s.GetName()+"' will not be analized to update cluster")
     }
   }
   return nil
@@ -338,6 +350,8 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
   cluster := c.GetCluster()
 
 
+//env.Output.WriteChDebug("(ClusterEngine::updateCluster) "+cluster.String())
+
   for _,nodeFrom := range clusterFrom.GetNodes(){
     // get stored node's data from cluster
     env.Output.WriteChDebug("(ClusterEngine::updateCluster) Received data from node '"+nodeFrom.GetName()+"' will be analized")
@@ -365,9 +379,10 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
             env.Output.WriteChError("(ClusterEngine::updateCluster) "+err.Error())
           } else {
             // update service whem serviceFrom timestamp is greater than the stored one
-            env.Output.WriteChDebug("(ClusterEngine::updateCluster) serviceFrom timestamp:"+strconv.Itoa(int(serviceFrom.GetTimestamp())))
-            env.Output.WriteChDebug("(ClusterEngine::updateCluster) serviceStored timestamp:"+strconv.Itoa(int(serviceStored.GetTimestamp())))
+            env.Output.WriteChDebug("(ClusterEngine::updateCluster) '"+serviceFrom.GetName()+"' serviceFrom timestamp:"+strconv.Itoa(int(serviceFrom.GetTimestamp())))
+            env.Output.WriteChDebug("(ClusterEngine::updateCluster) '"+serviceStored.GetName()+"' serviceStored timestamp:"+strconv.Itoa(int(serviceStored.GetTimestamp())))
             if serviceFrom.GetTimestamp() > serviceStored.GetTimestamp() {
+              env.Output.WriteChDebug("(ClusterEngine::updateCluster) Update service '"+serviceFrom.GetName()+"' on '"+nodeFrom.GetName()+"' timestamp:"+strconv.Itoa(int(serviceStored.GetTimestamp())))
               clusterService.AddServiceNode(nodeFrom.GetName(),serviceFrom)
             }
           }
@@ -382,9 +397,9 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
         
         // get number of checks from the service. Is possible to detect a restart when number of checks is lower than timestamp
         numberOfChecks := len(nodeFromService.GetChecks())
-        env.Output.WriteChDebug("(ClusterEngine::updateCluster) numberOfChecks:"+strconv.Itoa(numberOfChecks))
-        env.Output.WriteChDebug("(ClusterEngine::updateCluster) nodeFrom timestamp:"+strconv.Itoa(int(nodeFrom.GetTimestamp())))
-        env.Output.WriteChDebug("(ClusterEngine::updateCluster) nodeStored timestamp:"+strconv.Itoa(int(nodeStored.GetTimestamp())))
+        env.Output.WriteChDebug("(ClusterEngine::updateCluster) '"+nodeFrom.GetName()+"' numberOfChecks:"+strconv.Itoa(numberOfChecks))
+        env.Output.WriteChDebug("(ClusterEngine::updateCluster) '"+nodeFrom.GetName()+"' nodeFrom timestamp:"+strconv.Itoa(int(nodeFrom.GetTimestamp())))
+        env.Output.WriteChDebug("(ClusterEngine::updateCluster) '"+nodeFrom.GetName()+"' nodeStored timestamp:"+strconv.Itoa(int(nodeStored.GetTimestamp())))
 
         if ( nodeFrom.GetTimestamp() > nodeStored.GetTimestamp()) || int(nodeFrom.GetTimestamp()) <= numberOfChecks {
           env.Output.WriteChDebug("(ClusterEngine::updateCluster) Node '"+nodeFrom.GetName()+"' will be updated")
@@ -393,14 +408,15 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
           //
           // for each service defined on node, check it's status
           for _,serviceFrom := range nodeFrom.GetNodeServices(){
+            env.Output.WriteChError("(ClusterEngine::updateCluster) Review service '"+serviceFrom.GetName()+"'")
             // get cluster service stored for serviceFrom
             if err, clusterService := cluster.GetService(serviceFrom.GetName()); err != nil {
-              env.Output.WriteChWarn("(ClusterEngine::updateCluster) Service '"+serviceFrom.GetName()+"' will be added as controled service")
-              // Create cluster service
               if err, clusterservice := NewClusterService(serviceFrom.GetName()); err != nil {
                 env.Output.WriteChError("(ClusterEngine::updateCluster) "+err.Error())
               } else {
                 c.AddService(clusterservice)
+                env.Output.WriteChDebug("(ClusterEngine::updateCluster) Update service '"+serviceFrom.GetName()+"' on '"+nodeFrom.GetName()+"' timestamp:"+strconv.Itoa(int(serviceFrom.GetTimestamp())))
+                //env.Output.WriteChDebug("(ClusterEngine::updateCluster) Service '"+serviceFrom.GetName()+"' will be updated")
                 clusterservice.AddServiceNode(nodeFrom.GetName(),serviceFrom)
               }
             } else {
@@ -408,8 +424,12 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
               if err, serviceStored := clusterService.GetServiceNode(nodeFrom.GetName()); err != nil{
                 env.Output.WriteChError("(ClusterEngine::updateCluster) "+err.Error())
               } else {
+                env.Output.WriteChDebug("(ClusterEngine::updateCluster) '"+serviceFrom.GetName()+"' serviceFrom timestamp:"+strconv.Itoa(int(serviceFrom.GetTimestamp())))
+                env.Output.WriteChDebug("(ClusterEngine::updateCluster) '"+serviceFrom.GetName()+"' serviceStored timestamp:"+strconv.Itoa(int(serviceStored.GetTimestamp())))
                 // update service whem serviceFrom timestamp is greater than the stored one
                 if serviceFrom.GetTimestamp() > serviceStored.GetTimestamp() {
+                  env.Output.WriteChDebug("(ClusterEngine::updateCluster) Update service '"+serviceFrom.GetName()+"' on '"+nodeFrom.GetName()+"' timestamp:"+strconv.Itoa(int(serviceFrom.GetTimestamp())))
+                  //env.Output.WriteChDebug("(ClusterEngine::updateCluster) Service '"+serviceFrom.GetName()+"' will be updated")
                   clusterService.AddServiceNode(nodeFrom.GetName(),serviceFrom)
                 }            
               }
@@ -429,7 +449,7 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
     } else {
       clusternode.IncreaseTimestamp()
 
-     // Prepare the message to be sent to the cluster
+      // Prepare the message to be sent to the cluster
       if err, message := NewClusterMessage(env.Setup.Hostname, clusternode.GetTimestamp(),cluster); err == nil {
         env.Output.WriteChDebug("(ClusterEngine::updateCluster) New message ready to be sent")
         // transform data as []byte before send it

@@ -16,6 +16,7 @@ package cluster
 
 import (
   "errors"
+  "strconv"
   "verdmell/service"
   "verdmell/utils"
 )
@@ -40,7 +41,7 @@ func NewClusterNode(name string, url string) (error, *ClusterNode) {
 
 	node.SetName(name)
 	node.SetURL(url)
-  node.SetTimestamp(-1)
+  node.SetStatus(-1)
   node.SetTimestamp(0)
   node.SetCandidateForDelation(false)
 
@@ -121,7 +122,7 @@ func (c *ClusterNode) GetNodeServices() map[string] *service.ServiceObject {
 }
 //
 //# SetCandidateForDetelion: attribute from ClusterNode
-func (c *ClusterNode) GetCandidateForDelation() bool {
+func (c *ClusterNode) GetCandidateForDeletion() bool {
   env.Output.WriteChDebug("(ClusterNode::GetCandidateForDetelion)")
   return c.CandidateForDetelion
 }
@@ -129,6 +130,24 @@ func (c *ClusterNode) GetCandidateForDelation() bool {
 //# Specific methods
 //#---------------------------------------------------------------------
 
+//
+//# CopyClusterNode: method copies a cluster node
+func (c *ClusterNode) CopyClusterNode() *ClusterNode {
+  env.Output.WriteChDebug("(ClusterNode::CopyClusterNode)")
+  if c == nil {
+    return nil
+  }
+  
+  node := new(ClusterNode)
+  node.SetName(c.GetName())
+  node.SetURL(c.GetURL())
+  node.SetStatus(c.GetStatus())
+  node.SetTimestamp(c.GetTimestamp())
+  node.SetCandidateForDelation(c.GetCandidateForDeletion())
+  node.SetNodeServices(c.GetNodeServices())
+
+  return node
+}
 //
 //# GetNodeStatus: method sets the Status value for the ServiceObject
 // func (c *ClusterNode) GetNodeStatus() (error, int) {
@@ -158,7 +177,7 @@ func (c *ClusterNode) HasService(s string) (error, *service.ServiceObject) {
 //
 //# AddService: method add a service to cluster node
 func (c *ClusterNode) AddService(s *service.ServiceObject) error {
-  env.Output.WriteChDebug("(ClusterNode::AddService) Add service '"+s.GetName()+"' on node '"+c.GetName()+"'")
+  env.Output.WriteChDebug("(ClusterNode::AddService) Add service '"+s.GetName()+"' on node '"+c.GetName()+"'["+strconv.Itoa(int(s.GetTimestamp()))+"]")
   if err,_ := c.HasService(s.GetName()); err != nil {
     c.NodeServices[s.GetName()] = s
     env.Output.WriteChDebug("(ClusterNode::AddService) Service '"+s.GetName()+"' added on node '"+c.GetName()+"'")

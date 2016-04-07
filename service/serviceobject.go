@@ -122,6 +122,22 @@ func (s *ServiceObject) GetTimestamp() int64 {
 //#---------------------------------------------------------------------
 
 //
+//#CopyServiceObject: method copies the service ojbect
+func (s *ServiceObject) CopyServiceObject() *ServiceObject {
+	if s == nil {
+		return nil
+	}
+
+	serviceObj := new(ServiceObject)
+	serviceObj.SetName(s.GetName())
+	serviceObj.SetDescription(s.GetDescription())
+	serviceObj.SetChecks(s.GetChecks())
+	serviceObj.SetStatus(s.GetStatus())
+	serviceObj.SetTimestamp(s.GetTimestamp())
+	return serviceObj
+}
+
+//
 //#WaitAllSamples: method waits that all checks send at least one sample
 func (s *ServiceObject) WaitAllSamples(seconds int) *ServiceObject {
 	env.Output.WriteChDebug("(ServiceObject::WaitAllSamples) Waiting "+strconv.Itoa(seconds)+"s")
@@ -204,7 +220,7 @@ func (s *ServiceObject) StartServiceObjectSampleChannel(){
 				s.CalculateStatusForService(sam)
 				// start a new routine that will send the service object to interested ones
 				go func() {
- 					serviceEngine := env.GetServiceEngine().(*ServiceEngine)
+					serviceEngine := env.GetServiceEngine().(*ServiceEngine)
 					serviceEngine.sendServicesStatus(s)					
 				}()
 			}
