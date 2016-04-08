@@ -131,7 +131,7 @@ func (s *ServiceEngine) SayHi() {
   env.Output.WriteChInfo("(ServiceEngine::SayHi) Hi! I'm your new service engine instance")
 }
 //
-//# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
+//# StartReceiver: method prepares the system to wait sample and calculate the results for services
 func (s *ServiceEngine) StartReceiver() error {
 	s.inputChannel = make(chan interface{})
 	services := s.GetServices()
@@ -148,7 +148,7 @@ func (s *ServiceEngine) StartReceiver() error {
 				for _,service := range servicesCheck {
 					_,srv := services.GetServiceObject(service)
 					env.Output.WriteChDebug("(ServiceEngine::StartReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
-					go srv.SendToSampleChannel(sample)
+					go srv.RecevieData(sample)
 				}
 			}
 		}
@@ -156,10 +156,22 @@ func (s *ServiceEngine) StartReceiver() error {
 	return nil
 }
 //
-//# SendSample: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
-	env.Output.WriteChDebug("(ServiceEngine::SendSample) Send sample "+sample.String())
+//# ReceiveData: method prepares the system to wait sample and calculate the results for services
+//func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
+func (s *ServiceEngine) ReceiveData(sample *sample.CheckSample) {
+	env.Output.WriteChDebug("(ServiceEngine::ReceiveData) Send sample "+sample.String())
 	s.inputChannel <- sample
+}
+//
+//# SendData: method that send services to other engines
+func (s *ServiceEngine) SendData(o *ServiceObject) error {
+  env.Output.WriteChDebug("(ServiceEngine::SendData)")
+	for c,desc := range s.GetOutputChannels(){
+    env.Output.WriteChDebug("(ServiceEngine::SendData) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' on channel '"+desc+"'")
+		c <- o
+  }
+
+  return nil
 }
 //
 //# AddOutputSampleChan: Add a new channel to write service status
@@ -171,17 +183,6 @@ func (s *ServiceEngine) AddOutputChannel(o chan interface{}, desc string) error 
     channels[o] = desc
   } else {
     return errors.New("(ServiceEngine::AddOutputChannel) You are trying to add an existing channel")
-  }
-
-  return nil
-}
-//
-//# sendServicesStatus: method that send services to other engines
-func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
-  env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
-	for c,desc := range s.GetOutputChannels(){
-    env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' on channel '"+desc+"'")
-		c <- o
   }
 
   return nil

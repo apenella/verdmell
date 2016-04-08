@@ -169,7 +169,7 @@ func RetrieveServices(folder string) *Services{
 					if _,exist := servicesMap[srv.GetName()]; !exist{
 						servicesMap[srv.GetName()] = srv
 						go func() {
-							srv.StartServiceObjectSampleChannel()
+							srv.StartReceiver()
 						}()
 					}
 				// ending message

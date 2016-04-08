@@ -74,11 +74,11 @@ func main() {
 	}
 	// Set the output sample channel for checks as the input's service one
 	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
-	if err := cks.AddOutputChannel(srv.GetInputChannel()); err != nil {
+	if err := cks.AddOutputChannel(srv.GetInputChannel(),"ServiceEngine"); err != nil {
 		env.Output.WriteChWarn(err)
 	}
 	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
-	if err := cks.AddOutputChannel(sam.GetInputChannel()); err != nil {
+	if err := cks.AddOutputChannel(sam.GetInputChannel(),"SampleEngine"); err != nil {
 		env.Output.WriteChWarn(err)
 	}
 
@@ -95,7 +95,7 @@ func main() {
 		}
 
 		webconsole := ui.NewUI(env, listenaddr)
-		if err := cltr.AddOutputChannel(webconsole.GetInputChannel(),"WebConsole"); err != nil {
+		if err := cltr.AddOutputChannel(webconsole.GetInputChannel(),"UI"); err != nil {
 			env.Output.WriteChError(err.Error())
 		}
 		webconsole.AddRoutes(apisys.GetRoutes())

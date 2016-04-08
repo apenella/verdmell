@@ -21,6 +21,7 @@ import(
 	"log"
 	"net/http"
 	"path"
+	"time"
 	"verdmell/environment"
 )
 
@@ -155,6 +156,9 @@ func (u *UI) StartUI(){
 //
 //# StartReceiver: method prepare engine to receive []byte to be sent to client
 func (u *UI) StartReceiver() error {
+	stormController := make(chan bool)
+	enableDataReceiver := true
+
 	if u == nil {
 		return errors.New("(UI::server::StartReceiver) UI has not been initialized")
 	}
@@ -163,6 +167,17 @@ func (u *UI) StartReceiver() error {
 		env.Output.WriteChDebug("(UI::server::StartReceiver) Initializing inputChannel")
 		u.inputChannel = make(chan []byte)
 	}
+
+	stormControllerHandler := func () {
+    env.Output.WriteChDebug("(UI::server::StartReceiver::stormController)")
+    timeout := time.After(time.Duration(30) * time.Second)
+    for{
+      select{
+      case <-timeout:
+				stormController <- true
+      }
+    }
+  }
 
 	env.Output.WriteChDebug("(UI::server::StartReceiver) Starting byte receiver")
   go func() {
@@ -181,9 +196,18 @@ func (u *UI) StartReceiver() error {
 			// send data to clients
 	    case data := <-u.inputChannel:
 	      env.Output.WriteChDebug("(UI::server::StartReceiver) Data received")
-	      for c, _ := range u.clients {
-					c <- data
-				}
+		    if enableDataReceiver {
+					for c, _ := range u.clients {
+						c <- data
+					}
+		    	enableDataReceiver = false
+		    	go stormControllerHandler()
+		    } else {
+		    	env.Output.WriteChDebug("(UI::server::StartReceiver) Data received is not enabled")
+		    }
+			case <- stormController:
+				enableDataReceiver = true
+				env.Output.WriteChDebug("(UI::server::StartReceiver) Data received enabled")
 	    }
     }
   }()

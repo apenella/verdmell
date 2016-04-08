@@ -50,7 +50,7 @@ func NewServiceObject(name string, desc string, checks []string) (error,*Service
 	}
 
 	go func() {
-		serviceObj.StartServiceObjectSampleChannel()
+		serviceObj.StartReceiver()
 	}()
 	
 	env.Output.WriteChDebug("(ServiceObject::NewServiceObject) "+serviceObj.String())
@@ -198,8 +198,8 @@ func (s *ServiceObject) ValidateServiceObject() error {
 }
  
 //
-//# StartServiceObjectCheckSampleInput: methot the serviceObject to receive samples and calculates the service status
-func (s *ServiceObject) StartServiceObjectSampleChannel(){
+//# StartReceiver: methot the serviceObject to receive samples and calculates the service status
+func (s *ServiceObject) StartReceiver(){
 	sampleChan := make(chan *sample.CheckSample)
 	defer close(sampleChan)
 	checksStatusCache := make(map[string] int)
@@ -207,35 +207,33 @@ func (s *ServiceObject) StartServiceObjectSampleChannel(){
 	s.inputSampleChan = sampleChan
 	s.checksStatusCache = checksStatusCache
 	
-	env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) Waiting samles for service '"+s.GetName()+"'")
+	env.Output.WriteChDebug("(ServiceObject::StartReceiver) Waiting samles for service '"+s.GetName()+"'")
 	for {
 		select{
 		case sam := <- s.inputSampleChan:
-			env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) New sample arrived for '"+sam.GetCheck()+"' to service '"+s.GetName()+"'")
+			env.Output.WriteChDebug("(ServiceObject::StartReceiver) New sample arrived for '"+sam.GetCheck()+"' to service '"+s.GetName()+"'")
 
 			statusCachedValue, exist := s.checksStatusCache[sam.GetCheck()]
 
 			if !exist || statusCachedValue != sam.GetExit() {
-				env.Output.WriteChDebug("(ServiceObject::StartServiceObjectCheckSampleInput) The '"+sam.GetCheck()+"' status has changed, and service status have to be calculated.")
+				env.Output.WriteChDebug("(ServiceObject::StartReceiver) The '"+sam.GetCheck()+"' status has changed, and service status have to be calculated.")
 				s.CalculateStatusForService(sam)
 				// start a new routine that will send the service object to interested ones
 				go func() {
 					serviceEngine := env.GetServiceEngine().(*ServiceEngine)
-					serviceEngine.sendServicesStatus(s)					
+					serviceEngine.SendData(s)					
 				}()
 			}
 
 		}
 	}
 }
-
 //
 //# SendToSampleChannel: method sends a sample to the sample channel
-func (s *ServiceObject) SendToSampleChannel(sample *sample.CheckSample){
-	env.Output.WriteChDebug("(ServiceObject::SendToSampleChannel) New sample to send for '"+sample.GetCheck()+"' to service '"+s.GetName()+"'")
+func (s *ServiceObject) RecevieData(sample *sample.CheckSample){
+	env.Output.WriteChDebug("(ServiceObject::ReceiveData) New sample to send for '"+sample.GetCheck()+"' to service '"+s.GetName()+"'")
 	s.inputSampleChan <- sample
 }
-
 //
 //# SendToSampleChannel: method sends a sample to the sample channel
 func (s *ServiceObject) CalculateStatusForService(sam *sample.CheckSample){
