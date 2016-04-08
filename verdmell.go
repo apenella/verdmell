@@ -69,7 +69,7 @@ func main() {
 	//
 	// Add the cluster engine's input channel as a service engine's output channel
 	// That's the way how cluster engine will receive either node or services status
-	if err :=	srv.AddOutputChannel(cltr.GetInputChannel()); err != nil {
+	if err := srv.AddOutputChannel(cltr.GetInputChannel(),"ClusterEngine"); err != nil {
 		env.Output.WriteChWarn(err)
 	}
 	// Set the output sample channel for checks as the input's service one
@@ -95,7 +95,7 @@ func main() {
 		}
 
 		webconsole := ui.NewUI(env, listenaddr)
-		if err := cltr.AddOutputChannel(webconsole.GetInputChannel()); err != nil {
+		if err := cltr.AddOutputChannel(webconsole.GetInputChannel(),"WebConsole"); err != nil {
 			env.Output.WriteChError(err.Error())
 		}
 		webconsole.AddRoutes(apisys.GetRoutes())

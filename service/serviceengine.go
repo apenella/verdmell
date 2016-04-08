@@ -31,7 +31,7 @@ var env *environment.Environment
 type ServiceEngine struct{
 	Ss *Services `json:"servicesroot"`
 	inputChannel chan interface{} `json:"-"`
-	outputChannels map[chan interface{}] bool `json: "-"`
+	outputChannels map[chan interface{}] string `json: "-"`
 }
 
 //
@@ -70,7 +70,7 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	}
 
 	// Initialize the OutputChannels
-  	sys.outputChannels = make(map[chan interface{}] bool)
+  sys.outputChannels = make(map[chan interface{}] string)
 
 	// start the sample receiver
 	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) StartReceiver")
@@ -99,7 +99,7 @@ func (s *ServiceEngine) SetInputChannel(c chan interface{}) {
 }
 //
 //# SetOutputChannels: method sets the channels to write service status
-func (s *ServiceEngine) SetOutputChannels(o map[chan interface{}] bool) {
+func (s *ServiceEngine) SetOutputChannels(o map[chan interface{}] string) {
   env.Output.WriteChDebug("(ServiceEngine::SetOutputChannels)")
   s.outputChannels = o
 }
@@ -116,7 +116,7 @@ func (s *ServiceEngine) GetInputChannel() chan interface{} {
 }
 //
 //# GetOutputChannels: methods return the channels to write samples
-func (s *ServiceEngine) GetOutputChannels() map[chan interface{}] bool {
+func (s *ServiceEngine) GetOutputChannels() map[chan interface{}] string {
   env.Output.WriteChDebug("(ServiceEngine::GetOutputChannels)")
   return s.outputChannels
 }
@@ -163,12 +163,12 @@ func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
 }
 //
 //# AddOutputSampleChan: Add a new channel to write service status
-func (s *ServiceEngine) AddOutputChannel(o chan interface{}) error {
+func (s *ServiceEngine) AddOutputChannel(o chan interface{}, desc string) error {
   env.Output.WriteChDebug("(ServiceEngine::AddOutputChannel)")
 
   channels := s.GetOutputChannels()
   if _, exist := channels[o]; !exist {
-    channels[o] = true
+    channels[o] = desc
   } else {
     return errors.New("(ServiceEngine::AddOutputChannel) You are trying to add an existing channel")
   }
@@ -179,8 +179,8 @@ func (s *ServiceEngine) AddOutputChannel(o chan interface{}) error {
 //# sendServicesStatus: method that send services to other engines
 func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
   env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
-	for c,_ := range s.GetOutputChannels(){
-    env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' into channel")
+	for c,desc := range s.GetOutputChannels(){
+    env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' on channel '"+desc+"'")
 		c <- o
   }
 
