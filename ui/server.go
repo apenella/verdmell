@@ -32,10 +32,11 @@ var ui *UI = nil
 
 type UI struct {
 	Listenaddr string
+	ClientStormControlPeriod int
+	
 	router *mux.Router
 	templates *template.Template
 	inputChannel chan []byte
-
 	clients map[chan []byte]bool
 	newClients chan chan []byte
 	defunctClients chan chan []byte
@@ -58,6 +59,7 @@ func NewUI(e *environment.Environment, listenaddr string) *UI {
 	if ui == nil {
 		ui = new(UI)
 		ui.SetListenaddr(listenaddr)
+		ui.SetClientStormControlPeriod(20)
 		ui.SetRouter(mux.NewRouter().StrictSlash(true))
 		ui.SetTemplates(template.Must(template.ParseFiles(index,scripts,style,header,content,footer)))
 		ui.SetInputChannel(make(chan []byte))
@@ -85,6 +87,12 @@ func (u *UI) SetListenaddr(l string){
 	u.Listenaddr = l
 }
 //
+//# SetClientStormControlPeriod
+func (u *UI) SetClientStormControlPeriod(t int){
+	env.Output.WriteChDebug("(UI::server::SetClientStormControlPeriod) Set value")
+	u.ClientStormControlPeriod = t
+}
+//
 //# SetRouter
 func (u *UI) SetRouter(r *mux.Router){
 	env.Output.WriteChDebug("(UI::server::SetRouter) Set value")
@@ -107,6 +115,12 @@ func (u *UI) SetInputChannel(i chan []byte){
 func (u *UI) GetListenaddr() string {
 	env.Output.WriteChDebug("(UI::server::GetListenaddr) Get value")
 	return u.Listenaddr
+}
+//
+//# GetClientStormControlPeriod
+func (u *UI) GetClientStormControlPeriod() int {
+	env.Output.WriteChDebug("(UI::server::GetClientStormControlPeriod) Get value")
+	return u.ClientStormControlPeriod
 }
 //
 //# GetRouter
@@ -158,19 +172,22 @@ func (u *UI) StartUI(){
 func (u *UI) StartReceiver() error {
 	stormController := make(chan bool)
 	enableDataReceiver := true
+	var data []byte
 
+	// validate ui instance
 	if u == nil {
 		return errors.New("(UI::server::StartReceiver) UI has not been initialized")
 	}
-
+	// validate inputChannel status and make it if its nil
 	if u.inputChannel == nil {
 		env.Output.WriteChDebug("(UI::server::StartReceiver) Initializing inputChannel")
 		u.inputChannel = make(chan []byte)
 	}
 
+	// goroutine to avoid message storm to clients
 	stormControllerHandler := func () {
     env.Output.WriteChDebug("(UI::server::StartReceiver::stormController)")
-    timeout := time.After(time.Duration(30) * time.Second)
+    timeout := time.After(time.Duration(u.GetClientStormControlPeriod()) * time.Second)
     for{
       select{
       case <-timeout:
@@ -194,18 +211,28 @@ func (u *UI) StartReceiver() error {
 				delete(u.clients, c)
 				close(c)
 			// send data to clients
-	    case data := <-u.inputChannel:
+	    case data = <-u.inputChannel:
 	      env.Output.WriteChDebug("(UI::server::StartReceiver) Data received")
 		    if enableDataReceiver {
 					for c, _ := range u.clients {
 						c <- data
 					}
+					// enable receiver to receive new samples
 		    	enableDataReceiver = false
+		    	// drain data once it has been sent
+		    	data = nil
 		    	go stormControllerHandler()
 		    } else {
-		    	env.Output.WriteChDebug("(UI::server::StartReceiver) Data received is not enabled")
+		    	env.Output.WriteChDebug("(UI::server::StartReceiver) Data received will be buffered")
 		    }
 			case <- stormController:
+				// control whether new data has been received during strom controling
+				if data != nil {
+					env.Output.WriteChDebug("(UI::server::StartReceiver) Buffered data will be sent")
+					for c, _ := range u.clients {
+						c <- data
+					}
+				}
 				enableDataReceiver = true
 				env.Output.WriteChDebug("(UI::server::StartReceiver) Data received enabled")
 	    }
