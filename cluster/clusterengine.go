@@ -20,6 +20,9 @@ import (
   "strconv"
   "strings"
   "net/http"
+  "math"
+  "math/rand"
+  "time"
 	"verdmell/environment"
   "verdmell/service"
   "verdmell/utils"
@@ -83,7 +86,7 @@ func NewClusterEngine(e *environment.Environment) (error, *ClusterEngine){
 
   // Initialize Sync 
   cluster.inputSyncChannel = make(chan []byte)
-  //cluster.AddOutputChannel(cluster.inputSyncChannel,"myself")
+  cluster.AddOutputChannel(cluster.inputSyncChannel,"myself")
   cluster.StartClusterSync()
 
   // the cluster engine is set to environment
@@ -144,7 +147,7 @@ func (c *ClusterEngine) SayHi() {
   env.Output.WriteChInfo("(ClusterEngine::SayHi) Hi! I'm your Cluster Engine instance.")
 }
 //
-//# AddNode: Add a new node into the cluster
+//# AddNode: Add a new node into cluster
 func (c *ClusterEngine) AddNode(n *ClusterNode) error {
   env.Output.WriteChDebug("(ClusterEngine::AddNode) Add node '"+n.Name+"' to cluster")
   
@@ -154,6 +157,32 @@ func (c *ClusterEngine) AddNode(n *ClusterNode) error {
   }
 
   return c.Cluster.AddNode(n)
+}
+//
+//# DeleteNode: delete node from cluster
+func (c *ClusterEngine) DeleteNode(nodename string) error {
+  env.Output.WriteChDebug("(ClusterEngine::AddNode) DeleteNode node '"+nodename+"' from cluster")
+  var node *ClusterNode
+  var err error
+
+  if c.Cluster == nil {
+    return errors.New("(ClusterEngine::DeleteNode) Cluster has not been initialized")
+  }
+  if err, node = c.Cluster.GetNode(nodename); err != nil {
+    return errors.New("(ClusterEngine::DeleteNode) "+err.Error())
+  }
+  // delete node from cluster
+  c.Cluster.DeleteNode(nodename)
+  // deassign node from services
+  for servicename,_ := range node.GetNodeServices() {
+    _, service := c.Cluster.GetService(servicename)
+    service.DeleteServiceNode(nodename)
+    // delete service from cluster when service has no node 
+    if service.CountServiceNodes() < 1 {
+      c.Cluster.DeleteService(servicename)
+    }
+  }
+  return nil
 }
 //
 //# AddNode: Add a new node into the cluster
@@ -302,43 +331,38 @@ func (c *ClusterEngine) handleClusterMessage(data []byte) error {
     return errors.New("(ClusterMessage::handleClusterMessage) "+err.Error())
   } else {
     env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Message from '"+message.GetFrom()+"'")
-    // Decoding data from message
-    if err, messageData := DecodeData(message.GetData()); err != nil {
-      // When data coul not be decoded an error is thrown
-      msg := "(ClusterEngine::handleClusterMessage) "+err.Error()
-      env.Output.WriteChError(msg)
-      return errors.New(msg)
-    } else {
-      cluster := c.GetCluster()
+    
+    cluster := c.GetCluster()
+    messageData := message.GetData()
+    //
+    // Read data from the message: 
+    // get the reviced message timestamp
+    messageTimestamp := message.GetTimestamp()
+    // get sender clusternode's stored data
+    if err, clusternode := cluster.GetNode(message.GetFrom()); err != nil {
+      env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Received a message from new node '"+message.GetFrom()+"', and will be added on cluster")
       //
-      // Read data from the message: 
-      // get the reviced message timestamp
-      messageTimestamp := message.GetTimestamp()
-      // get sender clusternode's stored data
-      if err, clusternode := cluster.GetNode(message.GetFrom()); err != nil {
-        env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Received a message from new node '"+message.GetFrom()+"', and will be added on cluster")
-        //
+      // update information from nodes
+      if err := c.updateCluster(messageData); err != nil {
+        env.Output.WriteChError("(ClusterEngine::handleClusterMessage) "+err.Error())
+      }
+      //
+      //update services
+    } else {
+      env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Node '"+message.GetFrom()+"' has data on cluster")
+      // get received node from stored timestamp
+      nodeTimestamp := clusternode.GetTimestamp()
+      //
+      // if message timestamp is greater than nodeTimestamp means that the information from this node is newer
+      if messageTimestamp > nodeTimestamp {
         // update information from nodes
+        env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Before updateCluster")
         if err := c.updateCluster(messageData); err != nil {
           env.Output.WriteChError("(ClusterEngine::handleClusterMessage) "+err.Error())
         }
-        //
-        //update services
-      } else {
-        env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Node '"+message.GetFrom()+"' has data on cluster")
-        // get received node from stored timestamp
-        nodeTimestamp := clusternode.GetTimestamp()
-        //
-        // if message timestamp is greater than nodeTimestamp means that the information from this node is newer
-        if messageTimestamp > nodeTimestamp {
-          // update information from nodes
-          env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Before updateCluster")
-          if err := c.updateCluster(messageData); err != nil {
-            env.Output.WriteChError("(ClusterEngine::handleClusterMessage) "+err.Error())
-          }
-        }
       }
     }
+    
   }
   return nil
 }
@@ -434,7 +458,7 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
       if err, message := NewClusterMessage(env.Setup.Hostname, clusternode.GetTimestamp(),cluster); err == nil {
         env.Output.WriteChDebug("(ClusterEngine::updateCluster) New message ready to be sent")
         // transform data as []byte before send it
-        if err, messageBytes := utils.InterfaceToBytes(message); err == nil {
+        if err, messageBytes := utils.ObjectToJsonByte(message); err == nil {
           env.Output.WriteChDebug("(ClusterEngine::updateCluster) Send data to outputChannels")
           // send data to the outputChannels
           c.SendData(messageBytes)
@@ -456,7 +480,7 @@ func (c *ClusterEngine) GetClusterInfo() (error,[]byte) {
     return errors.New("(ClusterEngine::GetClusterData) Cluster object has not been initialized"),nil
   }
   
-  return nil,utils.ObjectToJsonByte(c.GetCluster())
+  return utils.ObjectToJsonByte(c.GetCluster())
 }
 //
 //# GetClusterNodes: get all nodes from cluster
@@ -468,7 +492,7 @@ func (c *ClusterEngine) GetClusterNodes() (error,[]byte) {
     return errors.New("(ClusterEngine::GetClusterNodes) Cluster object has not been initialized"),nil
   }
 
-  return nil,utils.ObjectToJsonByte(cluster.GetNodes())
+  return utils.ObjectToJsonByte(cluster.GetNodes())
 }
 //
 //# GetClusterServices: get all nodes from cluster
@@ -480,7 +504,7 @@ func (c *ClusterEngine) GetClusterServices() (error,[]byte) {
     return errors.New("(ClusterEngine::GetClusterServices) Cluster object has not been initialized"),nil
   }
 
-  return nil,utils.ObjectToJsonByte(cluster.GetServices())
+  return utils.ObjectToJsonByte(cluster.GetServices())
 }
 
 //
@@ -489,8 +513,29 @@ func (c *ClusterEngine) GetClusterServices() (error,[]byte) {
 
 //# SelectNodesToSync
 func (c *ClusterEngine) SelectNodesToSync() (error, map[string]*ClusterNode) {
+  env.Output.WriteChDebug("(ClusterEngine::SelectNodesToSync)")
   cluster := c.GetCluster()
-  return nil,cluster.GetNodes()
+  selectedNodes := make(map[string]*ClusterNode)
+  numberOfNodes := len(cluster.GetNodes())
+  numberOfSelectedNodes := int(math.Log2(float64(numberOfNodes)))
+  clusternodes := make([]string,numberOfNodes)
+  env.Output.WriteChDebug("(ClusterEngine::SelectNodesToSync) "+strconv.Itoa(numberOfSelectedNodes))
+
+  rand.Seed(time.Now().UTC().UnixNano())
+  it := 0
+  for nodename,_ := range cluster.GetNodes() {
+    clusternodes[it] = nodename
+    it++
+  }
+
+  for i := 0; i < numberOfSelectedNodes; i++ {
+    nodename := clusternodes[rand.Intn(numberOfNodes)]
+    env.Output.WriteChDebug("(ClusterEngine::SelectNodesToSync) Node '"+nodename+"' has been selected")    
+    _,n := cluster.GetNode(nodename)
+    selectedNodes[nodename] = n
+  }
+  return nil, selectedNodes
+//  return nil,cluster.GetNodes()
 }
 
 //
@@ -514,8 +559,11 @@ func (c *ClusterEngine) StartClusterSync() error {
               env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) endpoint: "+e[1])
               if err := utils.CheckEndpoint("tcp",e[1]); err != nil {
                 env.Output.WriteChError("(ClusterEngine::StartClusterSync) "+err.Error())
-                clusternode.SetCandidateForDelation(true)
+                clusternode.SetCandidateForDeletion(true)
               } else {
+                if clusternode.GetCandidateForDeletion() == true {
+                  clusternode.SetCandidateForDeletion(false)
+                }
                 if err := c.SendSyncMessage(clusternode.GetURL(),message); err != nil {
                   env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) "+err.Error())
                 }

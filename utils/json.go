@@ -45,9 +45,9 @@ func ObjectToJsonStringPretty(object interface{}) (error,string) {
 }
 //
 //# ObjectToJsonByte: converst any object to a json byte
-func ObjectToJsonByte(object interface{}) []byte {
+func ObjectToJsonByte(object interface{}) (error, []byte) {
   jsoned, _ := json.Marshal(object)
-  return jsoned
+  return nil, jsoned
 }
 
 //#######################################################################################################

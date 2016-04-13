@@ -28,7 +28,7 @@ import (
 type ClusterService struct{
 	Name string `json:"name"`
   Status int `json:"status"`
-	ServiceNodes map[string]*service.ServiceObject `json:"nodes"`
+	ServiceNodes map[string] *service.ServiceObject `json:"nodes"`
 	CandidateForDelation bool `json:"candidatefordeletion"`
 }
 //
@@ -123,7 +123,19 @@ func (c *ClusterService) GetServiceNode(n string) (error, *service.ServiceObject
     return nil, srv    
   }
 }
-
+//
+//# DeleteServiceNode: method deletes a node from cluster service
+func (c *ClusterService) DeleteServiceNode(node string) error {
+  env.Output.WriteChDebug("(ClusterNode::DeleteService) Delete node '"+node+"' on service '"+c.GetName()+"'")
+  delete(c.ServiceNodes, node)
+  return nil
+}
+//
+//# CountServiceNodes: method deletes a node from cluster service
+func (c *ClusterService) CountServiceNodes() int {
+  env.Output.WriteChDebug("(ClusterNode::CountServiceNodes) Count nodes on service '"+c.GetName()+"'")
+  return len(c.ServiceNodes)
+}
 //
 //# CalculateStatusForClusterService: method sends a sample to the sample channel
 func (c *ClusterService) CalculateStatusForClusterService() error {

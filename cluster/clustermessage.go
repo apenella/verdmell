@@ -28,12 +28,12 @@ import(
 type ClusterMessage struct{
 	From string `json:"from"`
 	Timestamp int64 `json:"timestamp"`
-	Data []byte	`json:"data"`
+	Data *Cluster `json:"data"`
 }
 
 //
 //# NewClusterMessage: return a CheckMessage
-func NewClusterMessage(f string, t int64, i interface{}) (error, *ClusterMessage){
+func NewClusterMessage(f string, t int64, c *Cluster) (error, *ClusterMessage){
 	env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) Creating a new ClusterMessage")
 
 	message := new(ClusterMessage)
@@ -45,32 +45,12 @@ func NewClusterMessage(f string, t int64, i interface{}) (error, *ClusterMessage
 		return errors.New(msg),nil
 	}
 	// check the cluster state
-	if i == nil {
+	if c == nil {
 		msg := "(ClusterMessage::NewClusterMessage) The message requieres not empty Cluster"
 		env.Output.WriteChError(msg)
 		return errors.New(msg),nil	
 	}
-
-	switch i.(type) {
-	case []byte:
-		env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) []byte type arrived")
-		message.SetData(i.([]byte))
-	case *Cluster:
-		env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) *Cluster type arrived")
-		if err, data := utils.InterfaceToBytes(i); err != nil {
-			msg := "(ClusterMessage::NewClusterMessage) "+err.Error()
-			env.Output.WriteChError(msg)
-			return errors.New(msg),nil		
-		} else {
-			message.SetData(data)
-		}
-	default:
-		msg := "(ClusterMessage::NewClusterMessage) Not valid type to construct a message"
-		env.Output.WriteChError(msg)
-		return errors.New(msg),nil
-	}
-
-	
+	message.SetData(c)	
 	message.SetFrom(f)
 	message.SetTimestamp(t)
 	
@@ -92,7 +72,7 @@ func (m *ClusterMessage) SetTimestamp(t int64) {
 }
 //
 //# SetData: attribute from ClusterMessage
-func (m *ClusterMessage) SetData(d []byte) {
+func (m *ClusterMessage) SetData(d *Cluster) {
 	env.Output.WriteChDebug("(ClusterMessage::SetData)")
 	m.Data = d
 }
@@ -111,7 +91,7 @@ func (m *ClusterMessage) GetTimestamp() int64 {
 }
 //
 //# GetData: attribute from ClusterMessage
-func (m *ClusterMessage) GetData() []byte {
+func (m *ClusterMessage) GetData() *Cluster {
 	env.Output.WriteChDebug("(ClusterMessage::GetData)")
 	return m.Data
 }

@@ -222,7 +222,7 @@ func (sys *ServiceEngine) GetAllServices() (error, []byte) {
 	}
 
 	//return ss.String()
-	return nil, utils.ObjectToJsonByte(services)
+	return utils.ObjectToJsonByte(services)
 }
 //
 //# GetServices: return all information about a service
@@ -251,7 +251,7 @@ func (sys *ServiceEngine) GetService(name string) (error, []byte) {
 		return errors.New(msg), nil
 	}
 
-	return nil, utils.ObjectToJsonByte(obj)
+	return utils.ObjectToJsonByte(obj)
 }
 
 //

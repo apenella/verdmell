@@ -43,7 +43,7 @@ func NewClusterNode(name string, url string) (error, *ClusterNode) {
 	node.SetURL(url)
   node.SetStatus(-1)
   node.SetTimestamp(0)
-  node.SetCandidateForDelation(false)
+  node.SetCandidateForDeletion(false)
 
   node.NodeServices = make( map[string]*service.ServiceObject )
 
@@ -86,8 +86,8 @@ func (c *ClusterNode) SetNodeServices(s map[string] *service.ServiceObject) {
 }
 //
 //# SetCandidateForDetelion: attribute from ClusterNode
-func (c *ClusterNode) SetCandidateForDelation(d bool) {
-  env.Output.WriteChDebug("(ClusterNode::SetCandidateForDelation)")
+func (c *ClusterNode) SetCandidateForDeletion(d bool) {
+  env.Output.WriteChDebug("(ClusterNode::SetCandidateForDeletion)")
   c.CandidateForDetelion = d
 }
 //
@@ -143,24 +143,11 @@ func (c *ClusterNode) CopyClusterNode() *ClusterNode {
   node.SetURL(c.GetURL())
   node.SetStatus(c.GetStatus())
   node.SetTimestamp(c.GetTimestamp())
-  node.SetCandidateForDelation(c.GetCandidateForDeletion())
+  node.SetCandidateForDeletion(c.GetCandidateForDeletion())
   node.SetNodeServices(c.GetNodeServices())
 
   return node
 }
-//
-//# GetNodeStatus: method sets the Status value for the ServiceObject
-// func (c *ClusterNode) GetNodeStatus() (error, int) {
-//   env.Output.WriteChDebug("(ClusterNode::GetNodeStatus)")
-//   var err error
-//   var service *service.ServiceObject
-
-//   if err, service = c.HasService(c.GetName()); err != nil {
-//     return errors.New("(ClusterNode::GetNodeStatus) "+err.Error()),-1
-//   }
-
-//   return nil, service.GetStatus()
-// }
 //
 //# HasService: method return if a service is defined on cluster node
 func (c *ClusterNode) HasService(s string) (error, *service.ServiceObject) {
@@ -188,6 +175,14 @@ func (c *ClusterNode) AddService(s *service.ServiceObject) error {
   } else {
     return err
   }
+
+  return nil
+}
+//
+//# DeleteService: method deletes a service to cluster node
+func (c *ClusterNode) DeleteService(service string) error {
+  env.Output.WriteChDebug("(ClusterNode::DeleteService) Delete service '"+service+"' on node '"+c.GetName()+"'")
+  delete(c.NodeServices,service)
 
   return nil
 }

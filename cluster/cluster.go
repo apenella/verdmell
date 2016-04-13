@@ -94,7 +94,7 @@ func (c *Cluster) GetNode(name string) (error, *ClusterNode) {
   }
 }
 //
-//# AddNode: Add a new node into the cluster
+//# AddNode: Add a new node into cluster
 func (c *Cluster) AddNode(n *ClusterNode) error {
   env.Output.WriteChDebug("(Cluster::AddNode) Add node '"+n.Name+"' to cluster")
 
@@ -112,6 +112,15 @@ func (c *Cluster) AddNode(n *ClusterNode) error {
   }
   c.Nodes[n.Name] = n
 
+  return nil
+}
+//
+//# DeleteNode: Delete node from cluster
+func (c *Cluster) DeleteNode(node string) error {
+  if c == nil {
+      return errors.New("(Cluster::DeleteNode) Cluster not initialized")    
+  }
+  delete(c.Nodes,node)
   return nil
 }
 //
@@ -148,7 +157,15 @@ func (c *Cluster) AddService(s *ClusterService) error {
 
   return nil
 }
-
+//
+//# DeleteService: Delete service from cluster
+func (c *Cluster) DeleteService(service string) error {
+  if c == nil {
+      return errors.New("(Cluster::DeleteService) Cluster not initialized")    
+  }
+  delete(c.Services,service)
+  return nil
+}
 
 //#
 //# Common methods

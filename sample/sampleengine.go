@@ -173,7 +173,7 @@ func (sys *SampleEngine) GetAllSamples() (error, []byte) {
     sample[name] = obj.Sample
   }
 
-  return nil,utils.ObjectToJsonByte(sample) 
+  return utils.ObjectToJsonByte(sample) 
 }
 //
 //# GetSampleForCheck: return the status of all checks
@@ -188,7 +188,7 @@ func (sys *SampleEngine) GetSampleForCheck(name string) (error, []byte) {
     return errors.New(msg), nil
   }
 
-  return nil,utils.ObjectToJsonByte(sample)
+  return utils.ObjectToJsonByte(sample)
 }
 
 

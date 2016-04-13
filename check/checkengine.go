@@ -332,7 +332,7 @@ func (c *CheckEngine) GetAllChecks() (error,[]byte) {
     return errors.New(msg), nil
   } 
 
-  return nil,utils.ObjectToJsonByte(checks)
+  return utils.ObjectToJsonByte(checks)
 }
 //
 //# GetCheck: return a checks
@@ -362,7 +362,7 @@ func (c *CheckEngine) GetCheck(name string) (error,[]byte) {
     return errors.New(msg), nil
   }
 
-  return nil,utils.ObjectToJsonByte(obj)
+  return utils.ObjectToJsonByte(obj)
 }
 //
 //# GetAllCheckgroups: return all checks
@@ -376,7 +376,7 @@ func (c *CheckEngine) GetAllCheckgroups() (error,[]byte) {
     return errors.New(msg), nil
   }
 
-  return nil,utils.ObjectToJsonByte(groups)
+  return utils.ObjectToJsonByte(groups)
 }
 //
 //# GetCheckgroup: return a checks
@@ -406,7 +406,7 @@ func (c *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
     return errors.New(msg), nil
   }
   
-  return nil,utils.ObjectToJsonByte(obj)
+  return utils.ObjectToJsonByte(obj)
 }
 
 //#

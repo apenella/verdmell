@@ -172,12 +172,11 @@ func (e *Environment) GetNodeInfo() (error,[]byte) {
 	environment["samples"] = e.GetSampleEngine()
 	environment["services"] = e.GetServiceEngine()
 
-	return nil,utils.ObjectToJsonByte(environment)
-	
+	return utils.ObjectToJsonByte(environment)
 }
 //
 //# GetCluster return all cluster nodes
-func (e *Environment) GetCluster() []byte{
+func (e *Environment) GetCluster() (error,[]byte) {
 	return utils.ObjectToJsonByte(e.Setup.Cluster)
 }
 //
