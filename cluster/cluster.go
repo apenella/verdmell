@@ -16,6 +16,7 @@ package cluster
 
 import (
   "errors"
+  "math"
 	"verdmell/utils"
 )
 
@@ -24,10 +25,12 @@ import (
 //# Cluster struct:
 //# Cluster is a set of nodes
 type Cluster struct{
-  //map to store the nodes that belong to the cluster
+  // map to store the nodes that belong to the cluster
   Nodes map[string] *ClusterNode `json:"nodes"`
-  //map to store the services that belong to the cluster
-  Services map[string] *ClusterService `json:"services"` 
+  // map to store the services that belong to the cluster
+  Services map[string] *ClusterService `json:"services"`
+  // map to control candidates for deletion
+  candidatesForDeletion map[string]map[string]bool
 }
 
 //
@@ -36,9 +39,7 @@ func NewCluster() (error, *Cluster) {
 // func NewCluster(n map[string]*ClusterNode, s map[string]string) (error, *Cluster) {
   env.Output.WriteChDebug("(Cluster::NewCluster)")
   cluster := new(Cluster)
-
-  // cluster.SetNodes(n)
-  // cluster.SetServices(s)
+  cluster.candidatesForDeletion = make(map[string]map[string]bool)
 
 	return nil, cluster
 }
@@ -54,7 +55,6 @@ func (c *Cluster) SetNodes(nodes map[string]*ClusterNode) {
   env.Output.WriteChDebug(nodes)
   c.Nodes = nodes
 }
-
 //
 //# GetNodes: get attribute from Cluster
 func (c *Cluster) GetNodes() map[string]*ClusterNode {
@@ -68,12 +68,24 @@ func (c *Cluster) SetServices(services map[string] *ClusterService) {
   env.Output.WriteChDebug("(Cluster::SetServices) Set Services' value")
   c.Services = services
 }
-
 //
 //# GetServices: get attribute from Cluster
 func (c *Cluster) GetServices() map[string] *ClusterService {
   env.Output.WriteChDebug("(Cluster::GetNodes) Get Services' value")
   return c.Services
+}
+
+//
+//# GetCandidatesForDeletion
+func (c *Cluster) GetCandidatesForDeletion() map[string]map[string]bool {
+  env.Output.WriteChDebug("(Cluster::GetCandidatesForDeletion) Get value")
+  return c.candidatesForDeletion
+}
+//
+//# SetCandidatesForDeletion
+func (c *Cluster) SetCandidatesForDeletion(cs map[string]map[string]bool ) {
+  env.Output.WriteChDebug("(Cluster::SetCandidatesForDeletion) Set value")
+  c.candidatesForDeletion = cs
 }
 
 //#
@@ -166,7 +178,39 @@ func (c *Cluster) DeleteService(service string) error {
   delete(c.Services,service)
   return nil
 }
+//
+//# AddCandidatesForDeletion
+func (c *Cluster) ConsensusForDeletion(candidate string, from string, reached bool) (error, bool) {
+  env.Output.WriteChDebug("(Cluster::ConsensusForDeletion)")
+  // consensus will determine how many nodes are required to determine if a node have to be deleted
+  consensusNumber := int(math.Log2(float64(len(c.GetNodes()))))
+  deletable := false
 
+  // get information from candidate
+  if exist,_ := c.candidatesForDeletion[candidate][from]; !exist {
+    // if candidate is not reached then it should be subject for discussion
+    if !reached {
+      env.Output.WriteChDebug("(Cluster::ConsensusForDeletion) Node '"+candidate+"' is unreachable from '"+from+"'")
+      if c.candidatesForDeletion[candidate] == nil {
+        c.candidatesForDeletion[candidate] = make(map[string]bool)
+      }  
+      c.candidatesForDeletion[candidate][from] = true
+      // node is deletable when number of nodes which candidate is unreachable is over consensus
+      if len(c.candidatesForDeletion[candidate]) > consensusNumber {
+        env.Output.WriteChDebug("(Cluster::ConsensusForDeletion) Node '"+candidate+"' will be deleted'")
+        deletable = true
+      }
+    }
+  } else {
+    // candidate already exist
+    if reached {
+      env.Output.WriteChDebug("(Cluster::ConsensusForDeletion) Node '"+candidate+"' is already reachable from '"+from+"'")
+      // should be delete node as an unreached from
+      delete(c.candidatesForDeletion[candidate],from)
+    }
+  }
+  return nil, deletable
+}
 //#
 //# Common methods
 //#---------------------------------------------------------------------

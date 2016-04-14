@@ -294,7 +294,6 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
     }
     // modify when is required
     if modify {
-
       newclusternode = clusternode.CopyClusterNode()
       newclusternode.AddService(s.CopyServiceObject())
       newclusternode.IncreaseTimestamp()
@@ -310,10 +309,9 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
 
       env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Cluster prepared to be updated with service '"+s.GetName()+"'")
       env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Before updateCluster")
-      if err := c.updateCluster(cluster); err != nil {
+      if err := c.updateCluster(env.Whoami(),cluster); err != nil {
         env.Output.WriteChError("(ClusterEngine::handleServiceObject) "+err.Error())
       }
-
     } else {
       env.Output.WriteChError("(ClusterEngine::handleServiceObject) Service '"+s.GetName()+"' will not be analized to update cluster")
     }
@@ -343,7 +341,7 @@ func (c *ClusterEngine) handleClusterMessage(data []byte) error {
       env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Received a message from new node '"+message.GetFrom()+"', and will be added on cluster")
       //
       // update information from nodes
-      if err := c.updateCluster(messageData); err != nil {
+      if err := c.updateCluster(clusternode.GetName(),messageData); err != nil {
         env.Output.WriteChError("(ClusterEngine::handleClusterMessage) "+err.Error())
       }
       //
@@ -357,7 +355,7 @@ func (c *ClusterEngine) handleClusterMessage(data []byte) error {
       if messageTimestamp > nodeTimestamp {
         // update information from nodes
         env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) Before updateCluster")
-        if err := c.updateCluster(messageData); err != nil {
+        if err := c.updateCluster(clusternode.GetName(),messageData); err != nil {
           env.Output.WriteChError("(ClusterEngine::handleClusterMessage) "+err.Error())
         }
       }
@@ -368,7 +366,7 @@ func (c *ClusterEngine) handleClusterMessage(data []byte) error {
 }
 //
 //# updateCluster: method to update stored nodes information
-func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
+func (c *ClusterEngine) updateCluster(from string, clusterFrom *Cluster) error {
   env.Output.WriteChDebug("(ClusterEngine::updateCluster)")
   modify := false
   cluster := c.GetCluster()
@@ -398,8 +396,6 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
 
         if ( nodeFrom.GetTimestamp() > nodeStored.GetTimestamp()) || int(nodeFrom.GetTimestamp()) <= numberOfChecks {
           env.Output.WriteChDebug("(ClusterEngine::updateCluster) Node '"+nodeFrom.GetName()+"' will be updated")
-          // add the node to cluster
-          //cluster.AddNode(nodeFrom)
           modify = true
         } else {
           env.Output.WriteChError("(ClusterEngine::updateCluster) Cluster will no be updated")
@@ -413,6 +409,15 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
       env.Output.WriteChError("(ClusterEngine::updateCluster) Modifing data on node '"+nodeFrom.GetName()+"'")
       // add the node to cluster
       cluster.AddNode(nodeFrom)
+      if nodeFrom.GetCandidateForDeletion() {
+        if err, deletable := cluster.ConsensusForDeletion(nodeFrom.GetName(),from,false); err != nil {
+          env.Output.WriteChError("(ClusterEngine::StartClusterSync) "+err.Error())
+        } else {
+          if deletable {
+            //TODO
+          }
+        }
+      }
       //
       // for each service defined on node, check it's status
       for _,serviceFrom := range nodeFrom.GetNodeServices(){
@@ -511,38 +516,42 @@ func (c *ClusterEngine) GetClusterServices() (error,[]byte) {
 // Sync
 //-----------------------------------------------------------------------
 
-//# SelectNodesToSync
-func (c *ClusterEngine) SelectNodesToSync() (error, map[string]*ClusterNode) {
-  env.Output.WriteChDebug("(ClusterEngine::SelectNodesToSync)")
+//# SelectNodesForSync
+func (c *ClusterEngine) SelectNodesForSync() (error, []string) {
+  env.Output.WriteChDebug("(ClusterEngine::SelectNodesForSync)")
   cluster := c.GetCluster()
-  selectedNodes := make(map[string]*ClusterNode)
+  
+  //selectedNodes := make(map[string]*ClusterNode)
   numberOfNodes := len(cluster.GetNodes())
+
+  // current nodes is alone
+  if numberOfNodes <= 1 {
+    env.Output.WriteChDebug("(ClusterEngine::SelectNodesForSync) No nodes to sync")   
+    return nil, nil
+  }
+  // number of nodes to sync
   numberOfSelectedNodes := int(math.Log2(float64(numberOfNodes)))
-  clusternodes := make([]string,numberOfNodes)
-  env.Output.WriteChDebug("(ClusterEngine::SelectNodesToSync) "+strconv.Itoa(numberOfSelectedNodes))
+  env.Output.WriteChDebug("(ClusterEngine::SelectNodesForSync) "+strconv.Itoa(numberOfSelectedNodes))
+  // selected nodes, current node won't be sync
+  clusternodes := make([]string,numberOfNodes-1)
+  whoami := env.Whoami()
 
   rand.Seed(time.Now().UTC().UnixNano())
   it := 0
   for nodename,_ := range cluster.GetNodes() {
-    clusternodes[it] = nodename
-    it++
+    if nodename != whoami {
+      clusternodes[it] = nodename
+      it++
+    }
   }
-
-  for i := 0; i < numberOfSelectedNodes; i++ {
-    nodename := clusternodes[rand.Intn(numberOfNodes)]
-    env.Output.WriteChDebug("(ClusterEngine::SelectNodesToSync) Node '"+nodename+"' has been selected")    
-    _,n := cluster.GetNode(nodename)
-    selectedNodes[nodename] = n
-  }
-  return nil, selectedNodes
-//  return nil,cluster.GetNodes()
+  return nil, clusternodes
 }
 
 //
 //# StartClusterSync
 func (c *ClusterEngine) StartClusterSync() error {
   env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) Starting cluster Sync")
-  
+  cluster := c.GetCluster()
   
   go func() {
     defer close (c.inputSyncChannel)
@@ -550,22 +559,31 @@ func (c *ClusterEngine) StartClusterSync() error {
       select{
       case message := <-c.inputSyncChannel:
         env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) New message to Sync")
-        if err, nodes := c.SelectNodesToSync(); err == nil {
-          for _, clusternode := range nodes {
+        if err, nodes := c.SelectNodesForSync(); err == nil {
+          for _,nodename := range nodes {
             go func() {
-              env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) Send message to node '"+clusternode.GetName()+"'")
-              
-              e := strings.Split(clusternode.GetURL(),"://")
-              env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) endpoint: "+e[1])
-              if err := utils.CheckEndpoint("tcp",e[1]); err != nil {
-                env.Output.WriteChError("(ClusterEngine::StartClusterSync) "+err.Error())
-                clusternode.SetCandidateForDeletion(true)
-              } else {
-                if clusternode.GetCandidateForDeletion() == true {
-                  clusternode.SetCandidateForDeletion(false)
-                }
-                if err := c.SendSyncMessage(clusternode.GetURL(),message); err != nil {
-                  env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) "+err.Error())
+              if err, clusternode := cluster.GetNode(nodename); err == nil {
+                env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) Send message to node '"+clusternode.GetName()+"'")
+                
+                e := strings.Split(clusternode.GetURL(),"://")
+                env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) endpoint: "+e[1])
+                if err := utils.CheckEndpoint("tcp",e[1]); err != nil {
+                  env.Output.WriteChError("(ClusterEngine::StartClusterSync) "+err.Error())
+                  clusternode.SetCandidateForDeletion(true)
+                  if err, deletable := cluster.ConsensusForDeletion(nodename,env.Whoami(),false); err != nil {
+                    env.Output.WriteChError("(ClusterEngine::StartClusterSync) "+err.Error())
+                  } else {
+                    if deletable {
+                      //TODO
+                    }
+                  }
+                } else {
+                  if clusternode.GetCandidateForDeletion() == true {
+                    clusternode.SetCandidateForDeletion(false)
+                  }
+                  if err := c.SendSyncMessage(clusternode.GetURL(),message); err != nil {
+                    env.Output.WriteChDebug("(ClusterEngine::StartClusterSync) "+err.Error())
+                  }
                 }
               }
             }()
