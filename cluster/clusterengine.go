@@ -272,7 +272,7 @@ func (c *ClusterEngine) handleServiceObject(s *service.ServiceObject) error {
   var newclusternode *ClusterNode
   var clusterservice *ClusterService
   modify := false
-  nodename := env.Setup.Hostname
+  nodename := env.Whoami()
 
   if err, cluster := NewCluster(); err != nil {
     env.Output.WriteChDebug("(ClusterEngine::handleServiceObject) "+err.Error())
@@ -450,12 +450,12 @@ func (c *ClusterEngine) updateCluster(clusterFrom *Cluster) error {
   // On any change, increase timestamp and deploy clusterMessage to cluster
   // it could be done once for cluster update
   if modify {
-    if err, clusternode := cluster.GetNode(env.Setup.Hostname); err != nil {
+    if err, clusternode := cluster.GetNode(env.Whoami()); err != nil {
       env.Output.WriteChError("(ClusterEngine::updateCluster) Cluster status has changed but ClusterMessage could not be deploy due an error: "+err.Error())
     } else {
       clusternode.IncreaseTimestamp()
       // Prepare the message to be sent to the cluster
-      if err, message := NewClusterMessage(env.Setup.Hostname, clusternode.GetTimestamp(),cluster); err == nil {
+      if err, message := NewClusterMessage(env.Whoami(), clusternode.GetTimestamp(),cluster); err == nil {
         env.Output.WriteChDebug("(ClusterEngine::updateCluster) New message ready to be sent")
         // transform data as []byte before send it
         if err, messageBytes := utils.ObjectToJsonByte(message); err == nil {
@@ -585,7 +585,7 @@ func (c *ClusterEngine) SendSyncMessage(url string, message []byte) error {
   env.Output.WriteChDebug("(ClusterEngine::SendSyncMessage) Message to '"+url+"'")
 
   req, err := http.NewRequest("PUT", url, bytes.NewBuffer(message))
-  req.Header.Set("X-Verdmell-From", env.Setup.Hostname)
+  req.Header.Set("X-Verdmell-From", env.Whoami())
   req.Header.Set("Content-Type", "application/json")
 
   client := &http.Client{}

@@ -61,11 +61,11 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	sys.SetServices(srv)
 
 	// Set description for default service
-	desc := "Global services for node "+env.Setup.Hostname
+	desc := "Global services for node "+env.Whoami()
 	
-	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) Registering service '"+env.Setup.Hostname+"'")
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) Registering service '"+env.Whoami()+"'")
 	checkengine := env.GetCheckEngine().(*check.CheckEngine)
-	if err := sys.RegisterService(env.Setup.Hostname,desc, checkengine.ListCheckNames()); err != nil{
+	if err := sys.RegisterService(env.Whoami(),desc, checkengine.ListCheckNames()); err != nil{
 		return err, nil
 	}
 

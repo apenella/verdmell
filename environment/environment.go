@@ -149,6 +149,13 @@ func (e *Environment) GetClusterEngine() interface{} {
 //---------------------------------------------------------------------
 
 //
+//# whoami: method returns the server hostname
+func (e *Environment) Whoami() string {
+	e.Output.WriteChDebug("(Environment::Whoami)")
+	return e.Setup.Hostname
+}
+
+//
 //# validateEnvironment: method to validate configuration objecte
 func (e *Environment) validateEnvironment() error {
 		if e == nil {
