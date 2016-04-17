@@ -167,8 +167,8 @@ func (s *ServiceEngine) ReceiveData(sample *sample.CheckSample) {
 func (s *ServiceEngine) SendData(o *ServiceObject) error {
   env.Output.WriteChDebug("(ServiceEngine::SendData)")
 	for c,desc := range s.GetOutputChannels(){
-    env.Output.WriteChDebug("(ServiceEngine::SendData) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' on channel '"+desc+"'")
-		c <- o
+    env.Output.WriteChDebug("(ServiceEngine::SendData) Writing service to channel '"+desc+"' {service:'"+o.GetName()+"', status:"+strconv.Itoa(o.GetStatus())+", timestamp:"+strconv.Itoa(int(o.GetTimestamp()))+"}")
+	c <- o
   }
 
   return nil

@@ -119,10 +119,29 @@ function createContainerClusterList(data, item) {
 	});
 }
 //
+//# updateContainerClusterList
+function updateContainerClusterList(data, item) {
+	
+	if (data.data[item] != null ) {
+		switch(item) {
+			case "nodes":
+				$.each(data.data[item], function(nodename, clusternode){
+					if ($('.clusternode#'+nodename).attr('status') != null) {
+						console.log(nodename+": "+clusternode.services[nodename].status+" - "+clusternode.status);
+ 						$('.clusternode#'+nodename).attr('status',clusternode.status)
+ 					}
+				});
+
+				break;
+		}
+	}
+}
+
+
+//
 //# createNodeForClusterList
 function createNodeForClusterList(parent, nodename, clusternode) {
 	node = new pageObject(parent,function(parent){
-		
 		nodeurl = clusternode.URL + "/api/node";
 		if (clusternode.services[nodename] != null ) {
 			$('<div/>', {
@@ -144,6 +163,7 @@ function createNodeForClusterList(parent, nodename, clusternode) {
 	});
 	setActionToNode(node,nodename,nodeurl);
 }
+
 //
 //# setActionToNode()
 function setActionToNode(node, nodename, nodeurl) {
@@ -592,5 +612,29 @@ $(document).ready(function(){
 
 	//define the ui's page
 	var p = new page(listenaddr,"http://");
+
+	//
+	// SSE
+	//
+	if(typeof(EventSource) !== "undefined") {
+		var source = new EventSource('/sse');
+		source.onopen = function (event) {
+			console.log("eventsource connection open");
+		};
+		source.onerror = function (event) {
+			if (event.target.readyState === 0) {
+				console.log("reconnecting to eventsource");
+			} else {
+				console.log("eventsource error");
+			}
+		};
+		source.onmessage = function(event) {
+			console.log(event)
+
+			updateContainerClusterList($.parseJSON(event.data),"nodes");
+		};	
+	} else {
+		console.log("SSE not supported");
+	} 
 
 });

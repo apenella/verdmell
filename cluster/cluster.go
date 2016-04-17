@@ -17,6 +17,7 @@ package cluster
 import (
   "errors"
   "math"
+  "strconv"
 	"verdmell/utils"
 )
 
@@ -109,20 +110,18 @@ func (c *Cluster) GetNode(name string) (error, *ClusterNode) {
 //# AddNode: Add a new node into cluster
 func (c *Cluster) AddNode(n *ClusterNode) error {
   env.Output.WriteChDebug("(Cluster::AddNode) Add node '"+n.Name+"' to cluster")
-
+  // validate cluster
   if c == nil {
       return errors.New("(Cluster::AddNode) Cluster not initialized")    
   }
-
+  // validate if exist any node
   if c.Nodes == nil {
     env.Output.WriteChDebug("(Cluster::AddNode) Initializing cluster's Nodes")
     c.Nodes = make(map[string]*ClusterNode)
   }
 
-  if _,exist := c.Nodes[n.Name]; exist {
-    env.Output.WriteChWarn("(Cluster::AddNode) Node "+n.Name+" does already exist and will be overwritten.")
-  }
-  c.Nodes[n.Name] = n
+  env.Output.WriteChDebug("(Cluster::AddNode) Node '"+n.GetName()+"' {status:"+ strconv.Itoa(n.GetStatus()) +", timestamp:"+ strconv.Itoa(int(n.GetTimestamp()))+ "}")
+  c.Nodes[n.GetName()] = n
 
   return nil
 }

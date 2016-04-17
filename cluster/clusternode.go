@@ -164,18 +164,23 @@ func (c *ClusterNode) HasService(s string) (error, *service.ServiceObject) {
 //
 //# AddService: method add a service to cluster node
 func (c *ClusterNode) AddService(s *service.ServiceObject) error {
-  env.Output.WriteChDebug("(ClusterNode::AddService) Add service '"+s.GetName()+"' on node '"+c.GetName()+"'["+strconv.Itoa(int(s.GetTimestamp()))+"]")
-  if err,_ := c.HasService(s.GetName()); err != nil {
-    c.NodeServices[s.GetName()] = s
-    env.Output.WriteChDebug("(ClusterNode::AddService) Service '"+s.GetName()+"' added on node '"+c.GetName()+"'")
-    if s.GetName() == c.GetName() {
-      c.SetStatus(s.GetStatus())
-      env.Output.WriteChDebug("(ClusterNode::AddService) Node '"+c.GetName()+"' has changed its status")
-    }
-  } else {
-    return err
+  env.Output.WriteChDebug("(ClusterNode::AddService) Add service to clusternode {node:'"+c.GetName()+"', service:'"+s.GetName()+"', service_status:"+strconv.Itoa(int(s.GetStatus()))+", service_timestamp:"+strconv.Itoa(int(s.GetTimestamp()))+"}")
+  c.NodeServices[s.GetName()] = s
+  if s.GetName() == c.GetName() {
+    c.SetStatus(s.GetStatus())
+    env.Output.WriteChDebug("(ClusterNode::AddService) Node has changed its status {node:"+c.GetName()+", status:"+strconv.Itoa(int(c.GetStatus()))+"}")
   }
-
+  // if err,_ := c.HasService(s.GetName()); err != nil {
+  //   c.NodeServices[s.GetName()] = s
+  //   env.Output.WriteChDebug("(ClusterNode::AddService) Service '"+s.GetName()+"' added on node '"+c.GetName()+"'")
+  //   if s.GetName() == c.GetName() {
+  //     c.SetStatus(s.GetStatus())
+  //     env.Output.WriteChDebug("(ClusterNode::AddService) Node has changed its status {node:"+c.GetName()+", status:"+strconv.Itoa(int(c.GetStatus()))+"}")
+  //   }
+  // } else {
+  //   //return errors.New("(ClusterNode::AddService) "+err.Error())
+  //   return err
+  // }
   return nil
 }
 //

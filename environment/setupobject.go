@@ -33,14 +33,20 @@ func newSetupObject(file string, folder string, output *message.Message) (error,
 
 	// Set path to setupFile
 	file = folder+string(os.PathSeparator)+file
+	output.WriteChDebug("(SetupObject::newSetupObject) Configuratin file '"+file+"'")
 	// Dump setup data to Environment
-	utils.LoadJSONFile(file, setup)
+	if err := utils.LoadJSONFile(file, setup); err != nil {
+		return errors.New("(SetupObject::newSetupObject) "+err.Error()),nil
+	}
+
 	// Set path to check folder
 	setup.Checksfolder = folder+string(os.PathSeparator)+setup.Checksfolder
+	output.WriteChDebug("(SetupObject::newSetupObject) Checks' definition on '"+setup.Checksfolder+"'")
 	// Set path to check folder
 	setup.Servicesfolder = folder+string(os.PathSeparator)+setup.Servicesfolder
+	output.WriteChDebug("(SetupObject::newSetupObject) Services' definition on '"+setup.Servicesfolder+"'")
 
-	output.WriteChDebug(setup.String())
+	output.WriteChDebug("(SetupObject::newSetupObject) Created'")
 	return nil, setup
 }
 

@@ -22,7 +22,9 @@ import(
 	"net/http"
 	"path"
 	"time"
+	"verdmell/cluster"
 	"verdmell/environment"
+	"verdmell/utils"
 )
 
 //
@@ -170,6 +172,7 @@ func (u *UI) StartUI(){
 //
 //# StartReceiver: method prepare engine to receive []byte to be sent to client
 func (u *UI) StartReceiver() error {
+	var messageData *cluster.Cluster
 	stormController := make(chan bool)
 	enableDataReceiver := true
 	var data []byte
@@ -212,11 +215,23 @@ func (u *UI) StartReceiver() error {
 				close(c)
 			// send data to clients
 	    case data = <-u.inputChannel:
-	      env.Output.WriteChDebug("(UI::server::StartReceiver) Data received")
+	      	env.Output.WriteChDebug("(UI::server::StartReceiver) Data received")
+		    
+			if err, message := cluster.DecodeClusterMessage(data); err != nil {
+				// When the data could not be decoded an error is thrown
+				env.Output.WriteChError("(UI::server::StartReceiver) "+err.Error())
+			} else {
+				if err, messageData = cluster.DecodeData(message.GetData()); err != nil {
+				  env.Output.WriteChError("(UI::server::StartReceiver) "+err.Error())
+				}
+			}
+
 		    if enableDataReceiver {
-					for c, _ := range u.clients {
+				for c, _ := range u.clients {
+					if err, data := utils.ObjectToJsonByte(messageData); err == nil {
 						c <- data
 					}
+				}
 					// enable receiver to receive new samples
 		    	enableDataReceiver = false
 		    	// drain data once it has been sent

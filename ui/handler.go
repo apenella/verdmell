@@ -16,6 +16,7 @@
 package ui
 
 import(
+	"fmt"
 	"errors"
 	"net/http"
 )
@@ -54,10 +55,12 @@ func SSE(w http.ResponseWriter, r *http.Request, u *UI) error {
 	}
 
 	// Set the headers related to event streaming.
-	//w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	//CORS
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	dataChan := make(chan []byte)
 	u.newClients <- dataChan
@@ -75,14 +78,15 @@ func SSE(w http.ResponseWriter, r *http.Request, u *UI) error {
 	for {
 		// Read from our dataChan.
 		data, open := <-dataChan
-		env.Output.WriteChDebug("(UI::handler::SSE) HOLA")
 		if !open {
-			// If our dataChan was closed, this means that the client has
-			// disconnected.
+			env.Output.WriteChDebug("(UI::handler::SSE) Channel has been closed")
 			break
 		}
+		env.Output.WriteChDebug("(UI::handler::SSE) Send event")
 		// Write to the ResponseWriter, `w`.
-		w.Write(data)
+		//w.Write(data)
+		fmt.Fprintf(w, "data:%s\n\n", data)
+
 		// Flush the response. This is only possible if
 		// the repsonse supports streaming.
 		f.Flush()			
