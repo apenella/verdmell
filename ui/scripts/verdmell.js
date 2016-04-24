@@ -122,13 +122,19 @@ function createContainerClusterList(data, item) {
 //# updateContainerClusterList
 function updateContainerClusterList(data, item) {
 	
-	if (data.data[item] != null ) {
+	if (data[item] != null ) {
 		switch(item) {
 			case "nodes":
-				$.each(data.data[item], function(nodename, clusternode){
+				$.each(data[item], function(nodename, clusternode){
+					
 					if ($('.clusternode#'+nodename).attr('status') != null) {
-						console.log(nodename+": "+clusternode.services[nodename].status+" - "+clusternode.status);
- 						$('.clusternode#'+nodename).attr('status',clusternode.status)
+						console.log(nodename+": "+clusternode.services[nodename].status+" - "+clusternode.status+" - "+$('.clusternode#'+nodename).length );
+	 					$('.clusternode#'+nodename).attr('status',clusternode.status);
+ 					} else {
+ 						console.log("crear "+nodename);
+ 						if( $('.clusternode#'+nodename).length > 0) {
+	 						$('.clusternode#'+nodename).attr('status',clusternode.status);						
+ 						}
  					}
 				});
 
@@ -629,8 +635,6 @@ $(document).ready(function(){
 			}
 		};
 		source.onmessage = function(event) {
-			console.log(event)
-
 			updateContainerClusterList($.parseJSON(event.data),"nodes");
 		};	
 	} else {

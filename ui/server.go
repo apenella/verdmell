@@ -245,7 +245,9 @@ func (u *UI) StartReceiver() error {
 				if data != nil {
 					env.Output.WriteChDebug("(UI::server::StartReceiver) Buffered data will be sent")
 					for c, _ := range u.clients {
-						c <- data
+						if err, data := utils.ObjectToJsonByte(messageData); err == nil {
+							c <- data
+						}
 					}
 				}
 				enableDataReceiver = true

@@ -351,7 +351,7 @@ func (c *ClusterEngine) handleClusterMessage(data []byte) error {
       env.Output.WriteChDebug("(ClusterEngine::handleClusterMessage) Received a message from new node '"+message.GetFrom()+"', and will be added on cluster")
       //
       // update information from nodes
-      if err := c.updateCluster(clusternode.GetName(),messageData); err != nil {
+      if err := c.updateCluster(message.GetFrom(),messageData); err != nil {
         env.Output.WriteChError("(ClusterEngine::handleClusterMessage) "+err.Error())
       }
       //
