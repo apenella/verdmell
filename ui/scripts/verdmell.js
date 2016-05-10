@@ -194,31 +194,31 @@ function createContainerServicesDetails(parent,nodename) {
 	for each service is nested a servicedetail structure into servicedetails
 	 ___________________________________________
 	| servicesdetails
-	|	 _______________________________________
-	|	|	servicesdetail									  		|
-	|	|  _________________ 						  			|
-	|	|	| servicename 		| 				  				|
-	|	|	|_________________| 			  					|
-	|	|	 ___________________________________	|
-	|	|	| servicechecks 				  					|	| 
-	|	|	|	 _____________ 	   _____________ 	| |
-	|	|	|	|servicecheck |...|servicecheck |	| |
-	|	|	|	|_____________|	  |_____________|	| |
-	|	|	|___________________________________|	|
-	|	|_______________________________________|
+	|	 _____________________________________________
+	|	|	servicesdetail							  |
+	|	|	 ___________________ 					  |
+	|	|	| servicename 		| 					  |
+	|	|	|___________________| 					  |
+	|	|	 _______________________________________  |
+	|	|	| servicechecks 	  					| | 
+	|	|	|	 _____________ 		 _____________ 	| |
+	|	|	|	|servicecheck |...	|servicecheck |	| |
+	|	|	|	|_____________|	  	|_____________|	| |
+	|	|	|_______________________________________| |
+	|	|_____________________________________________|
 	|	...
-	|	 _______________________________________
-	|	|	servicesdetail									  		|
-	|	|  _________________ 						  			|
-	|	|	| servicename 		| 				  				|
-	|	|	|_________________| 			  					|
-	|	|	 ___________________________________	|
-	|	|	| servicechecks 				  					|	| 
-	|	|	|	 _____________ 	   _____________ 	| |
-	|	|	|	|servicecheck |...|servicecheck |	| |
-	|	|	|	|_____________|	  |_____________|	| |
-	|	|	|___________________________________|	|
-	|	|_______________________________________|
+	|	 _____________________________________________
+	|	|	servicesdetail							  |
+	|	|	 ___________________ 					  |
+	|	|	| servicename 		| 					  |
+	|	|	|___________________| 					  |
+	|	|	 _______________________________________  |
+	|	|	| servicechecks 	  					| | 
+	|	|	|	 _____________ 		 _____________ 	| |
+	|	|	|	|servicecheck |...	|servicecheck |	| |
+	|	|	|	|_____________|	  	|_____________|	| |
+	|	|	|_______________________________________| |
+	|	|_____________________________________________|
 	|___________________________________________
 	*/
 
@@ -576,7 +576,7 @@ function pageObject(parent,render) {
 	this.renderObject(parent,render);
 }
 //#
-//# menu prototypes
+//# pageObject prototypes
 //
 //# cleanElement
 pageObject.prototype.clearObject = function(item) {
@@ -607,6 +607,50 @@ pageObject.prototype.setOnClickAction = function(object, action) {
 function cluster(url) {
 	this.url = url;
 //end cluster object	
+}
+
+
+//
+//
+//# Object to handle the verdmell path working object
+//# pwo
+function pathWorkingObject(parent,render) {
+	this.renderObject(parent,render);
+	pwo = new pageObject(parent,render);
+}
+//#
+//# pageObject prototypes
+//
+//# cleanElement
+pathWorkingObject.prototype.clearObject = function(pwo) {
+	$(pwo).removeData();
+	// end clearElement
+};
+//
+//# cleanElement
+pathWorkingObject.prototype.addObject = function(pwo,object,type) {
+	$('<div/>',{
+		class: 'pathObject',
+		type: type,
+		id: type+"_"+object,
+		text: object
+	}).appendTo(pwo);
+	
+	$(pwo).removeData();
+	// end clearElement
+};
+
+//
+//
+//# Object to handle the verdmell path
+//# pathObject
+function pathObject(pwo, object, type) {
+	$('<div/>',{
+		class: 'pathObject',
+		type: type,
+		id: type+"_"+object,
+		text: object
+	}).appendTo(pwo);
 }
 
 //

@@ -20,54 +20,53 @@ body {
 }
 
 header {
-	width: 99%;
-	padding: 1%;
-	margin-bottom: 1%;
+	position: relative;
+	
 	border-bottom: 0.01em solid #444541;
+	//margin-bottom: 2em;
+	height: 4em;
+	
+	color: #fcfbf9;
+//	background-color: #444541;
+	background-color: #333531;
 
 	// box-shadow:0em 0.01em 0.25em #444541;											
 	// background-color: #ecebe9;
 }
+
 header .logo {
-	margin: auto;
+	position: relative;
 	float:left;
-	width: 10%;
-}
-
-header .title {
-	padding: 1%;
-	padding-bottom: 0%;
-	text-align: center;
-	float: left;
-
-	color: #000000;
-	font-weight: bold;
-	font-size: 2em;
+	height: 60%;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	
+	padding-right: 3%;
+	padding-left: 1%;
 }
 
 header .menu {
-	margin-top: 1%;
-
-	color: #444541;
-	font-size: 1.2em;	
+	width: 100%;
+	height: 100%;
+	margin: auto;
+	
+	font-size: 1.3em;
 }
+
 header .menuitem {
 	position: relative;
 	float:left;
-
-	padding-top: 0.5%;
-	padding-bottom: 0.5%;
-	padding-left: 1%;
-	padding-right: 1%;
-	margin-right: 0.5em;
-	margin-left: 0.5em;
-
-	border-width: 0.1em;
-	border-style: solid;
-	border-color: #444541;
+	height: 100%;
+	
+	padding-left: 5%;
+	padding-right: 5%;	
+		
+	vertical-align: middle;
+	line-height: 3em;
 }
+
 header .menuitem:hover {
-	background-color: #ecebe9;
+	background-color: #7c7b79;
 }
 
 footer {
@@ -81,7 +80,7 @@ footer {
 	border-top: 0.01em solid #444541;
 	text-align: center;
 
-	color: #ecebe9;
+	color: #fcfbf9;
 	background-color: #444541;
 }
 
@@ -112,8 +111,7 @@ footer {
 .datacontainer {
 	position:relative;
 
-	min-height: 10em;
-	margin-left: 8%;
+	min-height: 12em;
 	margin-right: 8%;
 
 	font-size: 1.1em;
@@ -121,50 +119,62 @@ footer {
 
 .clusterlist {
 	float:left;
-	width: 25%;
+	width: 20%;
 
-	color: #f4f3f1;
+	color: #fcfbf9;
 }
 
 .clusternode {
-	padding: 0.5em;
-	margin: 0.5em;
-
-	/*border-radius: 0.25em;*/
-	border-width: 0.1em;
-	border-style: solid;
-	border-color: #444541;
-	background-color: #444541;
+	padding: 0.7em;
+	padding-bottom: 1.1em;
+	margin-top: 0.1em;
+	margin-left: 0;
 	
-	color: #f4f3f1;
+	background-color: #2196cb;
+	border-width: 0.2em;
+	border-left-width: 0.4em;
+	border-right-width: 0.4em;
+	border-style: solid;
+	border-color: #2196cb;
+	
+	// color: #444541;
+	color: #fcfbf9;
 }
 
 .clusternode[status="-1"]{
 	/*Unknown status: blue*/
-	border-color:  #2196f3;
-	background-color: #2196f3;
+	// border-color:  #2196f3;
+	// background-color: #2196f3;
+	border-color:  #2196cb;
+	background-color: #2196cb;
 }
 .clusternode[status="0"]{
 	/*OK status: green*/
-	border-color:  #4caf50;
-	background-color: #4caf50;
+	// border-color:  #4caf50;
+	// background-color: #4caf50;
+	border-color:  #4c8750;
+	background-color: #4c8750;
 }
 .clusternode[status="1"]{
 	/*WARN status: ambar*/
-	border-color:  #ffc107;
-	background-color: #ffc107;
+	// border-color:  #ffc107;
+	// background-color: #ffc107;
+	border-color:  #f5a307;
+	background-color: #f5a307;
 }
 .clusternode[status="2"]{
 	/*ERROR status: red*/
-	border-color:  #f44336;
-	background-color: #f44336;
+	// border-color:  #f44336;
+	// background-color: #f44336;
+	background-color: #cc4336;
+	border-color:  #cc4336;
 }
 
 .clusternode:hover {
-	border-color: #444541;
-	background-color: #ecebe9;
-	
-	color: grey;
+	// border-right-width: 4em;
+	border-color: #fcfbf9; 
+	// border-color: #444541;
+	// background-color: #ecebe9;
 }
 
 .clusternodedetails {
@@ -180,7 +190,7 @@ footer {
 	margin: 0.5em;
 	min-height: 100%;
 
-	/*border-radius: 0.25em;*/
+	box-shadow:0em 0.01em 0.25em #444541;
 	border-width: 0.1em;
 	border-style: solid;
 	border-color: #444541;

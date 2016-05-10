@@ -145,7 +145,6 @@ func DecodeData(data []byte) (error, *Cluster) {
 func DecodeClusterMessage(data []byte) (error, *ClusterMessage) {
 	env.Output.WriteChDebug("(ClusterMessage::DecodeClusterMessage)")
 	message := new(ClusterMessage)
-	env.Output.WriteChDebug(data)
  
  	buffer := bytes.NewBuffer(data)
 	dec := gob.NewDecoder(buffer)
