@@ -55,7 +55,9 @@ func NewUI(e *environment.Environment, listenaddr string) *UI {
 	header := path.Join("ui","html", "header.html")
 	content := path.Join("ui","html", "content.html")
 	footer := path.Join("ui","html", "footer.html")
-	scripts := path.Join("ui","scripts", "verdmell.js")
+	jsUtils := path.Join("ui","scripts", "utils.js")
+	jsMenu := path.Join("ui","scripts", "menu.js")
+	jsVerdmell := path.Join("ui","scripts", "verdmell.js")
 	style := path.Join("ui","style", "verdmell.css")
 
 	if ui == nil {
@@ -63,7 +65,7 @@ func NewUI(e *environment.Environment, listenaddr string) *UI {
 		ui.SetListenaddr(listenaddr)
 		ui.SetClientStormControlPeriod(20)
 		ui.SetRouter(mux.NewRouter().StrictSlash(true))
-		ui.SetTemplates(template.Must(template.ParseFiles(index,scripts,style,header,content,footer)))
+		ui.SetTemplates(template.Must(template.ParseFiles(index,jsUtils,jsMenu,jsVerdmell,style,header,content,footer)))
 		ui.SetInputChannel(make(chan []byte))
 		ui.StartReceiver()
 		
