@@ -8,8 +8,6 @@ $(document).ready(function() {
 	var baseurl = proto+listenaddr;
 	var clusterurl = baseurl + "/api/cluster/";
 
-	menuController.initialize("{}");
-
 	$.getJSON(clusterurl, function(data){
 		menuController.initialize(data);
 	});

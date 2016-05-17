@@ -16,15 +16,17 @@
 //
 // Model Object
 //-----------------------------------------------------------
-var menuModel = new Model();
-
-menuModel.prototype.getSelectedItem = function() {
-	return $(this.attributes[selected=true]);
-};
-
-menuModel.prototype.setSelectedItem = function() {
+var menuModel = new Model({
 	
-};
+	add: function(i) {
+		console.log(item);
+		menuModel.set({ item: i});
+	},
+
+	getSelectedItem: function() {
+		console.log('getSelectedItem');
+	}	
+});
 
 //
 // View Object
@@ -39,8 +41,13 @@ var menuController = new Controller({
 	view: menuView,
 
 	initialize: function(data){
-		console.log("hola");
+		_.each(data,function(content, item){
+			//console.log(item);
+			this.model.add(item);
+		});
 	}
+
+
 });
 
 
