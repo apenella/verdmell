@@ -16,27 +16,22 @@
 // Event object
 //-----------------------------------------------------------
 
-var Events = function Event(sender) {
-		this._sender = sender;
-		this._listeners = {};
-};
+var Event = {
+		_listeners: {},
 
-Event.prototype = {
-		on : function (listener, callback) {
+		on: function (listener, callback) {
 				this._listeners[listener] = callback;
 		},
 
-		off : function (listener) {
+		off: function (listener) {
 			delete this._listeners[listener];
 		},
 
-		notify : function (args) {
-				var index;
-
-				for (var listener in this._listeners){
-					this._listeners[listener](this._sender, args);
-				}
-		}
+		notify: function (listener, data) {
+			for (var listener in this._listeners){
+				this._listeners[listener](data);
+			}
+		} 
 };
 
 //
@@ -44,7 +39,7 @@ Event.prototype = {
 //-----------------------------------------------------------
 var Model = function (attributes) {
 	this.id = _.uniqueId('model');
-	this.attributes = attributes || {};		
+	this.attributes = attributes || {};
 };
 
 Model.prototype.get = function(attr) {
@@ -67,7 +62,7 @@ Model.prototype.change = function(attrs){
 	this.notify(this.id + 'update', attrs);
 }; 
 
-_.extend(Model.prototype, Events);
+_.extend(Model.prototype, Event);
 
 
 //
@@ -78,7 +73,7 @@ var View = function (options) {
 	this.id = _.uniqueId('view');
 };
 
-_.extend(View.prototype, Events);
+_.extend(View.prototype, Event);
 
 //
 // Controller Object
