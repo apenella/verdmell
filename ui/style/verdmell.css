@@ -69,6 +69,12 @@ header .menuitem:hover {
 	background-color: #7c7b79;
 }
 
+header .menuitem[selected="selected"] {
+	border-bottom-style: solid;
+	border-bottom-color: #0d47a1;
+	border-bottom-width: 0.2em;
+}
+
 footer {
 	bottom: 0;
 	clear: both;
@@ -100,9 +106,9 @@ footer {
 	/*Error message: green*/
 	border-width: 0.1em;
 	border-style: solid;
-	border-color: #f44336;
+	border-color: #b71c1c;
 	background-color: #fccbbd;
-	color: #f44336;
+	color: #b71c1c;
 
 	padding: 0.5em;
 	margin: 0.5em;
@@ -145,29 +151,29 @@ footer {
 	/*Unknown status: blue*/
 	// border-color:  #2196f3;
 	// background-color: #2196f3;
-	border-color:  #2196cb;
-	background-color: #2196cb;
+	border-color:  #0d47a1;
+	background-color: #0d47a1;
 }
 .clusternode[status="0"]{
 	/*OK status: green*/
 	// border-color:  #4caf50;
 	// background-color: #4caf50;
-	border-color:  #4c8750;
-	background-color: #4c8750;
+	border-color:  #1b5e20;
+	background-color: #1b5e20;
 }
 .clusternode[status="1"]{
 	/*WARN status: ambar*/
 	// border-color:  #ffc107;
 	// background-color: #ffc107;
-	border-color:  #f5a307;
-	background-color: #f5a307;
+	border-color:  #ff6f00;
+	background-color: #ff6f00;
 }
 .clusternode[status="2"]{
 	/*ERROR status: red*/
 	// border-color:  #f44336;
 	// background-color: #f44336;
-	background-color: #cc4336;
-	border-color:  #cc4336;
+	background-color: #b71c1c;
+	border-color:  #b71c1c;
 }
 
 .clusternode:hover {
@@ -198,22 +204,22 @@ footer {
 
 .servicedetail[status="-1"]{
 	/*Unknown status: blue*/
-	border-color: #2196f3;
+	border-color: #0d47a1;
 	border-width: 0.1em;
 }
 .servicedetail[status="0"]{
 	/*OK status: green*/
-	border-color: #4caf50;
+	border-color: #1b5e20;
 	border-width: 0.1em;
 }
 .servicedetail[status="1"]{
 	/*WARN status: ambar*/
-	border-color: #ffc107;
+	border-color: #ff6f00;
 	border-width: 0.1em;
 }
 .servicedetail[status="2"]{
 	/*ERROR status: red*/
-	border-color: #f44336;
+	border-color: #b71c1c;
 	border-width: 0.1em;
 }
 
@@ -225,19 +231,19 @@ footer {
 
 .servicedetail[status="-1"] > .servicename {
 	/*Unknown status: blue*/
-	background-color: #2196f3;
+	background-color: #0d47a1;
 }
 .servicedetail[status="0"] .servicename {
 	/*OK status: green*/
-	background-color: #4caf50;
+	background-color: #1b5e20;
 }
 .servicedetail[status="1"] .servicename {
 	/*WARN status: ambar*/
-	background-color: #ffc107;
+	background-color: #ff6f00;
 }
 .servicedetail[status="2"] .servicename {
 	/*ERROR status: red*/
-	background-color: #f44336;
+	background-color: #b71c1c;
 }
 
 .servicechecks{
@@ -257,23 +263,23 @@ footer {
 
 .servicecheck[status="-1"] {
 	/*Unknown status: blue*/
-	border-color:  #2196f3;
-	background-color: #2196f3;
+	border-color:  #0d47a1;
+	background-color: #0d47a1;
 }
 .servicecheck[status="0"] {
 	/*OK status: green*/
-	border-color:  #4caf50;
-	background-color: #4caf50;
+	border-color:  #1b5e20;
+	background-color: #1b5e20;
 }
 .servicecheck[status="1"] {
 	/*WARN status: ambar*/
-	border-color:  #ffc107;
-	background-color: #ffc107;
+	border-color:  #ff6f00;
+	background-color: #ff6f00;
 }
 .servicecheck[status="2"] {
 	/*ERROR status: red*/
-	border-color:  #f44336;
-	background-color: #f44336;
+	border-color:  #b71c1c;
+	background-color: #b71c1c;
 }
 
 .servicecheck:hover {

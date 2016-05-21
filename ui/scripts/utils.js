@@ -18,19 +18,25 @@
 
 var Event = {
 		_listeners: {},
+		_eventNumber: 0,
 
-		on: function (listener, callback) {
-				this._listeners[listener] = callback;
+		on: function (events, callback) {
+				this._listeners[events + --this._eventNumber] = callback;
 		},
 
-		off: function (listener) {
-			delete this._listeners[listener];
+		off: function (events) {
+			delete this._listeners[events];
 		},
 
-		notify: function (listener, data) {
-			for (var listener in this._listeners){
-				this._listeners[listener](data);
+		notify: function (events, data) {
+			for ( var topic in this._listeners) {
+				if (this._listeners.hasOwnProperty(topic)) {
+					if (topic.split("-")[0] == events) {
+						this._listeners[topic](data) !== false || delete this._listeners[topic];
+					}
+				}
 			}
+
 		} 
 };
 
@@ -48,6 +54,7 @@ Model.prototype.get = function(attr) {
 
 Model.prototype.set = function(attrs){
 	if (_.isObject(attrs)) {
+
 		_.extend(this.attributes, attrs);
 		this.change(attrs);
 	}
@@ -79,16 +86,6 @@ _.extend(View.prototype, Event);
 // Controller Object
 //-----------------------------------------------------------
 var Controller = function(options) {
-	_.extend(this, options); 
-	this.id = _.uniqueId('controller');
-
-	var parts, selector, eventType;
-	if(this.events){
-		_.each(this.events, function(method, eventName){
-			parts = eventName.split('.');
-			selector = parts[0];
-			eventType = parts[1];
-			$(selector)['on' + eventType] = this[method];
-		}.bind(this));
-	}		
+	_.extend(this, options);
+	this.id = _.uniqueId('controller');		
 };
