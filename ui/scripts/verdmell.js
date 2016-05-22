@@ -10,5 +10,6 @@ $(document).ready(function() {
 
 	$.getJSON(clusterurl, function(data){
 		menuController.initialize(data);
+		//clusterlistController.initialize(data);
 	});
 })

@@ -23,9 +23,15 @@ var menuModel = new Model({
 		this._items.push({name:i, selected: s});			
 		menuModel.set(this._items);
 	},
+
+	getItems: function() {
+		return this._items;
+	},
+
 	getSelectedItem: function() {
 		return _.where(this._items,{selected: true});
 	},
+
 	setSelectedItem: function(n) {
 		_.each(this._items, function(item){
 			if ( item.name == n){
@@ -35,10 +41,9 @@ var menuModel = new Model({
 					item.selected = false;
 				}
 			}
-			menuModel.set(item);
 		});
+		menuModel.set(this);
 	}
-
 });
 
 //
@@ -48,8 +53,8 @@ var menuView = new View({
 	parent: ".menu",
 
 	render: function(model){
-		//$('.menu').empty();
-		_.each(model, function(item){
+		console.log(model);
+		_.each(model.attributes.getItems(), function(item){
 			if( $('.menuitem#'+item.name).length ) {
 				$('.menuitem#'+item.name).attr('name',item.name);
 				$('.menuitem#'+item.name).attr('selected',item.selected);
@@ -69,10 +74,12 @@ var menuView = new View({
 				style: 'clear:both;'
 			}).appendTo(menuView.parent);
 		}	
-	}.bind(this),
+	},
 
 	observe: function(model){
-		this.on("menu", this.render(model));
+		this.on(model.id+'update', function(model){
+			menuView.render(model);
+		}.bind(this));
 	}
 
 });
@@ -95,7 +102,9 @@ var menuController = new Controller({
 			if (selected) selected = false;
 		});
 
-		this.view.observe(this.model.attributes._items);
+		this.view.render(this.model);
+		this.view.observe(this.model);
+
 		menuController._setEvents();
 	},
 
@@ -117,9 +126,6 @@ var menuController = new Controller({
 	selectItem: function() {
 		console.log(menuController.model);
 		menuController.model.attributes.setSelectedItem(this['id']);
-		menuController.view.observe(menuController.model.attributes._items);
+		//menuController.view.observe(menuController.model);
 	}
 });
-
-
-

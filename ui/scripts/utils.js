@@ -21,7 +21,8 @@ var Event = {
 		_eventNumber: 0,
 
 		on: function (events, callback) {
-				this._listeners[events + --this._eventNumber] = callback;
+			console.log(this.id + " "+ events);
+			this._listeners[events + --this._eventNumber] = callback;
 		},
 
 		off: function (events) {
@@ -30,6 +31,7 @@ var Event = {
 
 		notify: function (events, data) {
 			for ( var topic in this._listeners) {
+				console.log('notify:'+topic+" - "+events);
 				if (this._listeners.hasOwnProperty(topic)) {
 					if (topic.split("-")[0] == events) {
 						this._listeners[topic](data) !== false || delete this._listeners[topic];
