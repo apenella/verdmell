@@ -42,7 +42,7 @@ var menuModel = new Model({
 				}
 			}
 		});
-		menuModel.set(this);
+		menuModel.set(this._items);
 	}
 });
 
@@ -52,11 +52,10 @@ var menuModel = new Model({
 var menuView = new View({
 	parent: ".menu",
 
-	render: function(model){
-		console.log(model);
-		_.each(model.attributes.getItems(), function(item){
+	render: function(model){	
+		_.each(model, function(item){
 			if( $('.menuitem#'+item.name).length ) {
-				$('.menuitem#'+item.name).attr('name',item.name);
+				//$('.menuitem#'+item.name).attr('name',item.name);
 				$('.menuitem#'+item.name).attr('selected',item.selected);
 			} else {
 				$('<div/>', {
@@ -67,13 +66,6 @@ var menuView = new View({
 				}).appendTo(menuView.parent);
 			}
 		});
-
-		if( $(menuView.parent+' #cleaner').length == 0) {
-			$('<div/>',{
-				id: 'cleaner',
-				style: 'clear:both;'
-			}).appendTo(menuView.parent);
-		}	
 	},
 
 	observe: function(model){
@@ -97,13 +89,13 @@ var menuController = new Controller({
 
 	initialize: function(data) {
 		var selected = true;
+
+		this.view.observe(this.model);
+
 		_.each(data, function(content, item){
 			menuController._initializeWorker(item,selected);
 			if (selected) selected = false;
 		});
-
-		this.view.render(this.model);
-		this.view.observe(this.model);
 
 		menuController._setEvents();
 	},
@@ -123,9 +115,8 @@ var menuController = new Controller({
 		}
 	},
 
+
 	selectItem: function() {
-		console.log(menuController.model);
 		menuController.model.attributes.setSelectedItem(this['id']);
-		//menuController.view.observe(menuController.model);
 	}
 });
