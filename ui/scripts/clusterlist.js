@@ -21,7 +21,7 @@ var clusterlistModel = new Model({
 
 	add: function(type, item, data) {
 		this._elements.push({type: type, name: item, data: data});			
-		menuModel.set(this._elements);
+		clusterlistModel.set(this._elements);
 	}
 
 });
@@ -30,12 +30,62 @@ var clusterlistModel = new Model({
 // View Object
 //-----------------------------------------------------------
 var clusterlistView = new View({
+	// main class
+	clusterList: 'clusterlist',
+	// div classes map
+	itemTypeClass: {
+		"nodes": "nodeslist",
+		"services": "serviceslist"
+	},
 
-	observe: function(model) {
-		console.log(model);
+	initialize: function() {
+		// create div to place type's items
+		_.each( clusterlistView.itemTypeClass, function(c,t){
+			$('<div/>', {
+				class: c,
+				type: t
+			}).hide().appendTo("."+clusterlistView.clusterList);
+		})		
+	},
 
-		this.on(this.id+'_update', function(model){
-			console.log(model);
+	showSelected: function() { 
+		selected = menuModel.attributes.getSelectedItem()[0].name;
+		_.each(clusterlistView.itemTypeClass, function(c,t){
+			if (t == selected){
+				$('.'+c).show();
+			} else {
+				$('.'+c).hide();
+			}
+		})
+	},
+
+	observeMenu: function(model) {
+		// subscribe
+		this.on(model.id+'update', function(model){
+			// menuModel.attributes.getSelectedItem()[0].name --> selected menu item
+			// console.log(clusterlistView.itemTypeClass[menuModel.attributes.getSelectedItem()[0].name]);
+			clusterlistView.showSelected();
+		}.bind(this));
+	},
+
+	observeClusterlist: function(model) {
+		// subscribe
+		this.on(model.id+'update', function(model){		
+			_.each(model, function(item){
+				console.log("."+clusterlistView.itemTypeClass[item.type]);	
+				
+				if ( $('.'+clusterlistView.itemTypeClass[item.type]+' .clusternode#'+item.name).length ) {
+					$('.'+clusterlistView.itemTypeClass[item.type]+' .clusternode#'+item.name).attr('status',item.data.status);
+				} else {
+					$('<div/>', {
+						class: 'clusternode',
+						id: item.name,
+						type: item.type,
+						status: item.data.status,
+						text: item.name
+					}).appendTo("."+clusterlistView.itemTypeClass[item.type]);
+					}
+			});
 		}.bind(this));
 	}
 
@@ -53,19 +103,23 @@ var clusterlistController = new Controller({
 	},
 
 	initialize: function(data) {
+		// initialize view
+		this.view.initialize();
+		
+		//
+		// set listeners
+		//
+		// subscribe view to model
+		this.view.observeClusterlist(this.model);
+		// subscribe view to menu model, to be aware on clicks
+		this.view.observeMenu(menuController.model);
+
 		_.each(data, function(contentType, type){
 			_.each(contentType, function(contentItem, item){
 				clusterlistController._initializeWorker(type, item, contentItem);
 			});
 		});
-		
-		//
-		// set listeners
-		//
-		// listener to menu
-		this.view.observe(this.model.attributes._elements);
-
-
+		this.view.showSelected();
 	},
 
 	_initializeWorker: function(type, item, content) {

@@ -21,7 +21,6 @@ var Event = {
 		_eventNumber: 0,
 
 		on: function (events, callback) {
-			console.log("(Event::on)"+this.id + " "+ events);
 			this._listeners[events + --this._eventNumber] = callback;
 		},
 
@@ -31,8 +30,6 @@ var Event = {
 
 		notify: function (events, data) {
 			for ( var topic in this._listeners) {
-				console.log("(Event::notify)"+topic+" - "+events+" - ");
-				console.log(data);
 				if (this._listeners.hasOwnProperty(topic)) {
 					if (topic.split("-")[0] == events) {
 						this._listeners[topic](data) !== false || delete this._listeners[topic];
@@ -57,8 +54,6 @@ Model.prototype.get = function(attr) {
 
 Model.prototype.set = function(attrs){
 	if (_.isObject(attrs)) {
-		console.log("(Event::set)")
-		console.log(attrs);
 		_.extend(this.attributes, attrs);
 		this.change(attrs);
 	}

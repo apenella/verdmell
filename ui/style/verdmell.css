@@ -23,15 +23,11 @@ header {
 	position: relative;
 	
 	border-bottom: 0.01em solid #444541;
-	//margin-bottom: 2em;
+	margin-bottom: 0.5em;
 	height: 4em;
 	
 	color: #fcfbf9;
-//	background-color: #444541;
 	background-color: #333531;
-
-	// box-shadow:0em 0.01em 0.25em #444541;											
-	// background-color: #ecebe9;
 }
 
 header .logo {
@@ -49,6 +45,7 @@ header .menu {
 	width: 100%;
 	height: 100%;
 	margin: auto;
+	margin-bottom: 1em;
 	
 	font-size: 1.3em;
 }
@@ -92,7 +89,7 @@ footer {
 
 .message[type="info"] {
 	/*Info message: green*/
-	border-width: 0.1em;
+	border-width: 0.05em;
 	border-style: solid;
 	border-color:  #444541;
 	background-color: #fef394;
@@ -119,6 +116,7 @@ footer {
 
 	min-height: 12em;
 	margin-right: 8%;
+	margin-left: 0.05em;
 
 	font-size: 1.1em;
 }
@@ -136,44 +134,43 @@ footer {
 	margin-top: 0.1em;
 	margin-left: 0;
 	
-	background-color: #2196cb;
-	border-width: 0.2em;
+	background-color: #e0e0e0;
+	border-color: #e0e0e0;
+	border-width: 0.05em;
 	border-left-width: 0.4em;
 	border-right-width: 0.4em;
 	border-style: solid;
-	border-color: #2196cb;
 	
-	// color: #444541;
-	color: #fcfbf9;
+	color: #444541;
 }
 
 .clusternode[status="-1"]{
 	/*Unknown status: blue*/
-	// border-color:  #2196f3;
-	// background-color: #2196f3;
 	border-color:  #0d47a1;
 	background-color: #0d47a1;
+
+	color: #fcfbf9;
 }
 .clusternode[status="0"]{
 	/*OK status: green*/
-	// border-color:  #4caf50;
-	// background-color: #4caf50;
 	border-color:  #1b5e20;
 	background-color: #1b5e20;
+
+	color: #fcfbf9;
 }
 .clusternode[status="1"]{
 	/*WARN status: ambar*/
-	// border-color:  #ffc107;
-	// background-color: #ffc107;
 	border-color:  #ff6f00;
 	background-color: #ff6f00;
+	
+	color: #fcfbf9;
 }
 .clusternode[status="2"]{
 	/*ERROR status: red*/
-	// border-color:  #f44336;
-	// background-color: #f44336;
 	background-color: #b71c1c;
 	border-color:  #b71c1c;
+
+	color: #fcfbf9;
 }
 
 .clusternode:hover {
