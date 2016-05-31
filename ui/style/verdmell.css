@@ -128,6 +128,43 @@ footer {
 	color: #fcfbf9;
 }
 
+.clusterlistitem {
+	padding: 0.7em;
+	padding-bottom: 1.1em;
+	margin-top: 0.1em;
+	margin-left: 0;
+	
+	background-color: #e0e0e0;
+	color: #444541;
+}
+
+.clusterlistitem[status="-1"]{
+	/*Unknown status: blue*/
+	background-color: #0d47a1;
+	color: #fcfbf9;
+}
+.clusterlistitem[status="0"]{
+	/*OK status: green*/
+	background-color: #1b5e20;
+	color: #fcfbf9;
+}
+.clusterlistitem[status="1"]{
+	/*WARN status: ambar*/
+	background-color: #ff6f00;
+	color: #fcfbf9;
+}
+.clusterlistitem[status="2"]{
+	/*ERROR status: red*/
+	border-color:  #b71c1c;
+	color: #fcfbf9;
+}
+.clusterlistitem:hover {
+	padding-bottom: 1.9em;
+	padding-top: 1.5em;
+}
+
+/* TO DELETE */
+
 .clusternode {
 	padding: 0.7em;
 	padding-bottom: 1.1em;
@@ -172,13 +209,14 @@ footer {
 
 	color: #fcfbf9;
 }
-
 .clusternode:hover {
 	// border-right-width: 4em;
 	border-color: #fcfbf9; 
 	// border-color: #444541;
 	// background-color: #ecebe9;
 }
+
+/* TO DELETE END*/
 
 .clusternodedetails {
 	float:right;

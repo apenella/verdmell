@@ -71,14 +71,12 @@ var clusterlistView = new View({
 	observeClusterlist: function(model) {
 		// subscribe
 		this.on(model.id+'update', function(model){		
-			_.each(model, function(item){
-				console.log("."+clusterlistView.itemTypeClass[item.type]);	
-				
-				if ( $('.'+clusterlistView.itemTypeClass[item.type]+' .clusternode#'+item.name).length ) {
-					$('.'+clusterlistView.itemTypeClass[item.type]+' .clusternode#'+item.name).attr('status',item.data.status);
+			_.each(model, function(item){				
+				if ( $('.'+clusterlistView.itemTypeClass[item.type]+' .clusterlistitem#'+item.name).length ) {
+					$('.'+clusterlistView.itemTypeClass[item.type]+' .clusterlistitem#'+item.name).attr('status',item.data.status);
 				} else {
 					$('<div/>', {
-						class: 'clusternode',
+						class: 'clusterlistitem',
 						id: item.name,
 						type: item.type,
 						status: item.data.status,
@@ -99,7 +97,7 @@ var clusterlistController = new Controller({
 	view: clusterlistView,
 
 	events: {
-		".clusternode::click": "selectListItem"
+		".clusterlistitem::click": "selectListItem"
 	},
 
 	initialize: function(data) {
@@ -126,9 +124,12 @@ var clusterlistController = new Controller({
 		this.model.attributes.add(type, item, content);
 	},
 
+	update: function(data) {
+		console.log(data);
+	},
+
 	selectListItem: function() {
 
 	}
-
 
 });
