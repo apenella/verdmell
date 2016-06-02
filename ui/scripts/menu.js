@@ -59,7 +59,7 @@ var menuView = new View({
 	// place to append the items
 	parent: ".menu",
 
-	// draw model
+	// draw model to view
 	render: function(model){	
 		_.each(model, function(item){
 			if( $('.menuitem#'+item.name).length ) {

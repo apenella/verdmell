@@ -22,6 +22,10 @@ var clusterlistModel = new Model({
 	add: function(type, item, data) {
 		this._elements.push({type: type, name: item, data: data});			
 		clusterlistModel.set(this._elements);
+	},
+
+	contains: function(item, type) {
+		return _.contains( _.pluck(_.where(this._elements, {type: type}),'name') , item);
 	}
 
 });
@@ -125,7 +129,17 @@ var clusterlistController = new Controller({
 	},
 
 	update: function(data) {
-		console.log(data);
+		// clusterlistitem
+		_.each(data, function( typecontent, type){
+			_.each( typecontent, function( content, item ) {
+				
+				if (clusterlistController.model.attributes.contains(item,type)) {
+					console.log(item);
+				}
+
+			});
+		});
+
 	},
 
 	selectListItem: function() {
