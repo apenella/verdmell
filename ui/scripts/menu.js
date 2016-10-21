@@ -16,13 +16,13 @@
 //
 // Model Object
 //-----------------------------------------------------------
-var menuModel = new Model({
+var menuModel = new Model('menuModel',{
 	// menu item
 	_items:[],
 
 	// add an item to menu
-	add: function(i, s) {
-		this._items.push({name:i, selected: s});			
+	add: function(i, l, s) {
+		this._items.push({name:i.toUpperCase(), locator:l, selected: s});			
 		menuModel.set(this._items);
 	},
 
@@ -49,6 +49,11 @@ var menuModel = new Model({
 		});
 		// set the changes an notify subscribers
 		menuModel.set(this._items);
+	},
+	
+	// getSelectedItem
+	getSelectedItem: function(){
+		return _.where(this._items,{selected: true});
 	}
 });
 
@@ -60,7 +65,7 @@ var menuView = new View({
 	parent: ".menu",
 
 	// draw model to view
-	render: function(model){	
+	render: function(model){
 		_.each(model, function(item){
 			if( $('.menuitem#'+item.name).length ) {
 				//$('.menuitem#'+item.name).attr('name',item.name);
@@ -78,7 +83,8 @@ var menuView = new View({
 
 	// subscribe to model
 	observe: function(model){
-		this.on(model.id+'update', function(model){
+		// subscribe
+		this.on(model.id, this.id, function(model){
 			menuView.render(model);
 		}.bind(this));
 	}
@@ -101,6 +107,8 @@ var menuController = new Controller({
 	//
 	// menu initializes when document is ready
 	initialize: function(data) {
+		//console.log('locatorController::initialize');
+
 		// select the default menu item
 		var selected = true;
 		
@@ -112,8 +120,12 @@ var menuController = new Controller({
 
 		// invoke worker for each menu item received
 		_.each(data, function(content, item){
-			menuController._initializeWorker(item,selected);
-			if (selected) selected = false;
+			locator = "/"+item;
+			menuController._initializeWorker(item, locator, selected);
+			if (selected) {
+				selected = false;
+				menuModel.attributes.getSelectedItem(item.name);
+			}
 		});
 
 		// set events to menu
@@ -121,8 +133,8 @@ var menuController = new Controller({
 	},
 
 	// 
-	_initializeWorker: function(item, selected) {
-		this.model.attributes.add(item, selected);
+	_initializeWorker: function(item, locator, selected) {
+		this.model.attributes.add(item, locator, selected);
 	},
 
 	// hold an action to each menu item to be managed

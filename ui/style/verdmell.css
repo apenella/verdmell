@@ -14,8 +14,7 @@
 */
 body {
 	margin: 0;
-
-	background-color: #f4f3f1;
+	background-color: #fcfbf9;
 	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
@@ -26,8 +25,8 @@ header {
 	margin-bottom: 0.5em;
 	height: 4em;
 	
-	color: #fcfbf9;
-	background-color: #333531;
+	color: #333531;
+	background-color: #fcfbf9;
 }
 
 header .logo {
@@ -40,6 +39,10 @@ header .logo {
 	padding-right: 3%;
 	padding-left: 1%;
 }
+
+/*
+	MENU
+*/
 
 header .menu {
 	width: 100%;
@@ -63,7 +66,7 @@ header .menuitem {
 }
 
 header .menuitem:hover {
-	background-color: #7c7b79;
+	background-color: #cccbc9;
 }
 
 header .menuitem[selected="selected"] {
@@ -71,6 +74,10 @@ header .menuitem[selected="selected"] {
 	border-bottom-color: #0d47a1;
 	border-bottom-width: 0.2em;
 }
+
+/*
+	FOOTER
+*/
 
 footer {
 	bottom: 0;
@@ -80,35 +87,27 @@ footer {
 	padding: 1%;
 	margin-top: 15%;
 
-	border-top: 0.01em solid #444541;
+	border-top: 0.01em solid #333531;
 	text-align: center;
 
 	color: #fcfbf9;
-	background-color: #444541;
+	background-color: #333531;
 }
 
-.message[type="info"] {
-	/*Info message: green*/
-	border-width: 0.05em;
-	border-style: solid;
-	border-color:  #444541;
-	background-color: #fef394;
+/*
+	LOCATOR
+*/
+
+.locator {
+	position: relative;
+	float:left;
+	height: 100%;
+	
+	padding-left: 5%;
+	padding-right: 5%;
+	margin-bottom: 0.5em;
+	
 	color: #444541;
-
-	padding: 0.5em;
-	margin: 0.5em;
-}
-
-.message[type="error"] {
-	/*Error message: green*/
-	border-width: 0.1em;
-	border-style: solid;
-	border-color: #b71c1c;
-	background-color: #fccbbd;
-	color: #b71c1c;
-
-	padding: 0.5em;
-	margin: 0.5em;
 }
 
 .datacontainer {
@@ -121,13 +120,16 @@ footer {
 	font-size: 1.1em;
 }
 
+/*
+	CLUSTER LIST
+*/
+
 .clusterlist {
 	float:left;
 	width: 20%;
 
 	color: #fcfbf9;
 }
-
 .clusterlistitem {
 	padding: 0.7em;
 	padding-bottom: 1.1em;
@@ -155,68 +157,27 @@ footer {
 }
 .clusterlistitem[status="2"]{
 	/*ERROR status: red*/
-	border-color:  #b71c1c;
+	background-color:  #b71c1c;
 	color: #fcfbf9;
 }
 .clusterlistitem:hover {
+	box-shadow:0em 0.01em 0.25em #444541;
 	padding-bottom: 1.9em;
 	padding-top: 1.5em;
 }
 
-/* TO DELETE */
+/*
+	DETAILS
+*/
 
-.clusternode {
-	padding: 0.7em;
-	padding-bottom: 1.1em;
-	margin-top: 0.1em;
-	margin-left: 0;
-	
-	background-color: #e0e0e0;
-	border-color: #e0e0e0;
-	border-width: 0.05em;
-	border-left-width: 0.4em;
-	border-right-width: 0.4em;
-	border-style: solid;
-	
-	color: #444541;
-}
+.clusterlistitemdetails{
+	float:right;
+	width: 75%;
 
-.clusternode[status="-1"]{
-	/*Unknown status: blue*/
-	border-color:  #0d47a1;
-	background-color: #0d47a1;
-
-	color: #fcfbf9;
-}
-.clusternode[status="0"]{
-	/*OK status: green*/
-	border-color:  #1b5e20;
-	background-color: #1b5e20;
-
-	color: #fcfbf9;
-}
-.clusternode[status="1"]{
-	/*WARN status: ambar*/
-	border-color:  #ff6f00;
 	background-color: #ff6f00;
-	
-	color: #fcfbf9;
-}
-.clusternode[status="2"]{
-	/*ERROR status: red*/
-	background-color: #b71c1c;
-	border-color:  #b71c1c;
-
-	color: #fcfbf9;
-}
-.clusternode:hover {
-	// border-right-width: 4em;
-	border-color: #fcfbf9; 
-	// border-color: #444541;
-	// background-color: #ecebe9;
 }
 
-/* TO DELETE END*/
+
 
 .clusternodedetails {
 	float:right;
@@ -364,4 +325,32 @@ footer {
 	margin-bottom: 0.25em;
 
 	font-style: italic;
+}
+
+/*
+	MESSAGES
+*/
+
+.message[type="info"] {
+	/*Info message: green*/
+	border-width: 0.05em;
+	border-style: solid;
+	border-color:  #444541;
+	background-color: #fef394;
+	color: #444541;
+
+	padding: 0.5em;
+	margin: 0.5em;
+}
+
+.message[type="error"] {
+	/*Error message: green*/
+	border-width: 0.1em;
+	border-style: solid;
+	border-color: #b71c1c;
+	background-color: #fccbbd;
+	color: #b71c1c;
+
+	padding: 0.5em;
+	margin: 0.5em;
 }
