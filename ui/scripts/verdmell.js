@@ -50,5 +50,6 @@ var MainController = new Controller({
 
 	update: function(data) {
 		clusterlistController.update($.parseJSON(data));
+		detailsController.update($.parseJSON(data));
 	}
 });

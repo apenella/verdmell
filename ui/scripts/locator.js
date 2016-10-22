@@ -85,7 +85,7 @@ var locatorController = new Controller({
 		// own model: new elements
 		this.view.observe(this.model);
 
-		// changes to menu or cluster list
+		// observe changes to menu or cluster list
 		this.model.attributes.observe(menuModel);
 		this.model.attributes.observe(clusterlistModel);
 

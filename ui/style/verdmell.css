@@ -66,7 +66,7 @@ header .menuitem {
 }
 
 header .menuitem:hover {
-	background-color: #cccbc9;
+	background-color: #eeedeb;
 }
 
 header .menuitem[selected="selected"] {
@@ -173,8 +173,37 @@ footer {
 .clusterlistitemdetails{
 	float:right;
 	width: 75%;
+}
 
-	background-color: #ff6f00;
+.itemdetails{
+	padding: 0.3em;
+	padding-left: 0.7em;
+
+	margin-top: 0.1em;
+	margin-left: 0;
+	
+/*	border-top: 0.01em solid #e0e0e0;
+	border-bottom: 0.01em solid #e0e0e0;
+*/
+	background-color: #eeedeb;
+
+	color: #444541;
+}
+.itemdetails[status="-1"]{
+	/*Unknown status: blue*/
+	border-left: 0.3em solid #0d47a1;
+}
+.itemdetails[status="0"]{
+	/*OK status: green*/
+	border-left: 0.3em solid #1b5e20;
+}
+.itemdetails[status="1"]{
+	/*WARN status: ambar*/
+	border-left: 0.3em solid #ff6f00;
+}
+.itemdetails[status="2"]{
+	/*ERROR status: red*/
+	border-left: 0.3em solid  #b71c1c;
 }
 
 
