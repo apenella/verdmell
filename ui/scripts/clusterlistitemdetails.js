@@ -162,7 +162,7 @@ var detailsController = new Controller({
 
 	},
 
-	update: function() {
+	update: function(data) {
 		detailsModel.attributes.set(data);
 	},
 

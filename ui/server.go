@@ -55,6 +55,8 @@ func NewUI(e *environment.Environment, listenaddr string) *UI {
 	header := path.Join("ui","html", "header.html")
 	content := path.Join("ui","html", "content.html")
 	footer := path.Join("ui","html", "footer.html")
+	jsLibJQquery := path.Join("ui","scripts","lib","jquery-3.1.1.min.js")
+	jsLibUnderscore := path.Join("ui","scripts", "lib", "underscore-min.js")
 	jsUtils := path.Join("ui","scripts", "utils.js")
 	jsMenu := path.Join("ui","scripts", "menu.js")
 	jsClusterlist := path.Join("ui","scripts", "clusterlist.js")
@@ -67,7 +69,8 @@ func NewUI(e *environment.Environment, listenaddr string) *UI {
 		ui.SetListenaddr(listenaddr)
 		ui.SetClientStormControlPeriod(20)
 		ui.SetRouter(mux.NewRouter().StrictSlash(true))
-		ui.SetTemplates(template.Must(template.ParseFiles(index,jsUtils,jsMenu,jsClusterlist,jsClusterlistitemdetails,jsVerdmell,style,header,content,footer)))
+		ui.SetTemplates(template.Must(template.ParseFiles(index,jsLibJQquery,jsLibUnderscore,jsUtils,jsMenu,jsClusterlist,jsClusterlistitemdetails,jsVerdmell,style,header,content,footer)))
+		//ui.SetTemplates(template.Must(template.ParseFiles(index,jsLibJQquery,jsLibUnderscore,jsUtils,jsMenu,jsClusterlist,jsClusterlistitemdetails,jsVerdmell,style,header,content,footer)))
 		ui.SetInputChannel(make(chan []byte))
 		ui.StartReceiver()
 		
@@ -167,6 +170,7 @@ func (u *UI) StartUI(){
 	env.Output.WriteChDebug("(UI::server::StartUI) Starting UI listening at: "+u.Listenaddr)
 	u.GenerateRoutes()
 	u.router.Handle("/images/{img}",http.StripPrefix("/images/", http.FileServer(http.Dir("./ui/images/"))))
+	u.router.Handle("/scripts/lib/{lib}",http.StripPrefix("/scripts/lib/", http.FileServer(http.Dir("./ui/scripts/lib/"))))
 	u.router.Handle("/scripts/{script}",http.StripPrefix("/scripts/", http.FileServer(http.Dir("./ui/scripts/"))))
 	u.router.Handle("/style/{style}",http.StripPrefix("/style/", http.FileServer(http.Dir("./ui/style/"))))
 	
