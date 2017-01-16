@@ -3,6 +3,7 @@
 //
 // This function is run as soon the document is ready
 $(document).ready(function() {
+
 	var listenaddr = $(".datacontainer").attr('listenaddr');
 	var proto = "http://";
 	var baseurl = proto+listenaddr;
@@ -40,16 +41,22 @@ $(document).ready(function() {
 })
 
 var MainController = new Controller({
+  
+	nodeuri: "/api/node",
+
 	initialize: function(data) {
-		menuController.initialize(data);	
+		//console.log('MainController::initialize', data);
+		menuController.initialize(data);
 		clusterlistController.initialize(data);
 		detailsController.initialize(data);
 		locatorController.initialize(menuModel, clusterlistModel);
-
+		checksController.initialize(data);
 	},
 
 	update: function(data) {
+		//console.log('MainController::update', data);
 		clusterlistController.update($.parseJSON(data));
 		detailsController.update($.parseJSON(data));
+		checksController.update($.parseJSON(data));
 	}
 });

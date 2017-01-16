@@ -30,6 +30,14 @@ var locatorModel = new Model('locatorModel',{
 		return this._location;
 	},
 
+	getLastItem: function() {
+		locatorSplitted = this._location.split('/');
+		if ( locatorSplitted.length > 2 )
+			return locatorSplitted[1]
+		else
+			return null;
+	},
+
 	// subscribe to model
 	observe: function(model) {
 		// subscribe
@@ -88,6 +96,7 @@ var locatorController = new Controller({
 		// observe changes to menu or cluster list
 		this.model.attributes.observe(menuModel);
 		this.model.attributes.observe(clusterlistModel);
+		this.model.attributes.observe(detailsModel);
 
 		// set the select menu item
 		this.model.attributes.set(menuModel.attributes.getSelectedItem()[0].locator);

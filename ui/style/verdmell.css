@@ -130,6 +130,7 @@ footer {
 
 	color: #fcfbf9;
 }
+
 .clusterlistitem {
 	padding: 0.7em;
 	padding-bottom: 1.1em;
@@ -171,8 +172,13 @@ footer {
 */
 
 .clusterlistitemdetails{
-	float:right;
-	width: 75%;
+	float:left;
+	width: 35%;
+
+	margin-left: 0.7em;
+
+	padding: 1%;
+	border: 0.1em solid #e0e0e0;
 }
 
 .itemdetails{
@@ -189,6 +195,15 @@ footer {
 
 	color: #444541;
 }
+
+.itemdetailstitle {
+	padding: 0.3em;
+	padding-left: 0.7em;
+
+	background-color: #e0e0e0;
+	color: #444541;
+}
+
 .itemdetails[status="-1"]{
 	/*Unknown status: blue*/
 	border-left: 0.3em solid #0d47a1;
@@ -206,6 +221,78 @@ footer {
 	border-left: 0.3em solid  #b71c1c;
 }
 
+.itemdetails:hover {
+	box-shadow:0em 0.01em 0.25em #444541;
+}
+
+
+/*
+	CHECKS
+*/
+
+.checks {
+	float:right;
+	width: 37%;
+
+	margin-left: 0.7em;
+
+	padding: 1%;
+	border: 0.1em solid #e0e0e0;
+}
+
+.checkstitle {
+	padding: 0.3em;
+	padding-left: 0.7em;
+
+	background-color: #e0e0e0;
+	color: #444541;
+}
+
+.check {
+	padding: 0.3em;
+	padding-left: 0.7em;
+
+	margin-top: 0.1em;
+	margin-left: 0;
+	
+
+	background-color: #eeedeb;
+	color: #444541;
+}
+
+.check[status="-1"]{
+	/*Unknown status: blue*/
+	border-left: 0.3em solid #0d47a1;
+}
+.check[status="0"]{
+	/*OK status: green*/
+	border-left: 0.3em solid #1b5e20;
+}
+.check[status="1"]{
+	/*WARN status: ambar*/
+	border-left: 0.3em solid #ff6f00;
+}
+.check[status="2"]{
+	/*ERROR status: red*/
+	border-left: 0.3em solid  #b71c1c;
+}
+
+.check:hover {
+	box-shadow:0em 0.01em 0.25em #444541;
+}
+
+
+.itemdetailschecks{
+	padding: 0.3em;
+	padding-left: 0.7em;
+
+	margin-top: 0.1em;
+	margin-left: 0;
+
+	background-color: #eeedeb;
+	color: #444541;
+	border-top: 0.1em solid #444541;
+}
 
 
 .clusternodedetails {

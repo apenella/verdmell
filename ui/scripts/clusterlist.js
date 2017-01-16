@@ -36,10 +36,11 @@ var clusterlistModel = new Model('clusterlistModel',{
 
 				// generate locator for current type-item
 				locator = clusterlistModel.attributes.generateLocator(type,item);
-				// add object				
+				// add object
 				clusterlistModel.attributes.add(type, item, locator, this._selected, contentItem);
 			});
 		});
+
 		// set the array of elements
 		clusterlistModel.set(this._elements);
 
@@ -91,7 +92,7 @@ var clusterlistModel = new Model('clusterlistModel',{
 //-----------------------------------------------------------
 var clusterlistView = new View({
 	// main class
-	clusterList: 'clusterlist',
+	parent: '.clusterlist',
 	// div classes map
 	itemTypeClass: {
 		"nodes": "nodeslist",
@@ -107,12 +108,12 @@ var clusterlistView = new View({
 			$('<div/>', {
 				class: c,
 				type: t
-			}).hide().appendTo("."+clusterlistView.clusterList);
+			}).hide().appendTo(clusterlistView.parent);
 		})		
 	},
 
 	// show which type is selected
-	showSelected: function() { 
+	showSelected: function() {
 		selected = menuModel.attributes.getSelectedItem()[0].name.toLowerCase();
 		// show only the selected type
 		_.each(clusterlistView.itemTypeClass, function(c,t){
@@ -137,9 +138,17 @@ var clusterlistView = new View({
 	observeClusterlist: function(model) {
 		// subscribe
 		this.on(model.id, this.id, function(model){
+
+			// clear container for not keeping older items
+			_.each(clusterlistView.itemTypeClass, function(type){
+				$(type).empty();
+			});
+
 			_.each(model, function(item){				
 				if ( $('.'+clusterlistView.itemTypeClass[item.type]+' .clusterlistitem#'+item.name).length ) {
 					$('.'+clusterlistView.itemTypeClass[item.type]+' .clusterlistitem#'+item.name).attr('status',item.data.status);
+ 
+
 				} else {
 					$('<div/>', {
 						class: 'clusterlistitem',
@@ -148,9 +157,13 @@ var clusterlistView = new View({
 						status: item.data.status,
 						text: item.name
 					}).appendTo("."+clusterlistView.itemTypeClass[item.type]);
-					}
+				}
 			});
 		}.bind(this));
+	
+		// set events for clusterlist
+		clusterlistController.setEvents();
+
 	}
 
 });
@@ -183,7 +196,7 @@ var clusterlistController = new Controller({
 		this.view.showSelected();
 
 		// set events for clusterlist
-		clusterlistController._setEvents();
+		clusterlistController.setEvents();
 	},
 
 	_initializeWorker: function(type, item, content) {
@@ -194,7 +207,7 @@ var clusterlistController = new Controller({
 		clusterlistModel.attributes.set(data);
 	},
 
-	_setEvents: function() {
+	setEvents: function() {
 		var parts, selector, eventType;
 		if(this.events){
 			_.each(this.events, function(method, eventName){
