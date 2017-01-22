@@ -38,7 +38,7 @@ $(document).ready(function() {
 		console.log("SSE not supported");
 	}
 
-})
+});
 
 var MainController = new Controller({
   

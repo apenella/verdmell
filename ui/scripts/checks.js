@@ -82,10 +82,10 @@ var checksModel = new Model('checksModel',{
 
 	observe: function(model) {
 		checksModel.on(model.id, this.id, function(model){
-			if (detailsModel.attributes.getSelectedItem().length) {
-				// console.log('checksModel::observe',detailsModel.attributes.getSelectedItem()[0].content.checks);
+			if (detailsModel.attributes.getSelected().length) {
+				// console.log('checksModel::observe',detailsModel.attributes.getSelected()[0].content.checks);
 				// get node data related to detailitem clicked		
-				node = checksModel.attributes.getNode(detailsModel.attributes.getSelectedItem()[0][checksModel.attributes._itemTypeClass[detailsModel.attributes.getSelectedItem()[0].type]]);
+				node = checksModel.attributes.getNode(detailsModel.attributes.getSelected()[0][checksModel.attributes._itemTypeClass[detailsModel.attributes.getSelected()[0].type]]);
 				//console.log('checksModel::observe',node[0]);
 				if ( node.length ) {
 					//checksModel.attributes.retrieveChecks(node[0].url);
@@ -93,7 +93,7 @@ var checksModel = new Model('checksModel',{
 						// clear checks content
 						checksModel.attributes.clearChecks();
 						// console.log('checksModel::observe',data.checks);
-						$.each(detailsModel.attributes.getSelectedItem()[0].content.checks, function(index, check){
+						$.each(detailsModel.attributes.getSelected()[0].content.checks, function(index, check){
 							// console.log('checksModel::observe',data.checks.checks.checks[check]);
 							// console.log('checksModel::observe',data.samples.Samples[check]);
 							checksModel.attributes.addCheck(data.checks.checks.checks[check].name,data.checks.checks.checks[check],data.samples.Samples[check]);

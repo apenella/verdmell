@@ -51,7 +51,7 @@ var detailsModel = new Model('detailsModel',{
 
 		// if there was any selected clusterlist item, this is setted again
 		if ( _.size(this._locator) > 0 && _.findWhere(this._elements, {locator: this._locator}) != undefined ) {
-		 	clusterlistModel.attributes.setSelectedItem(this._locator);
+		 	clusterlistModel.attributes.setSelected(this._locator);
 		}
 
 	},
@@ -89,11 +89,11 @@ var detailsModel = new Model('detailsModel',{
 			return null;
 	},
 
-	getSelectedItem: function(){
+	getSelected: function(){
 		return _.where(this._elements, {selected: true});
 	},
 
-	setSelectedItem: function(locator) {
+	setSelected: function(locator) {
 		// review each item
 		_.each(this._elements, function(item){
 			// set selected
@@ -161,7 +161,7 @@ var detailsView = new View({
 	observeClusterlist: function(model) {
 		// subscribe
 		detailsView.on(model.id, detailsView.id, function(){
-			selectedItem = model.attributes.getSelectedItem();
+			selectedItem = model.attributes.getSelected();
 			if (selectedItem.length > 0) {
 				// console.log('detailsView::observeClusterlist',selectedItem[0]);
 				detailsView.setShowedElements(selectedItem[0].locator);				
@@ -188,7 +188,7 @@ var detailsView = new View({
 		locatorSplitted = locator.split('/');
 		//console.log('detailsView::setShowedElements',locatorSplitted);
 		base = detailsModel.attributes.getBase(locator);
-		selected = detailsModel.attributes.getSelectedItem();
+		selected = detailsModel.attributes.getSelected();
 
 		// set title
 		// if (locatorSplitted.length > 1) {
@@ -274,7 +274,7 @@ var detailsController = new Controller({
 	},
 
 	selectedItem: function() {
-		detailsController.model.attributes.setSelectedItem(this.getAttribute('id'));
+		detailsController.model.attributes.setSelected(this.getAttribute('id'));
 	}
 
 });

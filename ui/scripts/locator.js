@@ -42,7 +42,7 @@ var locatorModel = new Model('locatorModel',{
 	observe: function(model) {
 		// subscribe
 		locatorModel.on(model.id, locatorModel.id, function(){
-			selectedItem = model.attributes.getSelectedItem();
+			selectedItem = model.attributes.getSelected();
 			if (selectedItem.length > 0) {
 				locatorModel.attributes.set(selectedItem[0].locator);				
 			}
@@ -100,6 +100,6 @@ var locatorController = new Controller({
 		this.model.attributes.observe(detailsModel);
 
 		// set the select menu item
-		this.model.attributes.set(menuModel.attributes.getSelectedItem()[0].locator);
+		this.model.attributes.set(menuModel.attributes.getSelected()[0].locator);
 	}
 });

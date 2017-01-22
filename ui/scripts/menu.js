@@ -32,12 +32,12 @@ var menuModel = new Model('menuModel',{
 	},
 
 	// get the selected item
-	getSelectedItem: function() {
+	getSelected: function() {
 		return _.where(this._items,{selected: true});
 	},
 
 	// set a selected item
-	setSelectedItem: function(n) {
+	setSelected: function(n) {
 		_.each(this._items, function(item){
 			if ( item.name == n){
 				item.selected = true;	
@@ -49,11 +49,6 @@ var menuModel = new Model('menuModel',{
 		});
 		// set the changes an notify subscribers
 		menuModel.set(this._items);
-	},
-	
-	// getSelectedItem
-	getSelectedItem: function(){
-		return _.where(this._items,{selected: true});
 	}
 });
 
@@ -102,7 +97,7 @@ var menuController = new Controller({
 
 	// events to be hold on each menu item
 	events: {
-		".menuitem::click": "selectItem"
+		".menuitem::click": "select"
 	},
 	//
 	// menu initializes when document is ready
@@ -124,7 +119,7 @@ var menuController = new Controller({
 			menuController._initializeWorker(item, locator, selected);
 			if (selected) {
 				selected = false;
-				menuModel.attributes.getSelectedItem(item.name);
+				//menuModel.attributes.setSelected(item.name);
 			}
 		});
 
@@ -154,7 +149,7 @@ var menuController = new Controller({
 	},
 
 	// select item
-	selectItem: function() {
-		menuController.model.attributes.setSelectedItem(this['id']);
+	select: function() {
+		menuController.model.attributes.setSelected(this['id']);
 	}
 });
