@@ -86,7 +86,8 @@ var locatorController = new Controller({
 
 	//
 	// locator initializes when menu is ready
-	initialize: function(menuModel,clusterlistModel) {
+	// initialize: function(menuModel,clusterlistModel) {
+	initialize: function() {
 		//
 		// set listeners
 		//
@@ -101,6 +102,4 @@ var locatorController = new Controller({
 		// set the select menu item
 		this.model.attributes.set(menuModel.attributes.getSelectedItem()[0].locator);
 	}
-
-
 });
