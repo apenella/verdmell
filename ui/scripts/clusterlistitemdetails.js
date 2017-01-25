@@ -39,7 +39,7 @@ var detailsModel = new Model('detailsModel',{
 						// achive moreDetail
 						_.each(contentDetailType,function(contentDetailItem, detailItem){
 							locator = detailsModel.attributes.generateLocator(type,item,detailItem);
-								detailsModel.attributes.add(type, item, detailType, detailItem, locator, this._selected, contentItem.URL, contentDetailItem);
+								detailsModel.attributes.add(type, item, detailType, detailItem, locator, this._selected, false, contentItem.URL, contentDetailItem);
 						});// end achive detail item
 					}// end isObject
 				});// end achieve detail type
@@ -47,24 +47,50 @@ var detailsModel = new Model('detailsModel',{
 		});// end achieve types
 	
 		// set the array of elements
-		detailsModel.set(this._elements);
+		// detailsModel.set(this._elements);
 
 		// if there was any selected clusterlist item, this is setted again
 		if ( _.size(this._locator) > 0 && _.findWhere(this._elements, {locator: this._locator}) != undefined ) {
 		 	clusterlistModel.attributes.setSelected(this._locator);
 		}
 
+		// set the element to show
+		if (clusterlistModel.attributes.getSelected().length > 0 ) {
+			detailsModel.attributes.show(clusterlistModel.attributes.getSelected()[0].locator);
+		}
 	},
 
 	// createItem element
-	createItem: function(type, item, detailtype, detailitem, locator, selected, urlbase, content) {
-		return {type: type, item: item, detailtype: detailtype, detailitem: detailitem, selected: selected, url: urlbase, locator: locator, content: content};
+	createItem: function(type, item, detailtype, detailitem, locator, selected, show, urlbase, content) {
+		return {type: type, item: item, detailtype: detailtype, detailitem: detailitem, selected: selected, show: show, url: urlbase, locator: locator, content: content};
 	},
 
 	// add
-	add: function(type, item, detail, moreDetail, locator, selected, urlbase, content) {
-		this._elements.push(this.createItem(type, item, detail, moreDetail, locator, selected, urlbase, content));
+	add: function(type, item, detail, moreDetail, locator, selected, show, urlbase, content) {
+		this._elements.push(this.createItem(type, item, detail, moreDetail, locator, selected, show, urlbase, content));
 	},
+
+	show: function(locator) {
+		console.log('detailsModel::show',locator);
+		// for each detailModel's element
+		_.each(this._elements, function(item){
+			// console.log('detailsModel::show',locator);
+			// console.log('detailsModel::show',detailsModel.attributes.getBase(item.locator));
+			// show items which locator base is the same as the selected item on cluster list.
+			if ( locator == detailsModel.attributes.getBase(item.locator)) {
+				item.show = true;						
+				console.log('detailsModel::show',item);
+			} else {
+				item.show = false;
+			}
+		});
+
+		detailsModel.set(this._elements);
+	},
+
+	getShowed: function() {
+		return _.where(this._elements, {show: true});
+	}
 
 	// generateLocator
 	generateLocator: function(type,item,detail) {
@@ -108,7 +134,23 @@ var detailsModel = new Model('detailsModel',{
 		});
 		// set the changes an notify subscribers
 		detailsModel.set(this._elements);
+	},
+
+	// subscriptions
+	observe: function(model, f) {
+		clusterlistModel.on(model.id, this.id, function(){f(model);}.bind(this));
+	},
+	// observe cluster list
+	observeClusterlist: function(model) {
+			// get selected item from clusterlist
+			selected = model.attributes.getSelected();
+	 		// console.log('detailsModel::observeClusterlist',selected[0], selected.length);
+			// if selected item exist
+			if (selected.length > 0) {
+				detailsModel.attributes.show(selected[0].locator);
+			}
 	}
+
 
 });
 
@@ -223,7 +265,7 @@ var detailsController = new Controller({
 	view: detailsView,
 
 	events: {
-		".itemdetails::click": "selectedItem"
+		".itemdetails::click": "selected"
 	},
 
 	//
@@ -239,8 +281,8 @@ var detailsController = new Controller({
 		// subscribe for changes to clusterlist
 		this.view.observeClusterlist(clusterlistModel);
 		// subscribe for changes to menu
-		this.view.observeMenu(menuModel);
-
+		// this.view.observeMenu(menuModel);
+		this.model.attributes.observe(clusterlistModel, this.model.attributes.observeClusterlist);
 
 		// initialitze data for clusterlist
 		detailsModel.attributes.set(data);
@@ -273,7 +315,7 @@ var detailsController = new Controller({
 		}
 	},
 
-	selectedItem: function() {
+	selected: function() {
 		detailsController.model.attributes.setSelected(this.getAttribute('id'));
 	}
 

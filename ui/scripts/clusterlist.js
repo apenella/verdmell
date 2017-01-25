@@ -62,12 +62,13 @@ var clusterlistModel = new Model('clusterlistModel',{
 
 	// select items to be shown
 	show: function(type) {
-		// console.log('clusterlistModel::show', 'type', type);
+		 //console.log('clusterlistModel::show', 'type', type);
 		_.each(this._elements, function(item){
 			if (item.type == type) {
 				item.show = true;
 				//console.log('clusterlistModel::show', item);
 			} else {
+				// console.log('clusterlistModel::show', 'show false', item);
 				item.show = false
 			}
 		});
