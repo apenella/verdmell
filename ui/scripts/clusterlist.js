@@ -43,7 +43,7 @@ var clusterlistModel = new Model('clusterlistModel',{
 
 		// if there was any selected clusterlist item, this is setted again
 		if ( _.size(this._locator) > 0 && _.findWhere(this._elements, {locator: this._locator}) != undefined ) {
-		 	clusterlistModel.attributes.setSelected(this._locator);
+		 	clusterlistModel.attributes.select(this._locator);
 		}
 
 		// set the element to show
@@ -62,14 +62,27 @@ var clusterlistModel = new Model('clusterlistModel',{
 
 	// select items to be showed
 	show: function(type) {
-		 //console.log('clusterlistModel::show', 'type', type);
+		// console.log('clusterlistModel::show', 'type', type);
+		
+		// if exists, get selected item
+		selected = '';
+		if (clusterlistModel.attributes.getSelected().length) {
+			selected = clusterlistModel.attributes.getSelected()[0];
+		}
+
 		_.each(this._elements, function(item){
 			if (item.type == type) {
+				// console.log('clusterlistModel::show', item);
+				// set item to be showed
 				item.show = true;
-				//console.log('clusterlistModel::show', item);
+				// select item if it was already selected
+				if (selected.locator == item.locator ) item.selected = true;
 			} else {
 				// console.log('clusterlistModel::show', 'show false', item);
-				item.show = false
+				// set item for not being showed
+				item.show = false;
+				// unselect if item was selected
+				item.selected = false;
 			}
 		});
 
@@ -79,16 +92,14 @@ var clusterlistModel = new Model('clusterlistModel',{
 
 	// set a selected item
 	select: function(locator) {
+		// console.log('clusterlistModel::select', locator);
 		// review each item
 		_.each(this._elements, function(item){
 			// set selected
 			if ( item.locator == locator) {
 				item.selected = true;	
 			} else {
-				// if any other item is set as selected, unselect it
-				if (item.selected) {
-					item.selected = false;
-				}
+				item.selected = false;
 			}
 		});
 		// set the changes an notify subscribers

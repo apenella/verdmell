@@ -178,7 +178,8 @@ footer {
 	margin-left: 0.7em;
 
 	padding: 1%;
-	border: 0.1em solid #e0e0e0;
+	// border: 0.1em solid #e0e0e0;
+	border: 0.1em solid #444541;
 }
 
 .itemdetails{
@@ -200,7 +201,8 @@ footer {
 	padding: 0.3em;
 	padding-left: 0.7em;
 
-	background-color: #e0e0e0;
+	/*background-color: #e0e0e0;
+	color: #444541;*/
 	color: #444541;
 }
 
@@ -237,14 +239,16 @@ footer {
 	margin-left: 0.7em;
 
 	padding: 1%;
-	border: 0.1em solid #e0e0e0;
+	// border: 0.1em solid #e0e0e0;
+	border: 0.1em solid #444541;
 }
 
 .checkstitle {
 	padding: 0.3em;
 	padding-left: 0.7em;
 
-	background-color: #e0e0e0;
+	/*background-color: #e0e0e0;
+	color: #444541;*/
 	color: #444541;
 }
 

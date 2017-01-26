@@ -51,7 +51,7 @@ var detailsModel = new Model('detailsModel',{
 
 		// if there was any selected clusterlist item, this is setted again
 		if ( _.size(this._locator) > 0 && _.findWhere(this._elements, {locator: this._locator}) != undefined ) {
-		 	clusterlistModel.attributes.setSelected(this._locator);
+		 	clusterlistModel.attributes.select(this._locator);
 		}
 
 		// set the element to show
@@ -73,16 +73,29 @@ var detailsModel = new Model('detailsModel',{
 	// mark items to be showed
 	show: function(locator) {
 		// console.log('detailsModel::show',locator);
+		
+		// if exists, get selected item
+		selected = '';
+		if (clusterlistModel.attributes.getSelected().length) {
+			selected = detailsModel.attributes.getSelected()[0];
+		}
+
 		// for each detailModel's element
 		_.each(this._elements, function(item){
-			// console.log('detailsModel::show',locator);
-			// console.log('detailsModel::show',detailsModel.attributes.getBase(item.locator));
+			// console.log('detailsModel::show',item);
+			
 			// show items which locator base is the same as the selected item on cluster list.
 			if ( locator == detailsModel.attributes.getBase(item.locator)) {
-				item.show = true;						
-				// console.log('detailsModel::show',item);
+				// set item to be showed
+				item.show = true;
+				// select item if it was already selected
+				//if (selected.locator == item.locator ) item.selected = true;
 			} else {
+				// console.log('detailsModel::show','show false',item);
+				// set item for not being showed
 				item.show = false;
+				// unselect if item was selected
+				item.selected = false;
 			}
 		});
 
@@ -145,13 +158,13 @@ var detailsModel = new Model('detailsModel',{
 	},
 	// observe cluster list
 	observeClusterlist: function(model) {
-		// get selected item from clusterlist
-		selected = model.attributes.getSelected();
- 		// console.log('detailsModel::observeClusterlist',selected[0], selected.length);
-		// if selected item exist
-		if (selected.length > 0) {
-			detailsModel.attributes.show(selected[0].locator);
+		// console.log('detailsModel::observeClusterlist',selected);
+		// if exist, get selected item from clusterlist
+		selected = '';
+		if (model.attributes.getSelected().length > 0) {
+			selected = model.attributes.getSelected()[0].locator;
 		}
+		detailsModel.attributes.show(selected);
 	}
 
 });
@@ -176,39 +189,29 @@ var detailsView = new View({
 	},
 
 	render: function(model) {
-		$(detailsView.parent).empty();
-		// console.log('detailsView::_render', model.attributes.getShowed().length);
+ 		// console.log('detailsView::render', model.attributes.getShowed().length);
+ 		$(detailsView.parent).empty();
 
-		$('<div/>', {
-				class: 'itemdetailstitle',
-				text: detailsView._title[model.attributes.getShowed()[0].type].toUpperCase()
-		}).appendTo(detailsView.parent);
-
-		_.each(model.attributes.getShowed(), function(item){
-			//console.log('detailsView::_render', item);
-			 $('<div/>', {
-					class: 'itemdetails',
-					id: item.locator,
-					status: item.content.status,
-					text: item.detailitem
+		if (model.attributes.getShowed().length) {	
+			// console.log('detailsView::_render', model.attributes.getShowed().length);
+			$('<div/>', {
+					class: 'itemdetailstitle',
+					text: detailsView._title[model.attributes.getShowed()[0].type].toUpperCase()
 			}).appendTo(detailsView.parent);
-		});
 
-		// set events for details
-		detailsController.setEvents();
-	},
+			_.each(model.attributes.getShowed(), function(item){
+				//console.log('detailsView::_render', item);
+				 $('<div/>', {
+						class: 'itemdetails',
+						id: item.locator,
+						status: item.content.status,
+						text: item.detailitem
+				}).appendTo(detailsView.parent);
+			});
 
-	// set title to details list
-	setTitle: function(title) {
-		// if ( $('.itemdetailstitle').text().length > 0) {
-		// 	$('.itemdetailstitle').hide();
-		// 	$('.itemdetailstitle').text('');
-		// } else {
-		// 	console.log('detailsView::setTitle',title);
-		// 	$('.itemdetailstitle').text(title);
-		// 	$('.itemdetailstitle').show();
-		// }
-
+			// set events for details
+			detailsController.setEvents();
+		}
 	}
 
 });
