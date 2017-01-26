@@ -52,15 +52,15 @@ var clusterlistModel = new Model('clusterlistModel',{
 
 	// add a new item
 	add: function(type, item, locator, selected, show, data) {
-		this._elements.push(this.createItem(type, item, locator, selected, show, data));			
+		this._elements.push(this.create(type, item, locator, selected, show, data));			
 	},
 
-	// createItem jsoned item
-	createItem: function(type, item, locator, selected, show, data) {
+	// create clusterlist item
+	create: function(type, item, locator, selected, show, data) {
 		return {type: type, name: item, locator: locator, selected: selected, show: show, data: data};
 	},
 
-	// select items to be shown
+	// select items to be showed
 	show: function(type) {
 		 //console.log('clusterlistModel::show', 'type', type);
 		_.each(this._elements, function(item){
@@ -77,13 +77,8 @@ var clusterlistModel = new Model('clusterlistModel',{
 		clusterlistModel.set(this._elements);
 	},
 
-	// return elements marked as showed
-	getShowed: function() {
-		return _.where(this._elements, {show: true});
-	},
-
 	// set a selected item
-	setSelected: function(locator) {
+	select: function(locator) {
 		// review each item
 		_.each(this._elements, function(item){
 			// set selected
@@ -100,6 +95,11 @@ var clusterlistModel = new Model('clusterlistModel',{
 		clusterlistModel.set(this._elements);
 	},
 
+	// return elements marked as showed
+	getShowed: function() {
+		return _.where(this._elements, {show: true});
+	},
+
 	// getSelected
 	getSelected: function(){
 		return _.where(this._elements, {selected: true});
@@ -110,6 +110,8 @@ var clusterlistModel = new Model('clusterlistModel',{
 		return "/"+ type + "/" + item;
 	},
 
+	//
+	//
 	// subscriptions
 	observe: function(model, f) {
 		clusterlistModel.on(model.id, this.id, function(){f(model);}.bind(this));
@@ -213,7 +215,8 @@ var clusterlistController = new Controller({
 	},
 
 	select: function() {
-		clusterlistModel.attributes.setSelected( clusterlistController.model.attributes.generateLocator(this.getAttribute('type'), this.getAttribute('id')));
+		// console.log('clusterlistController.select',this.getAttribute('type'),this.getAttribute('id'))
+		clusterlistModel.attributes.select( clusterlistController.model.attributes.generateLocator(this.getAttribute('type'), this.getAttribute('id')));
 	}
 
 });

@@ -60,18 +60,19 @@ var detailsModel = new Model('detailsModel',{
 		}
 	},
 
-	// createItem element
-	createItem: function(type, item, detailtype, detailitem, locator, selected, show, urlbase, content) {
+	// create detail item
+	create: function(type, item, detailtype, detailitem, locator, selected, show, urlbase, content) {
 		return {type: type, item: item, detailtype: detailtype, detailitem: detailitem, selected: selected, show: show, url: urlbase, locator: locator, content: content};
 	},
 
-	// add
+	// add an item to _elements
 	add: function(type, item, detail, moreDetail, locator, selected, show, urlbase, content) {
-		this._elements.push(this.createItem(type, item, detail, moreDetail, locator, selected, show, urlbase, content));
+		this._elements.push(this.create(type, item, detail, moreDetail, locator, selected, show, urlbase, content));
 	},
 
+	// mark items to be showed
 	show: function(locator) {
-		console.log('detailsModel::show',locator);
+		// console.log('detailsModel::show',locator);
 		// for each detailModel's element
 		_.each(this._elements, function(item){
 			// console.log('detailsModel::show',locator);
@@ -79,7 +80,7 @@ var detailsModel = new Model('detailsModel',{
 			// show items which locator base is the same as the selected item on cluster list.
 			if ( locator == detailsModel.attributes.getBase(item.locator)) {
 				item.show = true;						
-				console.log('detailsModel::show',item);
+				// console.log('detailsModel::show',item);
 			} else {
 				item.show = false;
 			}
@@ -88,13 +89,25 @@ var detailsModel = new Model('detailsModel',{
 		detailsModel.set(this._elements);
 	},
 
+	// mark an item as selected
+	select: function(locator) {
+		// review each item
+		_.each(this._elements, function(item){
+			// set selected
+			if ( item.locator == locator) {
+				console.log('detailsModel::select',locator);
+				item.selected = true;
+			} else {
+				item.selected = false;
+			}
+		});
+		// set the changes an notify subscribers
+		detailsModel.set(this._elements);
+	},
+
+	// return item marked to be showed
 	getShowed: function() {
 		return _.where(this._elements, {show: true});
-	}
-
-	// generateLocator
-	generateLocator: function(type,item,detail) {
-		return '/'+ type + '/' + item + '/' + detail;
 	},
 
 	// return to which type of item belongs the detail
@@ -114,43 +127,32 @@ var detailsModel = new Model('detailsModel',{
 		else
 			return null;
 	},
-
+	// return selected items
 	getSelected: function(){
 		return _.where(this._elements, {selected: true});
 	},
 
-	setSelected: function(locator) {
-		// review each item
-		_.each(this._elements, function(item){
-			// set selected
-			if ( item.locator == locator) {
-				item.selected = true;
-			} else {
-				// if any other item is set as selected, unselect it
-				if (item.selected) {
-					item.selected = false;
-				}
-			}
-		});
-		// set the changes an notify subscribers
-		detailsModel.set(this._elements);
+	// generateLocator
+	generateLocator: function(type,item,detail) {
+		return '/'+ type + '/' + item + '/' + detail;
 	},
 
+	//
+	//
 	// subscriptions
 	observe: function(model, f) {
 		clusterlistModel.on(model.id, this.id, function(){f(model);}.bind(this));
 	},
 	// observe cluster list
 	observeClusterlist: function(model) {
-			// get selected item from clusterlist
-			selected = model.attributes.getSelected();
-	 		// console.log('detailsModel::observeClusterlist',selected[0], selected.length);
-			// if selected item exist
-			if (selected.length > 0) {
-				detailsModel.attributes.show(selected[0].locator);
-			}
+		// get selected item from clusterlist
+		selected = model.attributes.getSelected();
+ 		// console.log('detailsModel::observeClusterlist',selected[0], selected.length);
+		// if selected item exist
+		if (selected.length > 0) {
+			detailsModel.attributes.show(selected[0].locator);
+		}
 	}
-
 
 });
 
@@ -161,54 +163,39 @@ var detailsView = new View({
 	// place to append the items
 	parent: ".clusterlistitemdetails",
 	// titles
-	_titles: {
+	_title: {
 		"nodes": "services",
 		"services": "nodes"
 	},
 
+	//
+	//
+	// subscriptions
+	observe: function(model, f) {
+		detailsModel.on(model.id, this.id, function(){f(model);}.bind(this));
+	},
+
 	render: function(model) {
-		// console.log('detailsView::render', model);
 		$(detailsView.parent).empty();
+		// console.log('detailsView::_render', model.attributes.getShowed().length);
 
-			$('<div/>', {
+		$('<div/>', {
 				class: 'itemdetailstitle',
-				id: 'title',
-				text: ''
-			}).hide().appendTo(detailsView.parent);
+				text: detailsView._title[model.attributes.getShowed()[0].type].toUpperCase()
+		}).appendTo(detailsView.parent);
 
-		_.each(model, function(item){
+		_.each(model.attributes.getShowed(), function(item){
+			//console.log('detailsView::_render', item);
 			 $('<div/>', {
 					class: 'itemdetails',
 					id: item.locator,
 					status: item.content.status,
 					text: item.detailitem
-			}).hide().appendTo(detailsView.parent);
+			}).appendTo(detailsView.parent);
 		});
-		// set elements to show
-		detailsView.setShowedElements(locatorModel.attributes.get());
-		
+
 		// set events for details
 		detailsController.setEvents();
-	},
-
-	// subscribe to model
-	observe: function(model) {
-		// subscribe
-		this.on(model.id, this.id, function(model){
-			detailsView.render(model);
-		}.bind(this));
-	},
-
-	// subscribe to model
-	observeClusterlist: function(model) {
-		// subscribe
-		detailsView.on(model.id, detailsView.id, function(){
-			selectedItem = model.attributes.getSelected();
-			if (selectedItem.length > 0) {
-				// console.log('detailsView::observeClusterlist',selectedItem[0]);
-				detailsView.setShowedElements(selectedItem[0].locator);				
-			}
-		}.bind(this));
 	},
 
 	// set title to details list
@@ -221,36 +208,7 @@ var detailsView = new View({
 		// 	$('.itemdetailstitle').text(title);
 		// 	$('.itemdetailstitle').show();
 		// }
-		$('.itemdetailstitle').text(title);
 
-	},
-	// manage which elements to show
-	setShowedElements: function(locator) {
-		
-		locatorSplitted = locator.split('/');
-		//console.log('detailsView::setShowedElements',locatorSplitted);
-		base = detailsModel.attributes.getBase(locator);
-		selected = detailsModel.attributes.getSelected();
-
-		// set title
-		// if (locatorSplitted.length > 1) {
-		// 	console.log('detailsView::setShowedElements',locatorSplitted[1]);
-		// 	detailsView.setTitle(this._titles[locatorSplitted[1]].toUpperCase());
-		// }
-		
-		$('.itemdetails').each(function(){
-			if ( detailsModel.attributes.getBase(this.getAttribute('id')) == base ) {
-				$(this).show();
-			} else {
-				$(this).hide();
-			}
-		});
-	},
-	// observer for changes on menu
-	observeMenu: function(model) {
-		this.on(model.id, this.id, function(){
-			$('.itemdetails').hide();
-		}.bind(this));
 	}
 
 });
@@ -277,12 +235,13 @@ var detailsController = new Controller({
 		// set listeners
 		//
 		// subscribe view to model
-		this.view.observe(this.model);
+		//this.view.observe(this.model);
+		this.view.observe(this.model,this.view.render);
 		// subscribe for changes to clusterlist
-		this.view.observeClusterlist(clusterlistModel);
+		this.model.attributes.observe(clusterlistModel, this.model.attributes.observeClusterlist);
+		// this.view.observeClusterlist(clusterlistModel);
 		// subscribe for changes to menu
 		// this.view.observeMenu(menuModel);
-		this.model.attributes.observe(clusterlistModel, this.model.attributes.observeClusterlist);
 
 		// initialitze data for clusterlist
 		detailsModel.attributes.set(data);
@@ -316,7 +275,8 @@ var detailsController = new Controller({
 	},
 
 	selected: function() {
-		detailsController.model.attributes.setSelected(this.getAttribute('id'));
+		// console.log('detailsController::selected',this.getAttribute('id'));
+		detailsController.model.attributes.select(this.getAttribute('id'));
 	}
 
 });
