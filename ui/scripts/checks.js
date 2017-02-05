@@ -46,16 +46,16 @@ var checksModel = new Model('checksModel',{
 		return { node: node, url: url, selected: false };
 	},
 
-	addCheck: function(name, checks, samples) {
-		this._checks.push(checksModel.attributes.createCheck(name, checks, samples));
+	add: function(name, selected, show, checks, samples) {
+		this._checks.push(checksModel.attributes.create(name, selected, show, checks, samples));
 	},
 
-	createCheck: function(name, checks, samples) {
-		return { name: name, checks: checks, samples: samples};
+	create: function(name, selected, show, checks, samples) {
+		return { name: name, selected: selected, show: show, checks: checks, samples: samples};
 	},
 
-	clearChecks: function() {
-		// console.log('checksModel::clearChecks');
+	clear: function() {
+		// console.log('checksModel::clear');
 		this._checks = [];
 	},
 
@@ -80,7 +80,7 @@ var checksModel = new Model('checksModel',{
 		// console.log('checksModel::setSelectedNode',this._nodes);
 	},
 
-	observe: function(model) {
+	_observe: function(model) {
 		checksModel.on(model.id, this.id, function(model){
 			if (detailsModel.attributes.getSelected().length) {
 				// console.log('checksModel::observe',detailsModel.attributes.getSelected()[0].content.checks);
@@ -91,18 +91,58 @@ var checksModel = new Model('checksModel',{
 					//checksModel.attributes.retrieveChecks(node[0].url);
 					$.getJSON(node[0].url+MainController.nodeuri, function(data){
 						// clear checks content
-						checksModel.attributes.clearChecks();
+						checksModel.attributes.clear();
 						// console.log('checksModel::observe',data.checks);
 						$.each(detailsModel.attributes.getSelected()[0].content.checks, function(index, check){
 							// console.log('checksModel::observe',data.checks.checks.checks[check]);
 							// console.log('checksModel::observe',data.samples.Samples[check]);
-							checksModel.attributes.addCheck(data.checks.checks.checks[check].name,data.checks.checks.checks[check],data.samples.Samples[check]);
+							checksModel.attributes.add(data.checks.checks.checks[check].name,data.checks.checks.checks[check],data.samples.Samples[check]);
 						});
 						checksModel.attributes.setChecks();
 					});
 				}
 			}
 		});
+	},
+
+	//show
+	show: function() {
+
+	},
+
+	select: function() {
+
+	},
+
+	//
+	//
+	// subscriptions
+	observe: function(model, f) {
+		clusterlistModel.on(model.id, this.id, function(){f(model);}.bind(this));
+	},
+	// observe details
+	observeDetails: function(model) {
+		if (detailsModel.attributes.getSelected().length) {
+			// console.log('checksModel::observe',detailsModel.attributes.getSelected()[0].content.checks);
+			// get node data related to detailitem clicked	
+			node = clusterlistModel.attributes.getNode(detailsModel.attributes.getSelected()[0][checksModel.attributes._itemTypeClass[detailsModel.attributes.getSelected()[0].type]]);
+			//node = checksModel.attributes.getNode(detailsModel.attributes.getSelected()[0][checksModel.attributes._itemTypeClass[detailsModel.attributes.getSelected()[0].type]]);
+			console.log('checksModel::observe',node);
+			if ( node.length ) {
+				//checksModel.attributes.retrieveChecks(node[0].url);
+				$.getJSON(node[0].data.URL+MainController.nodeuri, function(data){
+					// clear checks content
+					checksModel.attributes.clear();
+					 console.log('checksModel::observe',data.checks);
+					$.each(detailsModel.attributes.getSelected()[0].content.checks, function(index, check){
+						// console.log('checksModel::observe',data.checks.checks.checks[check]);
+						// console.log('checksModel::observe',data.samples.Samples[check]);
+						checksModel.attributes.add(data.checks.checks.checks[check].name,data.checks.checks.checks[check],data.samples.Samples[check]);
+					});
+					checksModel.attributes.setChecks();
+				});
+			}
+		}	
 	}
 
 });
@@ -126,9 +166,10 @@ var checksView = new View({
 			$('<div/>', {
 				class: 'checkstitle',
 				id: 'title',
-				text: 'CHECKS'
+				text: 'checks'
 			}).appendTo(checksView.parent);
 
+		console.log('checksView::render',model);
 		_.each(model, function(item){
 			$('<div/>', {
 				class: 'check',
@@ -157,23 +198,52 @@ var checksController = new Controller({
 	// menu view management
 	view: checksView,
 
+	events: {
+		".check::click": "select"
+	},
+
 	initialize: function(data) {
 
 		//
 		// set listeners
 		//
 		// subscribe to detailsModel
-		this.model.attributes.observe(detailsModel);
+		//this.model.attributes.observe(detailsModel);
+		this.model.attributes.observe(detailsModel,this.model.attributes.observeDetails);
 		// subscribe for changes to checksModel
 		this.view.observe(this.model);
 
 		this.view.initialize();
 		// set nodes to model
 		this.model.attributes.setNodes(data['nodes']);
+
+//		console.log('checksController::initialize','data',data['nodes']);
+//		console.log('checksController::initialize','clusterlist',clusterlistModel.attributes.getNodes());
 	},
 
+	// on update
 	update: function(data) {
 		this.model.attributes.setNodes(data['nodes']);
+	},
+
+	// set events to items
+	setEvents: function() {
+		var parts, selector, eventType;
+		if(this.events){
+			_.each(this.events, function(method, eventName){
+				parts = eventName.split('::');
+				// get item from events property
+				selector = parts[0];
+				// get method from events property
+				eventType = parts[1];
+				// hold the event to item
+				$(selector).on(eventType, this[method]);
+			}.bind(this));
+		}
+	},
+
+	select: function() {
+		console.log('checksController::select');
 	}
 
 });

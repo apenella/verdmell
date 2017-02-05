@@ -22,29 +22,40 @@ var clusterlistModel = new Model('clusterlistModel',{
 
 	// set data to clusterlist
 	set: function(data) {
+
+		// if exists, get selected item
+		selected = '';
+		if (clusterlistModel.attributes.getSelected().length > 0) {
+			selected = clusterlistModel.attributes.getSelected()[0].locator;
+			// console.log('clusterlistModel::set', 'selected', selected);
+		}
+
+		// generate a new array for all elements. either for first load and updates
 		this._elements = [];
 		// achive the current locator
 		this._locator = locatorModel.attributes.get();
-		this._selected = false;
-
+		
 		//
 		// iterate all the items from data to generate the clusterlist
 		// achive types
 		_.each(data, function(contentType, type){
 			// achieve item
 			_.each(contentType, function(contentItem, item){
-
 				// generate locator for current type-item
 				locator = clusterlistModel.attributes.generateLocator(type,item);
-				// add object
-				clusterlistModel.attributes.add(type, item, locator, this._selected, false, contentItem);
+
+				// console.log('clusterlistModel::set',selected, locator);
+				// if there was and item selected, it will be added as was
+				if (selected == locator) {
+					// selected true
+					clusterlistModel.attributes.add(type, item, locator, true, false, contentItem);
+				}else{
+					// selected false
+					clusterlistModel.attributes.add(type, item, locator, false, false, contentItem);					
+				}
+
 			});
 		});
-
-		// if there was any selected clusterlist item, this is setted again
-		if ( _.size(this._locator) > 0 && _.findWhere(this._elements, {locator: this._locator}) != undefined ) {
-		 	clusterlistModel.attributes.select(this._locator);
-		}
 
 		// set the element to show
 		clusterlistModel.attributes.show(menuModel.attributes.getSelected()[0].name.toLowerCase());
@@ -114,6 +125,22 @@ var clusterlistModel = new Model('clusterlistModel',{
 	// getSelected
 	getSelected: function(){
 		return _.where(this._elements, {selected: true});
+	},
+
+	// getNodes
+	getNodes: function(){
+		return _.where(this._elements, {type: 'nodes'});
+	},
+
+	// get specific node
+	getNode: function(node){
+		console.log('clusterlistModel::getNode',node);
+		return _.where(this._elements, {type: 'nodes', name: node});
+	},	
+
+	// getServices
+	getServices: function(){
+		return _.where(this._elements, {type: 'services'});
 	},
 
 	// generateLocator
