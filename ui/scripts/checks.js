@@ -64,59 +64,34 @@ var checksModel = new Model('checksModel',{
 		checksModel.set(this._checks);
 	},
 
-	// setSelectedNode: function(node) {
-	// 	//console.log('checksModel::setSelectedNode',node);
-	// 	_.each(this._nodes, function(item){
-	// 		// set selected
-	// 		if ( item.node == node) {
-	// 			item.selected = true;
-	// 		} else {
-	// 			// if any other item is set as selected, unselect it
-	// 			if (item.selected) {
-	// 				item.selected = false;
-	// 			}
-	// 		}
-	// 	});
-	// 	// console.log('checksModel::setSelectedNode',this._nodes);
-	// },
-
-	// _observe: function(model) {
-	// 	checksModel.on(model.id, this.id, function(model){
-	// 		if (detailsModel.attributes.getSelected().length) {
-	// 			// console.log('checksModel::observe',detailsModel.attributes.getSelected()[0].content.checks);
-	// 			// get node data related to detailitem clicked		
-	// 			node = checksModel.attributes.getNode(detailsModel.attributes.getSelected()[0][checksModel.attributes._itemTypeClass[detailsModel.attributes.getSelected()[0].type]]);
-	// 			//console.log('checksModel::observe',node[0]);
-	// 			if ( node.length ) {
-	// 				//checksModel.attributes.retrieveChecks(node[0].url);
-	// 				$.getJSON(node[0].url+MainController.nodeuri, function(data){
-	// 					// clear checks content
-	// 					checksModel.attributes.clear();
-	// 					// console.log('checksModel::observe',data.checks);
-	// 					$.each(detailsModel.attributes.getSelected()[0].content.checks, function(index, check){
-	// 						// console.log('checksModel::observe',data.checks.checks.checks[check]);
-	// 						// console.log('checksModel::observe',data.samples.Samples[check]);
-	// 						checksModel.attributes.add(data.checks.checks.checks[check].name,data.checks.checks.checks[check],data.samples.Samples[check]);
-	// 					});
-	// 					checksModel.attributes.setChecks();
-	// 				});
-	// 			}
-	// 		}
-	// 	});
-	// },
-
-	// generateLocator
-	generateLocator: function(base, check) {
-		return base + '/' + check;
-	},
-
 	//show
 	show: function() {
 
 	},
 
-	select: function() {
+	select: function(locator) {
+		console.log('checksModel::select',locator);
+		// review each item
+		_.each(this._checks, function(item){
+			// set selected
+			if ( item.locator == locator) {
+				item.selected = true;
+			} else {
+				item.selected = false;
+			}
+		});
+		// set the changes an notify subscribers
+		checksModel.set(this._elements);
+	},
 
+	// generate locator
+	generateLocator: function(base, check) {
+		return base + '/' + check;
+	},
+
+	// return selected items
+	getSelected: function(){
+		return _.where(this._checks, {selected: true});
 	},
 
 	//
@@ -142,8 +117,10 @@ var checksModel = new Model('checksModel',{
 					$.each(detailsModel.attributes.getSelected()[0].content.checks, function(index, check){
 						// console.log('checksModel::observe',data.checks.checks.checks[check]);
 						// console.log('checksModel::observe',data.samples.Samples[check]);
-						checksModel.attributes.add(data.checks.checks.checks[check].name, '',false, false, data.checks.checks.checks[check],data.samples.Samples[check]);
+						// console.log('checksModel::observe', checksModel.attributes.generateLocator(detailsModel.attributes.getSelected()[0].locator,data.checks.checks.checks[check].name));
+						checksModel.attributes.add(data.checks.checks.checks[check].name, checksModel.attributes.generateLocator(detailsModel.attributes.getSelected()[0].locator,data.checks.checks.checks[check].name),false, false, data.checks.checks.checks[check],data.samples.Samples[check]);
 					});
+
 					checksModel.attributes.setChecks();
 				});
 			}
@@ -174,15 +151,18 @@ var checksView = new View({
 				text: 'checks'
 			}).appendTo(checksView.parent);
 
-		console.log('checksView::render',model);
+		// console.log('checksView::render',model);
 		_.each(model, function(item){
 			$('<div/>', {
 				class: 'check',
-				id: item.name,
+				id: item.locator,
 				status: item.samples.Sample.exit,
 				text: item.name
 			}).appendTo(checksView.parent);
 		});
+
+		// set events for details
+		checksController.setEvents();
 	},
 
 	observe: function(model) {
@@ -249,6 +229,7 @@ var checksController = new Controller({
 
 	select: function() {
 		console.log('checksController::select');
+		checksController.model.attributes.select(this.getAttribute('id'));
 	}
 
 });

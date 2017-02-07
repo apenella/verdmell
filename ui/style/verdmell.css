@@ -102,9 +102,11 @@ footer {
 	position: relative;
 	float:left;
 	height: 100%;
-	
+
+
 	padding-left: 5%;
 	padding-right: 5%;
+	margin-top: 0.5em;
 	margin-bottom: 0.5em;
 	
 	color: #444541;

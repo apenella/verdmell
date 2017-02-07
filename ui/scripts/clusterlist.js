@@ -122,28 +122,28 @@ var clusterlistModel = new Model('clusterlistModel',{
 		return _.where(this._elements, {show: true});
 	},
 
-	// getSelected
+	// return selected items
 	getSelected: function(){
 		return _.where(this._elements, {selected: true});
 	},
 
-	// getNodes
+	// return all nodes
 	getNodes: function(){
 		return _.where(this._elements, {type: 'nodes'});
 	},
 
 	// get specific node
 	getNode: function(node){
-		console.log('clusterlistModel::getNode',node);
+		// console.log('clusterlistModel::getNode',node);
 		return _.where(this._elements, {type: 'nodes', name: node});
 	},	
 
-	// getServices
+	// return all services
 	getServices: function(){
 		return _.where(this._elements, {type: 'services'});
 	},
 
-	// generateLocator
+	// generate locator
 	generateLocator: function (type, item) {
 		return "/"+ type + "/" + item;
 	},
