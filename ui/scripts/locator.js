@@ -98,6 +98,7 @@ var locatorController = new Controller({
 		this.model.attributes.observe(menuModel);
 		this.model.attributes.observe(clusterlistModel);
 		this.model.attributes.observe(detailsModel);
+		this.model.attributes.observe(checksModel);
 
 		// set the select menu item
 		this.model.attributes.set(menuModel.attributes.getSelected()[0].locator);

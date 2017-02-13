@@ -18,7 +18,6 @@
 //-----------------------------------------------------------
 var checksModel = new Model('checksModel',{
 
-	_nodes: [],
 	_checks: [],
 
 	_itemTypeClass: {
@@ -26,62 +25,54 @@ var checksModel = new Model('checksModel',{
 		"services": "detailitem"
 	},
 
-	// setNodes: function(data) {
-	// 	this._nodes = [],
+	// set checks
+	set: function(data) {
+		// console.log('checksModel::set');
+		this._checks = [];
 
-	// 	_.each(data, function(node){
-	// 		checksModel.attributes.addNode(node.name, node.URL);
-	// 	});
-	// },
+		// add checks when data is not null
+		if ( _.isObject(data) ) {
+			$.each(detailsModel.attributes.getSelected()[0].content.checks, function(index, check){
+				// console.log('checksModel::observe',data.checks.checks.checks[check]);
+				// console.log('checksModel::observe',data.samples.Samples[check]);
+				// console.log('checksModel::observe', checksModel.attributes.generateLocator(detailsModel.attributes.getSelected()[0].locator,data.checks.checks.checks[check].name));
+				checksModel.attributes.add(data.checks.checks.checks[check].name, checksModel.attributes.generateLocator(detailsModel.attributes.getSelected()[0].locator,data.checks.checks.checks[check].name),false, false, data.checks.checks.checks[check],data.samples.Samples[check]);
+			});
+		}
 
-	// addNode: function(node, url) {
-	// 	this._nodes.push(checksModel.attributes.createNode(node, url));
-	// },
+		checksModel.set(this._checks);
+	},
 
-	// getNode: function(node) {
-	// 	return _.where(checksModel.attributes._nodes, {node: node});
-	// },
-
-	// createNode: function (node, url) {
-	// 	return { node: node, url: url, selected: false };
-	// },
-
+	// add a check onto checks
 	add: function(name, locator, selected, show, checks, samples) {
 		this._checks.push(checksModel.attributes.create(name, locator, selected, show, checks, samples));
 	},
 
+	// return a new check objecte
 	create: function(name, locator, selected, show, checks, samples) {
 		return { name: name, locator: locator, selected: selected, show: show, checks: checks, samples: samples};
 	},
 
-	clear: function() {
-		// console.log('checksModel::clear');
-		this._checks = [];
+	// return checks
+	getChecks: function() {
+		// console.log('checksModel::getChecks');
+		return this._checks;
 	},
 
-	setChecks: function() {
-		// console.log('checksModel::setChecks');
-		checksModel.set(this._checks);
-	},
-
-	//show
-	show: function() {
-
-	},
-
-	select: function(locator) {
-		console.log('checksModel::select',locator);
+	// set check as selected 
+	select: function(name) {
+		// console.log('checksModel::select',name);
 		// review each item
 		_.each(this._checks, function(item){
 			// set selected
-			if ( item.locator == locator) {
+			if ( item.name == name) {
 				item.selected = true;
 			} else {
 				item.selected = false;
 			}
 		});
 		// set the changes an notify subscribers
-		checksModel.set(this._elements);
+		checksModel.set(this._checks);
 	},
 
 	// generate locator
@@ -102,29 +93,24 @@ var checksModel = new Model('checksModel',{
 	},
 	// observe details
 	observeDetails: function(model) {
-		if (detailsModel.attributes.getSelected().length) {
-			// console.log('checksModel::observe',detailsModel.attributes.getSelected()[0].content.checks);
-			// get node data related to detailitem clicked	
-			node = clusterlistModel.attributes.getNode(detailsModel.attributes.getSelected()[0][checksModel.attributes._itemTypeClass[detailsModel.attributes.getSelected()[0].type]]);
-			//node = checksModel.attributes.getNode(detailsModel.attributes.getSelected()[0][checksModel.attributes._itemTypeClass[detailsModel.attributes.getSelected()[0].type]]);
-			// console.log('checksModel::observe',node);
-			if ( node.length ) {
-				//checksModel.attributes.retrieveChecks(node[0].url);
-				$.getJSON(node[0].data.URL+MainController.nodeuri, function(data){
-					// clear checks content
-					checksModel.attributes.clear();
-					// console.log('checksModel::observe',data.checks);
-					$.each(detailsModel.attributes.getSelected()[0].content.checks, function(index, check){
-						// console.log('checksModel::observe',data.checks.checks.checks[check]);
-						// console.log('checksModel::observe',data.samples.Samples[check]);
-						// console.log('checksModel::observe', checksModel.attributes.generateLocator(detailsModel.attributes.getSelected()[0].locator,data.checks.checks.checks[check].name));
-						checksModel.attributes.add(data.checks.checks.checks[check].name, checksModel.attributes.generateLocator(detailsModel.attributes.getSelected()[0].locator,data.checks.checks.checks[check].name),false, false, data.checks.checks.checks[check],data.samples.Samples[check]);
-					});
+		// console.log('checksModel::observe');
 
-					checksModel.attributes.setChecks();
+		if (detailsModel.attributes.getSelected().length > 0) {
+			// console.log('checksModel::observe',detailsModel.attributes.getSelected()[0].content.checks);
+			// get node data related to detailitem clicked
+			node = clusterlistModel.attributes.getNode(detailsModel.attributes.getSelected()[0][checksModel.attributes._itemTypeClass[detailsModel.attributes.getSelected()[0].type]]);
+			
+			// console.log('checksModel::observe',node);
+			if ( node.length > 0 ) {
+				$.getJSON(node[0].data.URL+MainController.nodeuri, function(data){
+					// set check
+					checksModel.attributes.set(data);
 				});
 			}
-		}	
+		} else {
+			// set check
+			checksModel.attributes.set(null);
+		}
 	}
 
 });
@@ -145,17 +131,19 @@ var checksView = new View({
 	render: function(model) {
 		$(checksView.parent).empty();
 
+		if ( checksModel.attributes.getChecks().length > 0) {
 			$('<div/>', {
 				class: 'checkstitle',
 				id: 'title',
 				text: 'checks'
 			}).appendTo(checksView.parent);
+		}
 
 		// console.log('checksView::render',model);
 		_.each(model, function(item){
 			$('<div/>', {
 				class: 'check',
-				id: item.locator,
+				id: item.name,
 				status: item.samples.Sample.exit,
 				text: item.name
 			}).appendTo(checksView.parent);
