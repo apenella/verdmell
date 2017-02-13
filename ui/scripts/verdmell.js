@@ -51,6 +51,7 @@ var MainController = new Controller({
 		detailsController.initialize(data);
 		locatorController.initialize(menuModel, clusterlistModel);
 		checksController.initialize(data);
+		checkDetailsController.initialize();
 	},
 
 	update: function(data) {

@@ -181,17 +181,12 @@ var checksController = new Controller({
 		// set listeners
 		//
 		// subscribe to detailsModel
-		//this.model.attributes.observe(detailsModel);
 		this.model.attributes.observe(detailsModel,this.model.attributes.observeDetails);
 		// subscribe for changes to checksModel
 		this.view.observe(this.model);
-
+		// initialize view
 		this.view.initialize();
-		// set nodes to model
-		// this.model.attributes.setNodes(data['nodes']);
 
-//		console.log('checksController::initialize','data',data['nodes']);
-//		console.log('checksController::initialize','clusterlist',clusterlistModel.attributes.getNodes());
 	},
 
 	// on update
