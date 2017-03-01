@@ -21,7 +21,7 @@ var Event = {
 		_eventNumber: 0,
 
 		on: function (events_from, events_to, callback) {
-			//this._listeners[events + --this._eventNumber] = callback;
+			// console.log('utils::on', events_from, events_to);
 			this._listeners[events_from +"-"+events_to] = callback;
 		},
 
@@ -45,6 +45,7 @@ var Event = {
 //-----------------------------------------------------------
 var Model = function (desc, attributes) {
 	this.id = _.uniqueId('model');
+	this.desc = desc;
 	this.attributes = attributes || {};
 };
 
@@ -54,6 +55,7 @@ Model.prototype.get = function(attr) {
 
 Model.prototype.set = function(attrs){
 	if (_.isObject(attrs)) {
+		// console.log('utils::set', this.desc, attrs);
 		_.extend(this.attributes, attrs);
 		this.change(attrs);
 	}

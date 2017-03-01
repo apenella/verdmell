@@ -162,7 +162,7 @@ var detailsModel = new Model('detailsModel',{
 	//
 	// subscriptions
 	observe: function(model, f) {
-		clusterlistModel.on(model.id, this.id, function(){f(model);}.bind(this));
+		detailsModel.on(model.id, this.id, function(){f(model);}.bind(this));
 	},
 	// observe cluster list
 	observeClusterlist: function(model) {

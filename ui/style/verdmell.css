@@ -178,9 +178,8 @@ footer {
 	width: 35%;
 
 	margin-left: 0.7em;
-
 	padding: 1%;
-	//border: 0.1em solid #e0e0e0;
+	
 	border: 0.1em solid #444541;
 }
 
@@ -191,11 +190,6 @@ footer {
 	margin-top: 0.1em;
 	margin-left: 0;
 	
-/*	border-top: 0.01em solid #e0e0e0;
-	border-bottom: 0.01em solid #e0e0e0;
-
-	background-color: #eeedeb;
-*/
 	color: #444541;
 }
 
@@ -204,8 +198,6 @@ footer {
 	padding-left: 0.7em;
 	margin-bottom: 0.7em;
 
-	/*background-color: #e0e0e0;
-	color: #444541;*/
 	border-bottom: 0.2em solid #e0e0e0;
 	color: #0d47a1;
 }
@@ -243,7 +235,6 @@ footer {
 	margin-left: 0.7em;
 
 	padding: 1%;
-	// border: 0.1em solid #e0e0e0;
 	border: 0.1em solid #444541;
 }
 
@@ -252,8 +243,6 @@ footer {
 	padding-left: 0.7em;
 	margin-bottom: 0.7em;
 
-	/*background-color: #e0e0e0;
-	color: #444541;*/
 	border-bottom: 0.2em solid #e0e0e0;
 	color: #0d47a1;
 }
@@ -265,8 +254,6 @@ footer {
 	margin-top: 0.1em;
 	margin-left: 0;
 	
-
-	// background-color: #eeedeb;
 	color: #444541;
 }
 
@@ -291,166 +278,73 @@ footer {
 	box-shadow:0em 0.01em 0.25em #444541;
 }
 
+/*
+	CHECK DETAILS
+*/
 
-.itemdetailschecks{
-	padding: 0.3em;
-	padding-left: 0.7em;
+.checkdetailsbg {
+	position: fixed;
+	top: 0px;
+  left: 0px;
+	width: 100%;
+	height: 100%;
 
-	margin-top: 0.1em;
-	margin-left: 0;
-
-	background-color: #eeedeb;
 	color: #444541;
-	border-top: 0.1em solid #444541;
+	background-color: #fcfbf9;
+	opacity: 0.95;
+} 
+
+.checkdetailsclose{
+	position: relative;
+	float: right;
+
+	padding: 0.4em;
+	margin: 0.3em;
+
+	font-weight: bold;
 }
 
+.checkdetailsclose:hover{
+	border: 0.1em solid #444541;
+	box-shadow: 0em 0.01em 0.25em #444541;	
+}
 
-.clusternodedetails {
-	float:right;
+.checkdetails {
+	position: relative;
+	
 	width: 75%;
+	margin: auto;
+	padding: 2%;
+
+	background-color: #fcfbf9;
 }
 
-.servicesdetails{
-	margin-left: 1em;
-	margin-right: 1em;
-}
-.servicedetail{		
-	margin: 0.5em;
-	min-height: 100%;
+.checkdetailstitle {
+	padding-top: 0.3em;
+	padding-left: 0.7em;
+	margin-bottom: 0.7em;
 
-	box-shadow:0em 0.01em 0.25em #444541;
-	border-width: 0.1em;
-	border-style: solid;
-	border-color: #444541;
+	border-bottom: 0.2em solid #e0e0e0;
+	color: #0d47a1;
 }
 
-.servicedetail[status="-1"]{
-	/*Unknown status: blue*/
-	border-color: #0d47a1;
-	border-width: 0.1em;
-}
-.servicedetail[status="0"]{
-	/*OK status: green*/
-	border-color: #1b5e20;
-	border-width: 0.1em;
-}
-.servicedetail[status="1"]{
-	/*WARN status: ambar*/
-	border-color: #ff6f00;
-	border-width: 0.1em;
-}
-.servicedetail[status="2"]{
-	/*ERROR status: red*/
-	border-color: #b71c1c;
-	border-width: 0.1em;
-}
-
-.servicename{
-	padding: 0.5em;
-
-	color: #f4f3f1;
-}
-
-.servicedetail[status="-1"] > .servicename {
-	/*Unknown status: blue*/
-	background-color: #0d47a1;
-}
-.servicedetail[status="0"] .servicename {
-	/*OK status: green*/
-	background-color: #1b5e20;
-}
-.servicedetail[status="1"] .servicename {
-	/*WARN status: ambar*/
-	background-color: #ff6f00;
-}
-.servicedetail[status="2"] .servicename {
-	/*ERROR status: red*/
-	background-color: #b71c1c;
-}
-
-.servicechecks{
-	color: #f4f3f1;
-}
-
-.servicecheck {
-	padding: 0.5em;
-	margin: 0.5em;
+.checkdetailscheck {
+	width: 50%;
 	float:left;
-	/*border-radius: 0.25em;*/		
-	border-width: 0.1em;
-	border-style: solid;
-	border-color: #444541;
-	background-color: #444541;
 }
 
-.servicecheck[status="-1"] {
-	/*Unknown status: blue*/
-	border-color:  #0d47a1;
-	background-color: #0d47a1;
-}
-.servicecheck[status="0"] {
-	/*OK status: green*/
-	border-color:  #1b5e20;
-	background-color: #1b5e20;
-}
-.servicecheck[status="1"] {
-	/*WARN status: ambar*/
-	border-color:  #ff6f00;
-	background-color: #ff6f00;
-}
-.servicecheck[status="2"] {
-	/*ERROR status: red*/
-	border-color:  #b71c1c;
-	background-color: #b71c1c;
+.checkdetailssample {
+	width: 50%;
+	float:left;
 }
 
-.servicecheck:hover {
-	background-color: #f4f3f1;
-	border-width: 0.1em;
-	border-style: solid;
-	border-color: #444541;
-
-	color: #444541;		
+.checkdetailsheader {
+	font-weight: bold;
 }
-
-.servicecheckalldetails {
-	padding-top: 2%;
-	padding-left: 2%;
-	padding-right: 2%;
-
+.checkdetailsinfo {
+	margin-left: 0.25em;
+	margin-bottom: 0.25em;
 	font-family: monospace;
-
-	color: #f4f3f1;
-	background-color: #444541;
-}
-
-.servicecheckdetails {
-	width: 50%;
-	float:left;
-}
-
-.checkinfotitle {
-	font-weight: bold;
-}
-.checkinfo {
-	margin-left: 0.25em;
-	margin-bottom: 0.25em;
-
-	font-style: italic;
-}
-
-.servicechecksampledetails{
-	width: 50%;
-	float:left;
-}
-.sampleinfotitle {
-	font-weight: bold;
-}
-.sampleinfo {
-	margin-left: 0.25em;
-	margin-bottom: 0.25em;
-
-	font-style: italic;
 }
 
 /*

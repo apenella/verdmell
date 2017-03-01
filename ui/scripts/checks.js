@@ -33,9 +33,6 @@ var checksModel = new Model('checksModel',{
 		// add checks when data is not null
 		if ( _.isObject(data) ) {
 			$.each(detailsModel.attributes.getSelected()[0].content.checks, function(index, check){
-				// console.log('checksModel::observe',data.checks.checks.checks[check]);
-				// console.log('checksModel::observe',data.samples.Samples[check]);
-				// console.log('checksModel::observe', checksModel.attributes.generateLocator(detailsModel.attributes.getSelected()[0].locator,data.checks.checks.checks[check].name));
 				checksModel.attributes.add(data.checks.checks.checks[check].name, checksModel.attributes.generateLocator(detailsModel.attributes.getSelected()[0].locator,data.checks.checks.checks[check].name),false, false, data.checks.checks.checks[check],data.samples.Samples[check]);
 			});
 		}
@@ -89,7 +86,7 @@ var checksModel = new Model('checksModel',{
 	//
 	// subscriptions
 	observe: function(model, f) {
-		clusterlistModel.on(model.id, this.id, function(){f(model);}.bind(this));
+		checksModel.on(model.id, this.id, function(){f(model);}.bind(this));
 	},
 	// observe details
 	observeDetails: function(model) {
@@ -129,6 +126,7 @@ var checksView = new View({
 	},
 
 	render: function(model) {
+		// console.log('checksView::render');
 		$(checksView.parent).empty();
 
 		if ( checksModel.attributes.getChecks().length > 0) {
@@ -139,8 +137,8 @@ var checksView = new View({
 			}).appendTo(checksView.parent);
 		}
 
-		// console.log('checksView::render',model);
 		_.each(model, function(item){
+			// console.log('checksView::render',item);
 			$('<div/>', {
 				class: 'check',
 				id: item.name,
