@@ -13,15 +13,13 @@ import (
 //
 //# LoadJSONFile: function to dump data from the file f to object
 func LoadJSONFile(f string, object interface{}) error {
-  
-  if file, err := ioutil.ReadFile(f); err != nil {
-    return errors.New("(loadJSONFile) Error on loading file '"+f+"'. "+err.Error())
-  } else {
-    if err:= json.Unmarshal(file, object); err != nil{
-      return errors.New("(loadJSONFile) Error on loading file '"+f+"'. "+err.Error())
-    }
+  file, err := ioutil.ReadFile(f)
+
+  if err != nil {
+    return errors.New("(utils::loadJSONFile) Error on loading file '"+f+"' "+err.Error())
   }
-  return nil
+
+  return json.Unmarshal(file, object)
 }
 
 //
@@ -30,7 +28,7 @@ func ObjectToJsonString(object interface{}) (error, string) {
   if jsoned, err := json.Marshal(object); err != nil{
     return err, err.Error() 
   }else{
-    return nil,string(jsoned)
+    return nil, string(jsoned)
   }
 }
 //

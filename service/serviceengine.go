@@ -307,7 +307,7 @@ func (sys *ServiceEngine) GetServiceStatus(service string) (error , int) {
 		// that will work because in standalone mode the GetServicesStatusHuman is launch once all checks has been executed.
 		if env.Context.ExecutionMode == "standalone" {
 			obj = obj.WaitAllSamples(5)
-			env.Output.WriteChDebug("(ServiceEngine::GetServicesStatusHuman) The waiting has end")
+			env.Output.WriteChDebug("(ServiceEngine::GetServiceStatus) The waiting has end")
 		}
 		return nil, obj.GetStatus()		
 	}

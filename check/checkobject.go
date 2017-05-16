@@ -194,7 +194,7 @@ func (c *CheckObject) StartQueue(){
       case <-timeout:
         c.SetTimestamp(c.GetTimestamp()+1)
         checkEngine := env.GetCheckEngine().(*CheckEngine)
-        checkEngine.StartCheckEngine(c)
+        checkEngine.Start(c)
       }
     }
   }

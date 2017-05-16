@@ -121,7 +121,7 @@ func RetrieveCheckgroups(folder string) *Checkgroups{
     c := UnmarshalCheckgroups(checkFile)
     for checkgroupName, checks := range c.GetCheckgroup(){
       if _,exist := checkgroups[checkgroupName]; !exist{
-        env.Output.WriteChInfo("(Checkgroups::RetrieveCheckGroups) Checkgroup '"+checkgroupName+"' defined")
+        env.Output.WriteChDebug("(Checkgroups::RetrieveCheckGroups) Checkgroup '"+checkgroupName+"' defined")
         checkgroups[checkgroupName] = checks
       } else {
         env.Output.WriteChWarn("(Checkgroups::RetrieveCheckgroups) The Checkgroup '"+checkgroupName+"' has already defined")

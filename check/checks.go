@@ -367,7 +367,7 @@ func RetrieveChecks(folder string) *Checks{
 
       // sending the CheckObject to be stored
       checkObjChan <- checkObj
-      env.Output.WriteChInfo("(Checks::RetrieveChecks) Check '"+checkName+"' defined")
+      env.Output.WriteChDebug("(Checks::RetrieveChecks) Check '"+checkName+"' defined")
       env.Output.WriteChDebug("(Checks::RetrieveChecks) '"+checkObj.String()+"'")
     }
     // a message is send when all CheckObject defined into a file have been sent to store
