@@ -1,7 +1,6 @@
 package utils
 
 import (
-  "os"
   "encoding/json"
   "io/ioutil"
   "github.com/apenella/messageOutput"
@@ -17,8 +16,8 @@ func LoadJSONFile(f string, object interface{}) error {
   file, e := ioutil.ReadFile(f)
 
   if e != nil {
-    message.WriteError("(loadJSONFile) File error")
-    os.Exit(1)
+    message.WriteError("(utils::loadJSONFile) File error "+e.Error())
+    return e
   }
   return json.Unmarshal(file, object)
 }
@@ -27,12 +26,10 @@ func LoadJSONFile(f string, object interface{}) error {
 //# ObjectToJsonString: converst any object to a json string
 func ObjectToJsonString(object interface{}) (error, string) {
   if jsoned, err := json.Marshal(object); err != nil{
-    return err,err.Error() 
+    return err, err.Error() 
   }else{
-    return nil,string(jsoned)
+    return nil, string(jsoned)
   }
-  //jsoned, _ := json.Marshal(object)
-  //return string(jsoned)
 }
 //
 //# ObjectToJsonString: converst any object to a json string

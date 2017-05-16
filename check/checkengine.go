@@ -30,7 +30,7 @@ type CheckEngine struct{
   // Map to storage the checkgroups
   Cg *Checkgroups  `json:"checkgroups"`
   // Service Channel
-  outputChannels map[chan interface{}] bool `json: "-"`
+  subscriptions map[chan interface{}] bool `json: "-"`
 }
 //
 //# NewCheckEngine: return a CheckEngine instance to be run
@@ -48,7 +48,7 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
   var err error
 
   // folder contains check definitions
-  folder := env.Setup.Checksfolder
+  folder := env.Config.Checks.Folder
   // Get defined checks
   // validate checks and set the checks into check system
   ck := RetrieveChecks(folder)
@@ -69,8 +69,8 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
     return err, nil
   }
 
-  // Initialize the outputChannels
-  cks.outputChannels = make(map[chan interface{}] bool)
+  // Initialize the subscriptions
+  cks.subscriptions = make(map[chan interface{}] bool)
 
   // Set the environment's check engine
   env.SetCheckEngine(cks)
@@ -96,10 +96,10 @@ func (c *CheckEngine) SetCheckgroups(cg *Checkgroups) {
   c.Cg = cg
 }
 //
-//# SetoutputChannels: method sets the channels to write samples 
-func (c *CheckEngine) SetOutputChannels(o map[chan interface{}] bool) {
-  env.Output.WriteChDebug("(CheckEngine::SetoutputChannels) Set value")
-  c.outputChannels = o
+//# SetSusbcriptions: method sets the channels to write samples 
+func (c *CheckEngine) SetSusbcriptions(o map[chan interface{}] bool) {
+  env.Output.WriteChDebug("(CheckEngine::SetSusbcriptions) Set value")
+  c.subscriptions = o
 }
 
 //
@@ -115,10 +115,10 @@ func (c *CheckEngine) GetCheckgroups() *Checkgroups{
   return c.Cg
 }
 //
-//# GetoutputChannels: methods return the channels to write samples
-func (c *CheckEngine) GetOutputChannels() map[chan interface{}] bool {
-  env.Output.WriteChDebug("(CheckEngine::GetOutputChannels)")
-  return c.outputChannels
+//# GetSubscriptions: methods return the channels to write samples
+func (c *CheckEngine) GetSubscriptions() map[chan interface{}] bool {
+  env.Output.WriteChDebug("(CheckEngine::GetSubscriptions)")
+  return c.subscriptions
 }
 
 //#
@@ -132,14 +132,14 @@ func (sys *CheckEngine) SayHi() {
 }
 //
 //# AddOutputSampleChan:
-func (c *CheckEngine) AddOutputChannel(o chan interface{}) error {
-  env.Output.WriteChDebug("(CheckEngine::AddOutputChannel)")
+func (c *CheckEngine) Subscribe(o chan interface{}) error {
+  env.Output.WriteChDebug("(CheckEngine::Subscribe)")
 
-  channels := c.GetOutputChannels()
+  channels := c.GetSubscriptions()
   if _, exist := channels[o]; !exist {
     channels[o] = true
   } else {
-    return errors.New("(CheckEngine::AddOutputChannel) You are trying to add an existing channel")
+    return errors.New("(CheckEngine::Subscribe) You are trying to add an existing channel")
   }
 
   return nil
@@ -160,9 +160,9 @@ func (c *CheckEngine) InitCheckRunningQueues() error {
   return nil
 }
 //
-//# StartCheckEngine: will determine which kind of check has been required by user and start the checks
-func (c *CheckEngine) StartCheckEngine(i interface{}) error {
-  env.Output.WriteChDebug("(CheckEngine::StartCheckEngine)")
+//# Start: will determine which kind of check has been required by user and start the checks
+func (c *CheckEngine) Start(i interface{}) error {
+  env.Output.WriteChDebug("(CheckEngine::Start)")
 
   endChan := make(chan bool)
   defer close(endChan)
@@ -177,7 +177,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
   
   switch req := i.(type){
   case *CheckObject:
-    env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) Starting the check '"+req.String()+"'")
+    env.Output.WriteChDebug("(CheckEngine::Start) Starting the check '"+req.String()+"'")
     //add the check to be executed
     checks[req.GetName()] = req
     //add the check dependencies
@@ -202,16 +202,16 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
 
     select{
     case <-endChan:
-      env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) All Pools Finished")
+      env.Output.WriteChDebug("(CheckEngine::Start) All Pools Finished")
     case err := <-errChan:
       return err
     }
 
   case []string:
-    env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) Running a Checkgroup")
+    env.Output.WriteChDebug("(CheckEngine::Start) Running a Checkgroup")
 
     for _,checkname := range req {
-      env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) Preparing the check '"+checkname+"'")
+      env.Output.WriteChDebug("(CheckEngine::Start) Preparing the check '"+checkname+"'")
       cks := c.GetChecks()
 
       if err, checkObj := cks.GetCheckObjectByName(checkname); err != nil {
@@ -244,7 +244,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
 
     select{
     case <-endChan:
-      env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) All Pools Finished")
+      env.Output.WriteChDebug("(CheckEngine::Start) All Pools Finished")
     case err := <-errChan:
       return err
     }
@@ -255,7 +255,7 @@ func (c *CheckEngine) StartCheckEngine(i interface{}) error {
     if err := checks.StartCheckTaskPools(); err != nil{
       return err
     }
-    env.Output.WriteChDebug("(CheckEngine::StartCheckEngine) All Pools Finished")
+    env.Output.WriteChDebug("(CheckEngine::Start) All Pools Finished")
   }
 
   return nil
@@ -270,24 +270,24 @@ func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
   // GetSample return an error if no samples has been add before for that check
   if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
     // sending sample to service using the output channel
-    c.writeToOutputChannels(s)
+    c.notify(s)
   } else {
     // if a sample for that exist
     // the sample will not send to service system unless it has modified it exit status
     if sam.GetTimestamp() < s.GetTimestamp() {
       // sending sample to service using the output channel
-      c.writeToOutputChannels(s)
+      c.notify(s)
     }
   }
 
   return nil
 }
 //
-//# writeToOutputChannels: function write samples to defined samples
-func (c *CheckEngine) writeToOutputChannels(s *sample.CheckSample) {
-  env.Output.WriteChDebug("(CheckEngine::writeToOutputChannels)")
-  for c,_ := range c.GetOutputChannels(){
-    env.Output.WriteChDebug("(CheckEngine::writeToOutputChannels) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Writing sample '"+s.GetCheck()+"' with exit '"+strconv.Itoa(s.GetExit())+"' into channel")
+//# notify: function write samples to defined samples
+func (c *CheckEngine) notify(s *sample.CheckSample) {
+  env.Output.WriteChDebug("(CheckEngine::notify)")
+  for c,_ := range c.GetSubscriptions(){
+    env.Output.WriteChDebug("(CheckEngine::notify) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Writing sample '"+s.GetCheck()+"' with exit '"+strconv.Itoa(s.GetExit())+"' into channel")
     c <- s
   }
 }

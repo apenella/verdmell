@@ -9,8 +9,10 @@ package environment
 
 import (
 	"errors"
-	"github.com/apenella/messageOutput"
+	"verdmell/configuration"
 	"verdmell/utils"
+
+	"github.com/apenella/messageOutput"
 )
 //
 //Environment data type
@@ -22,6 +24,8 @@ type Environment struct{
 	Output *message.Message
 	// Context execution parameters
 	Context *currentContext
+	// Configuration
+	Config *configuration.Configuration
 
 	//ChecksEngine
 	CheckEngine interface{} `json:"checks"`
@@ -44,6 +48,7 @@ func NewEnvironment() (error, *Environment) {
 	var setup = new(setupObject)
 
 	output := message.GetInstance(context.Loglevel)
+	
 	if output == nil {
 		return errors.New("(Environment::NewEnvironment) The OutputMessage instance is null"),nil
 	}
@@ -86,6 +91,11 @@ func (e *Environment) SetOutput(o *message.Message){
 func (e *Environment) SetContext(c *currentContext) {
 	e.Output.WriteChDebug("(Environment::SetContext)")
 	e.Context = c
+}
+//Set configuration for the Environment
+func(e *Environment) SetConfig(c *configuration.Configuration) {
+	e.Output.WriteChDebug("(Environment::SetConfig)")
+	e.Config = c
 }
 // Set the CheckEngine for the Environment
 func (e *Environment) SetCheckEngine(c interface{}) {

@@ -7,142 +7,54 @@ package main
 
 import (
 	"os"
-	"strconv"
+
+	"verdmell/command"
+	
 	"github.com/apenella/messageOutput"
-	"verdmell/environment"
-	"verdmell/sample"
-	"verdmell/check"
-	"verdmell/service"
-	"verdmell/cluster"
-	"verdmell/api"
-	"verdmell/ui"
+	"github.com/mitchellh/cli"
+
 )
+
+// Commands is the mapping of all the available Consul commands.
+var Commands map[string]cli.CommandFactory
+
+func init() {
+	Commands = map[string]cli.CommandFactory {
+		"exec": func() (cli.Command, error) {
+			return &command.ExecCommand {}, nil 
+		},
+	}
+}
 
 //
 // main
 //---------------------------------------------------
 func main() {
-
 	var err error
-	var env *environment.Environment
-	var sam *sample.SampleEngine
-	var cks *check.CheckEngine
-	var srv *service.ServiceEngine
-	var cltr *cluster.ClusterEngine
-
+	//var env *environment.Environment
+		
 	exitStatus := 0
 
-	// Call to initialize the Environment
-	if err, env = environment.NewEnvironment(); err != nil {
-		message.WriteError(err)
-		os.Exit(4)
+	// Filter out the configtest command from the help display
+	var included []string
+	for command := range Commands {
+		included = append(included, command)
 	}
 
-	// get the environment attributes
-	//setup := env.GetSetup()
-	context := env.GetContext()
-	output := env.GetOutput()
-	// preparing to destroy the output system
-	defer output.DestroyInstance()
+	args := os.Args[1:]
 
-  // Call to initialize cluster engine
-	if err, cltr = cluster.NewClusterEngine(env); err != nil {
-	 	message.WriteError(err)
-	 	os.Exit(4)
-	}
-	// Call to initialize SampleEngine
-  if err, sam = sample.NewSampleEngine(env); err != nil {
-		message.WriteError(err)
-		os.Exit(4)
-  }
-	// Call to initialize the CheckEngine
-	if err, cks = check.NewCheckEngine(env); err != nil {
-		message.WriteError(err)
-		os.Exit(4)
-	}
-	// Call to initialize the ServiceEngine
-	if err,srv = service.NewServiceEngine(env); err != nil {
-		message.WriteError(err)
-		os.Exit(4)
-	}
-	//
-	//
-	// Add the cluster engine's input channel as a service engine's output channel
-	// That's the way how cluster engine will receive either node or services status
-	if err :=	srv.AddOutputChannel(cltr.GetInputChannel()); err != nil {
-		env.Output.WriteChWarn(err)
-	}
-	// Set the output sample channel for checks as the input's service one
-	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
-	if err := cks.AddOutputChannel(srv.GetInputChannel()); err != nil {
-		env.Output.WriteChWarn(err)
-	}
-	//cks.SetOutputSampleChan(srv.GetInputSampleChan())
-	if err := cks.AddOutputChannel(sam.GetInputChannel()); err != nil {
-		env.Output.WriteChWarn(err)
+	c := &cli.CLI{
+		Args: args,
+		Commands: Commands,
+		Version: "0.0.0",
+		HelpFunc: cli.FilteredHelpFunc(included, cli.BasicHelpFunc("verdmell")),
 	}
 
-	switch(context.ExecutionMode){
-	case "cluster":
-		// prepare listen address for cluster node
-		listenaddr := env.Context.Host+":"+strconv.Itoa(env.Context.Port)
-		
-		apisys := api.NewApiEngine(env)
 
-		if err = cks.StartCheckEngine(nil); err != nil {
-			env.Output.WriteChError(err)
-			os.Exit(4)
-		}
-
-		webconsole := ui.NewUI(env, listenaddr)
-		webconsole.AddRoutes(apisys.GetRoutes())
-		webconsole.StartUI()
-
-		break
-	case "standalone":
-		message.Write("\t# That's Verdmell in standalone mode #\n")
-
-		checkObj := new(check.CheckObject)
-		//execute an isolated check
-		if context.ExecuteCheck != "" {
-			if err, checkObj = cks.GetCheckObjectByName(context.ExecuteCheck); err != nil {
-				env.Output.WriteChError(err)
-				os.Exit(4)	
-			}	
-			if err = cks.StartCheckEngine(checkObj); err != nil {
-				env.Output.WriteChError(err)
-				os.Exit(4)
-			}
-		// execute checks from group
-		} else if  context.ExecuteCheckGroup != "" {
-			var checks []string 
-			if err, checks = cks.GetCheckgroupByName(context.ExecuteCheckGroup); err != nil {
-				env.Output.WriteChError(err)
-				os.Exit(4)	
-			}
-			if err = cks.StartCheckEngine(checks); err != nil {
-				env.Output.WriteChError(err)
-				os.Exit(4)
-			}
-
-		//execute all checks
-		} else {
-			if err = cks.StartCheckEngine(nil); err != nil {
-				env.Output.WriteChError(err)
-				os.Exit(4)
-			}
-		}
-
-		// achieve required status
-		if err, exitStatus = srv.GetServiceStatus(env.Context.Service); err != nil{
-			env.Output.WriteChError(err)
-			os.Exit(4)
-		}
-
-		_,hummanstatus := srv.GetServicesStatusHuman(env.Context.Service)
-		message.Write(hummanstatus)
-
-	}//end switch
+	exitStatus, err = c.Run()
+	if err != nil {
+		message.WriteError(args)
+	}
 
 	os.Exit(exitStatus)
 }

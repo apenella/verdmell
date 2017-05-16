@@ -1,0 +1,17 @@
+{
+	"name": "apenella",
+	"ip": "0.0.0.0",
+	"port": 5497,
+	"checks": {
+		"folder": "checks",
+		"min_interval": 60
+	},
+	"services": {
+		"folder": "services"
+	},
+	"cluster": [
+		"http://0.0.0.0:5497",
+		"http://0.0.0.0:15497",
+		"http://2.2.2.2:5497"
+	]
+}

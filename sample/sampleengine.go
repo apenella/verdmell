@@ -43,7 +43,7 @@ func NewSampleEngine(e *environment.Environment) (error, *SampleEngine) {
 	env = e
 
   // start the sample receiver
-  sys.StartSampleReceiver()
+  sys.Start()
 
   // Set the environment's sample engine
   env.SetSampleEngine(sys)
@@ -76,8 +76,8 @@ func (sys *SampleEngine) SayHi() {
 }
 //
 //# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
-func (s *SampleEngine) StartSampleReceiver() error {
-  env.Output.WriteChDebug("(SampleEngine::StartSampleReceiver) Starting sample receiver")
+func (s *SampleEngine) Start() error {
+  env.Output.WriteChDebug("(SampleEngine::Start) Starting sample receiver")
   s.inputChannel = make(chan interface{})
 
   go func() {
@@ -86,7 +86,7 @@ func (s *SampleEngine) StartSampleReceiver() error {
       select{
       case obj := <-s.inputChannel:
         sample := obj.(*CheckSample)
-        env.Output.WriteChDebug("(SampleEngine::StartSampleReceiver) New sample received for '"+sample.GetCheck()+"'")
+        env.Output.WriteChDebug("(SampleEngine::Start) New sample received for '"+sample.GetCheck()+"'")
         s.AddSample(sample)
       }
     }
