@@ -23,6 +23,14 @@ func init() {
 		"exec": func() (cli.Command, error) {
 			return &command.ExecCommand {}, nil 
 		},
+		/*
+			TODO
+			start --> start node as cluster mode
+			stop --> stop node
+			restart --> restart node
+
+			reload --> reload configuration
+		*/
 	}
 }
 

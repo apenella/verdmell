@@ -25,11 +25,15 @@ func (c *ExecCommand) Run(args []string) int {
 		return 1
 	}
 	
-	//env.Output.WriteChInfo("(ExecCommand::Run)",args)
-
+	// start agent
 	if err := a.Start(); err != nil {
 		return 1
 	}
+	// get status from agent
+	if err := a.Status(); err != nil {
+		return 1
+	}
+
 
 	return 0
 }
