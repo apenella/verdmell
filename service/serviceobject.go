@@ -228,6 +228,7 @@ func (s *ServiceObject) StartReceiver(){
 		}
 	}
 }
+
 //
 //# SendToSampleChannel: method sends a sample to the sample channel
 func (s *ServiceObject) RecevieData(sample *sample.CheckSample){

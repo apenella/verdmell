@@ -15,6 +15,7 @@ package service
 import (
 	"errors"
 	"strconv"
+	
 	"verdmell/environment"
 	"verdmell/check"
 	"verdmell/utils"
@@ -44,7 +45,7 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	env = e
 
 	// folder that contains services definitions
-	folder := env.Setup.Servicesfolder
+	folder := env.Config.Services.Folder
 	// Get defined services
 	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) RetrieveServices")
 	srv := RetrieveServices(folder)
@@ -61,11 +62,12 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	sys.SetServices(srv)
 
 	// Set description for default service
-	desc := "Global services for node "+env.Whoami()
+
+	desc := "Global services for node "+env.Config.Name
 	
-	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) Registering service '"+env.Whoami()+"'")
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) Registering service '"+env.Config.Name+"'")
 	checkengine := env.GetCheckEngine().(*check.CheckEngine)
-	if err := sys.RegisterService(env.Whoami(),desc, checkengine.ListCheckNames()); err != nil{
+	if err := sys.RegisterService(env.Config.Name,desc, checkengine.ListCheckNames()); err != nil{
 		return err, nil
 	}
 
@@ -73,8 +75,8 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
   sys.outputChannels = make(map[chan interface{}] string)
 
 	// start the sample receiver
-	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) StartReceiver")
-	sys.StartReceiver()
+	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) Start")
+	sys.Start()
 
 	// Set the environments services engine
 	env.SetServiceEngine(sys)
@@ -131,19 +133,34 @@ func (s *ServiceEngine) SayHi() {
   env.Output.WriteChInfo("(ServiceEngine::SayHi) Hi! I'm your new service engine instance")
 }
 //
-//# StartReceiver: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceEngine) StartReceiver() error {
+//# Subscribe: Add a new channel to write service status
+func (s *ServiceEngine) Subscribe(o chan interface{}, desc string) error {
+  env.Output.WriteChDebug("(ServiceEngine::Subscribe)")
+
+  channels := s.GetOutputChannels()
+  if _, exist := channels[o]; !exist {
+    channels[o] = desc
+  } else {
+    return errors.New("(ServiceEngine::Subscribe) You are trying to add an existing channel")
+  }
+
+  return nil
+}
+
+//
+//# StartServiceEngine: method prepares the system to wait sample and calculate the results for services
+func (s *ServiceEngine) Start() error {
 	s.inputChannel = make(chan interface{})
 	services := s.GetServices()
 
-	env.Output.WriteChDebug("(ServiceEngine::StartReceiver) Starting sample receiver")
+	env.Output.WriteChDebug("(ServiceEngine::Start) Starting sample receiver")
 	go func() {
 		defer close (s.inputChannel)
 		for{
 			select{
 			case obj := <-s.inputChannel:
 				sample := obj.(*sample.CheckSample)
-				env.Output.WriteChDebug("(ServiceEngine::StartReceiver) New sample received for '"+sample.GetCheck()+"'")
+				env.Output.WriteChDebug("(ServiceEngine::Start) New sample received for '"+sample.GetCheck()+"'")
 				_,servicesCheck := s.GetServicesForCheck(sample.GetCheck())
 				for _,service := range servicesCheck {
 					_,srv := services.GetServiceObject(service)
@@ -155,6 +172,19 @@ func (s *ServiceEngine) StartReceiver() error {
 	}()
 	return nil
 }
+
+//
+//# SendData: method that send services to other engines
+func (s *ServiceEngine) SendData(o *ServiceObject) error {
+	env.Output.WriteChDebug("(ServiceEngine::SendData)")
+	
+	for c,desc := range s.GetOutputChannels(){
+		env.Output.WriteChDebug("(ServiceEngine::SendData) Writing service to channel '"+desc+"' {service:'"+o.GetName()+"', status:"+strconv.Itoa(o.GetStatus())+", timestamp:"+strconv.Itoa(int(o.GetTimestamp()))+"}")
+		c <- o
+	}
+
+	return nil
+}
 //
 //# ReceiveData: method prepares the system to wait sample and calculate the results for services
 //func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
@@ -162,31 +192,7 @@ func (s *ServiceEngine) ReceiveData(sample *sample.CheckSample) {
 	env.Output.WriteChDebug("(ServiceEngine::ReceiveData) Send sample "+sample.String())
 	s.inputChannel <- sample
 }
-//
-//# SendData: method that send services to other engines
-func (s *ServiceEngine) SendData(o *ServiceObject) error {
-  env.Output.WriteChDebug("(ServiceEngine::SendData)")
-	for c,desc := range s.GetOutputChannels(){
-    env.Output.WriteChDebug("(ServiceEngine::SendData) Writing service to channel '"+desc+"' {service:'"+o.GetName()+"', status:"+strconv.Itoa(o.GetStatus())+", timestamp:"+strconv.Itoa(int(o.GetTimestamp()))+"}")
-	c <- o
-  }
 
-  return nil
-}
-//
-//# AddOutputSampleChan: Add a new channel to write service status
-func (s *ServiceEngine) AddOutputChannel(o chan interface{}, desc string) error {
-  env.Output.WriteChDebug("(ServiceEngine::AddOutputChannel)")
-
-  channels := s.GetOutputChannels()
-  if _, exist := channels[o]; !exist {
-    channels[o] = desc
-  } else {
-    return errors.New("(ServiceEngine::AddOutputChannel) You are trying to add an existing channel")
-  }
-
-  return nil
-}
 //
 //# RegisterService: register a new service for service engine
 func (s *ServiceEngine) RegisterService(name string, desc string, checks []string) error {
@@ -288,10 +294,10 @@ func (sys *ServiceEngine) GetServicesStatusHuman(service string) (error ,string)
 		// If vermell is running as standalone mode, all the sample have to arrived from check system to service system.
 		// to ensure that, you could compare the checkStatusCache's length to the Checks one
 		// that will work because in standalone mode the GetServicesStatusHuman is launch once all checks has been executed.
-		if env.Context.ExecutionMode == "standalone" {
+		//if env.Context.ExecutionMode == "standalone" {
 			obj = obj.WaitAllSamples(5)
 			env.Output.WriteChDebug("(ServiceEngine::GetServicesStatusHuman) The waiting has end")
-		}
+		//}
 		return nil, "Service '"+obj.GetName()+"' status is " + sample.Itoa(obj.GetStatus())
 	}
 }
@@ -305,10 +311,10 @@ func (sys *ServiceEngine) GetServiceStatus(service string) (error , int) {
 		// If vermell is running as standalone mode, all the sample have to arrived from check system to service system.
 		// to ensure that, you could compare the checkStatusCache's length to the Checks one
 		// that will work because in standalone mode the GetServicesStatusHuman is launch once all checks has been executed.
-		if env.Context.ExecutionMode == "standalone" {
+		//if env.Context.ExecutionMode == "standalone" {
 			obj = obj.WaitAllSamples(5)
 			env.Output.WriteChDebug("(ServiceEngine::GetServiceStatus) The waiting has end")
-		}
+		//}
 		return nil, obj.GetStatus()		
 	}
 }

@@ -1,6 +1,9 @@
 package agent
 
 import (
+	"verdmell/check"
+	"verdmell/sample"
+	"verdmell/service"
 	"verdmell/utils"
 )
 
@@ -17,6 +20,13 @@ type Agent struct{
 	Configfile string `json: "configuration_file"`
 	// folder to place configuration
 	Configdir string `json: "configuration_dir"`
+
+	// Check Engine manages checks
+	Cks *check.CheckEngine `json: "-"`
+	// Sample Engine manages samples
+	Sam *sample.SampleEngine `json: "-"`
+	// Service Engine manages services
+	Srv *service.ServiceEngine `json: "-"`
 }
 
 //
