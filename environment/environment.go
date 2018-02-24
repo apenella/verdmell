@@ -159,6 +159,13 @@ func (e *Environment) GetClusterEngine() interface{} {
 //---------------------------------------------------------------------
 
 //
+//# whoami: method returns the server hostname
+func (e *Environment) Whoami() string {
+	e.Output.WriteChDebug("(Environment::Whoami)")
+	return e.Setup.Hostname
+}
+
+//
 //# validateEnvironment: method to validate configuration objecte
 func (e *Environment) validateEnvironment() error {
 		if e == nil {
@@ -182,12 +189,11 @@ func (e *Environment) GetNodeInfo() (error,[]byte) {
 	environment["samples"] = e.GetSampleEngine()
 	environment["services"] = e.GetServiceEngine()
 
-	return nil,utils.ObjectToJsonByte(environment)
-	
+	return utils.ObjectToJsonByte(environment)
 }
 //
 //# GetCluster return all cluster nodes
-func (e *Environment) GetCluster() []byte{
+func (e *Environment) GetCluster() (error,[]byte) {
 	return utils.ObjectToJsonByte(e.Setup.Cluster)
 }
 //

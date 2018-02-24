@@ -25,11 +25,58 @@ func init() {
 		},
 		/*
 			TODO
-			start --> start node as cluster mode
-			stop --> stop node
-			restart --> restart node
+			//standalone mode options
+			exec: run a check
+			    - options:
+			    	-check: set check name.
+			    	-configfile: set configuration file.
+			    	-configdir: set configuration directory.
+			    	-loglevel: set loglevel.
+			    	-silence: no output message.
+			healthcheck: run a nodes health check
+				- options:
+					-configfile: set configuration file.
+			    	-configdir: set configuration directory.
+			    	-loglevel: set loglevel.
+					-service: ask for an specific service.
+					-silence: no output message.
 
-			reload --> reload configuration
+			// cluster mode options
+			start: start agent daemon
+				- options:
+					-ip: set IP address
+					-port: set port to listen to.
+					-name: node name.
+					-cluster: list of nodes to join to.
+					-configfile: set configuration file.
+			    	-configdir: set configuration directory.
+			    	-loglevel: set loglevel.
+			stop: stop agent daemon
+			reload: reload configuration
+			  - reload checks
+			  - reload services
+			  - options:
+					-configfile: set configuration file.
+			    	-configdir: set configuration directory.
+			    	-loglevel: set loglevel.
+			status: agent's current status
+			  - check engine
+			  - service engine
+			  - api engine
+			  - cluster engine
+			  - ui engine
+			  - samples engine
+			ps: list check that are currently running
+			node health: get a node health status
+			  - options:
+			    -node: set node. Current node if not set.
+			    -service: achieve some services.
+			    -silence: no output message.
+			service health: get a service healt status
+			  - options:
+			    -node: set node. Current node if not set.
+			    -service: achieve some services.
+			    -silence: no output message.
 		*/
 	}
 }
@@ -54,10 +101,9 @@ func main() {
 	c := &cli.CLI{
 		Args: args,
 		Commands: Commands,
-		Version: "0.0.0",
+		Version: "2.0.0",
 		HelpFunc: cli.FilteredHelpFunc(included, cli.BasicHelpFunc("verdmell")),
 	}
-
 
 	exitStatus, err = c.Run()
 	if err != nil {

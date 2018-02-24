@@ -18,8 +18,7 @@ var Commands = map[string]cli.CommandFactory{
 			},
 		}
 
-var tests = []testsRun{
-	
+var tests = []testsRun{	
 	{
 		Args: []string {"exec","-loglevel","1"},
 		Value: 1,

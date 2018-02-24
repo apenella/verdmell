@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 {{ define "content" }}
 	<div class="datacontainer" listenaddr="{{.Listenaddr}}">
+		<div class="locator"></div>
+		<!-- clean floatability to next elements-->
+		<div style="clear:both;"></div>
+		
 		<div class="clusterlist"></div>
-		<div class="clusternodedetails"></div>
+		<div class="clusterlistitemdetails"></div>
+		<div class="checks"></div>
 	</div>
 {{ end }}

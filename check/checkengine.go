@@ -17,7 +17,7 @@ import (
   "verdmell/sample"
   "verdmell/utils"
 )
-//
+// variable to set environment information
 var env *environment.Environment
 
 //#
@@ -26,16 +26,16 @@ var env *environment.Environment
 //# The struct for CheckEngine has all Check, Checkgroup and samples information
 type CheckEngine struct{
   // Map to storage the checks
-  Ck *Checks  `json:"checks"`
+  Cks *Checks  `json:"checks"`
   // Map to storage the checkgroups
-  Cg *Checkgroups  `json:"checkgroups"`
+  Groups *Checkgroups  `json:"groups"`
   // Service Channel
-  subscriptions map[chan interface{}] bool `json: "-"`
+  subscriptions map[chan interface{}] string `json: "-"`
 }
 //
 //# NewCheckEngine: return a CheckEngine instance to be run
 func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
-  e.Output.WriteChDebug("(CheckEngine::NewCheckEngine)")
+  e.Output.WriteChDebug("(CheckEngine::NewCheckEngine) Create new engine instance")
 
   // get the environment attributes
   env = e
@@ -44,40 +44,45 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
     return errors.New("(CheckEngine::NewCheckEngine) SampleEngine have to be initialized before ChecksEngine's load"),nil
   }
 
-  cks := new(CheckEngine)
+  eng := new(CheckEngine)
   var err error
 
-  // folder contains check definitions
-  folder := env.Config.Checks.Folder
   // Get defined checks
   // validate checks and set the checks into check system
-  ck := RetrieveChecks(folder)
-  if err = ck.ValidateChecks(nil); err == nil {
-    cks.SetChecks(ck)
+  cks := RetrieveChecks(env.Config.Checks.Folder)
+  if err = cks.ValidateChecks(nil); err == nil {
+    eng.SetChecks(cks)
     //Init the running queues to proceed the executions
-    cks.InitCheckRunningQueues()
+    eng.InitCheckRunningQueues()
   } else {
     return err, nil
   }
 
   // Get defined checks groups
   // validate checks and set the checks into check system
-  cg := RetrieveCheckgroups(folder)
-  if err := cg.ValidateCheckgroups(ck); err == nil {
-    cks.SetCheckgroups(cg)
+  groups := RetrieveCheckgroups(env.Config.Checks.Folder)
+  if err := groups.ValidateCheckgroups(cks); err == nil {
+    eng.SetCheckgroups(groups)
   } else {
     return err, nil
   }
 
-  // Initialize the subscriptions
-  cks.subscriptions = make(map[chan interface{}] bool)
+  // Initialize the Subscriptions
+  eng.subscriptions = make(map[chan interface{}] string)
 
   // Set the environment's check engine
-  env.SetCheckEngine(cks)
+  env.SetCheckEngine(eng)
   env.Output.WriteChInfo("(CheckEngine::NewCheckEngine) Hi! I'm your new check engine instance")
 
-	return err, cks
+	return err, eng
 }
+
+//
+// Interface Engine requirements
+func (c *CheckEngine) Init() error { return nil}
+func (c *CheckEngine) Run() error { return nil}
+func (c *CheckEngine) Stop() error { return nil}
+func (c *CheckEngine) Status() error { return nil}
 
 //#
 //# Getters and Setters
@@ -85,40 +90,40 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
 
 //
 //# SetChecks: attribute from CheckEngine
-func (c *CheckEngine) SetChecks(ck *Checks) {
-  env.Output.WriteChDebug("(CheckEngine::SetChecks) Set value '"+ck.String()+"'")
-  c.Ck = ck
+func (eng *CheckEngine) SetChecks(cks *Checks) {
+  env.Output.WriteChDebug("(CheckEngine::SetChecks) Set value '"+cks.String()+"'")
+  eng.Cks = cks
 }
 //
 //# SetCheckgroups: attribute from CheckEngine
-func (c *CheckEngine) SetCheckgroups(cg *Checkgroups) {
-  env.Output.WriteChDebug("(CheckEngine::SetCheckgroups) Set value '"+cg.String()+"'")
-  c.Cg = cg
+func (eng *CheckEngine) SetCheckgroups(groups *Checkgroups) {
+  env.Output.WriteChDebug("(CheckEngine::SetCheckgroups) Set value '"+groups.String()+"'")
+  eng.Groups = groups
 }
 //
-//# SetSusbcriptions: method sets the channels to write samples 
-func (c *CheckEngine) SetSusbcriptions(o map[chan interface{}] bool) {
-  env.Output.WriteChDebug("(CheckEngine::SetSusbcriptions) Set value")
-  c.subscriptions = o
+//# SetSubscriptions: method sets the channels to write samples 
+func (eng *CheckEngine) SetSubscriptions(o map[chan interface{}] string) {
+  env.Output.WriteChDebug("(CheckEngine::SetSubscriptions) Set value")
+  eng.subscriptions = o
 }
 
 //
 //# Getchecks: attribute from CheckEngine
-func (c *CheckEngine) GetChecks() *Checks{
+func (eng *CheckEngine) GetChecks() *Checks{
   env.Output.WriteChDebug("(CheckEngine::GetChecks) Get value")
-  return c.Ck
+  return eng.Cks
 }
 //
 //# Getcheckgroups: attribute from CheckEngine
-func (c *CheckEngine) GetCheckgroups() *Checkgroups{
+func (eng *CheckEngine) GetCheckgroups() *Checkgroups{
   env.Output.WriteChDebug("(CheckEngine::GetCheckgroups) Get value")
-  return c.Cg
+  return eng.Groups
 }
 //
 //# GetSubscriptions: methods return the channels to write samples
-func (c *CheckEngine) GetSubscriptions() map[chan interface{}] bool {
+func (eng *CheckEngine) GetSubscriptions() map[chan interface{}] string {
   env.Output.WriteChDebug("(CheckEngine::GetSubscriptions)")
-  return c.subscriptions
+  return eng.subscriptions
 }
 
 //#
@@ -127,17 +132,17 @@ func (c *CheckEngine) GetSubscriptions() map[chan interface{}] bool {
 
 //
 //# SayHi: 
-func (sys *CheckEngine) SayHi() {
+func (eng *CheckEngine) SayHi() {
   env.Output.WriteChInfo("(CheckEngine::SayHi) Hi! I'm your new check engine instance")
 }
 //
 //# AddOutputSampleChan:
-func (c *CheckEngine) Subscribe(o chan interface{}) error {
+func (eng *CheckEngine) Subscribe(o chan interface{}, desc string) error {
   env.Output.WriteChDebug("(CheckEngine::Subscribe)")
 
-  channels := c.GetSubscriptions()
+  channels := eng.GetSubscriptions()
   if _, exist := channels[o]; !exist {
-    channels[o] = true
+    channels[o] = desc
   } else {
     return errors.New("(CheckEngine::Subscribe) You are trying to add an existing channel")
   }
@@ -147,11 +152,11 @@ func (c *CheckEngine) Subscribe(o chan interface{}) error {
 
 //
 //# InitCheckRunningQueues: prepares each checkobject to be run
-func (c *CheckEngine) InitCheckRunningQueues() error {
-        env.Output.WriteChDebug("(CheckEngine::InitCheckRunningQueues)")
-  cs := c.GetChecks()
+func (eng *CheckEngine) InitCheckRunningQueues() error {
+  env.Output.WriteChDebug("(CheckEngine::InitCheckRunningQueues)")
+  cks := eng.GetChecks()
 
-  for _,obj := range cs.GetCheck() {
+  for _,obj := range cks.GetCheck() {
       go func(checkObj *CheckObject) {
         env.Output.WriteChDebug("(CheckEngine::InitCheckRunningQueues) CheckQueue for '"+checkObj.GetName()+"'") 
         checkObj.StartQueue()
@@ -161,7 +166,7 @@ func (c *CheckEngine) InitCheckRunningQueues() error {
 }
 //
 //# Start: will determine which kind of check has been required by user and start the checks
-func (c *CheckEngine) Start(i interface{}) error {
+func (eng *CheckEngine) Start(i interface{}) error {
   env.Output.WriteChDebug("(CheckEngine::Start)")
 
   endChan := make(chan bool)
@@ -182,7 +187,7 @@ func (c *CheckEngine) Start(i interface{}) error {
     checks[req.GetName()] = req
     //add the check dependencies
     for _,dependency := range req.GetDepend(){
-      if err, checkObj := c.Ck.GetCheckObjectByName(dependency); err != nil {
+      if err, checkObj := eng.Cks.GetCheckObjectByName(dependency); err != nil {
         return err
       } else {
         if _,exist := checks[dependency]; !exist{
@@ -212,7 +217,7 @@ func (c *CheckEngine) Start(i interface{}) error {
 
     for _,checkname := range req {
       env.Output.WriteChDebug("(CheckEngine::Start) Preparing the check '"+checkname+"'")
-      cks := c.GetChecks()
+      cks := eng.GetChecks()
 
       if err, checkObj := cks.GetCheckObjectByName(checkname); err != nil {
         return err
@@ -222,7 +227,7 @@ func (c *CheckEngine) Start(i interface{}) error {
         }
         //add the check dependencies
         for _,dependency := range checkObj.GetDepend(){
-          if err, checkObjdependency := c.Ck.GetCheckObjectByName(dependency); err != nil {
+          if err, checkObjdependency := eng.Cks.GetCheckObjectByName(dependency); err != nil {
             return err
           } else {
             if _,exist := checks[dependency]; !exist{
@@ -250,7 +255,7 @@ func (c *CheckEngine) Start(i interface{}) error {
     }
     
   default:
-    checks :=  c.GetChecks()
+    checks :=  eng.GetChecks()
     // startCheckTaskPools requiere the Sample system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
     if err := checks.StartCheckTaskPools(); err != nil{
       return err
@@ -262,7 +267,7 @@ func (c *CheckEngine) Start(i interface{}) error {
 }
 //
 //# sendSamples: method that send samples to other engines
-func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
+func (eng *CheckEngine) sendSample(s *sample.CheckSample) error {
   env.Output.WriteChDebug("(CheckEngine::sendSample)["+strconv.Itoa(int(s.GetTimestamp()))+"] Send sample for '"+s.GetCheck()+"' check with exit '"+strconv.Itoa(s.GetExit())+"'")
   sampleEngine := env.GetSampleEngine().(*sample.SampleEngine)
 
@@ -270,73 +275,73 @@ func (c *CheckEngine) sendSample(s *sample.CheckSample) error {
   // GetSample return an error if no samples has been add before for that check
   if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
     // sending sample to service using the output channel
-    c.notify(s)
+    eng.notify(s)
   } else {
     // if a sample for that exist
     // the sample will not send to service system unless it has modified it exit status
     if sam.GetTimestamp() < s.GetTimestamp() {
       // sending sample to service using the output channel
-      c.notify(s)
+      eng.notify(s)
     }
   }
 
   return nil
 }
 //
-//# notify: function write samples to defined samples
-func (c *CheckEngine) notify(s *sample.CheckSample) {
+//# writeToSubscriptions: function write samples to defined samples
+func (eng *CheckEngine) notify(s *sample.CheckSample) {
   env.Output.WriteChDebug("(CheckEngine::notify)")
-  for c,_ := range c.GetSubscriptions(){
-    env.Output.WriteChDebug("(CheckEngine::notify) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Writing sample '"+s.GetCheck()+"' with exit '"+strconv.Itoa(s.GetExit())+"' into channel")
-    c <- s
+  for o, desc := range eng.GetSubscriptions(){
+    env.Output.WriteChDebug("(CheckEngine::notify) ["+strconv.Itoa(int(s.GetTimestamp()))+"] Notify sample '"+s.GetCheck()+"' with exit '"+strconv.Itoa(s.GetExit())+"' on channel '"+desc+"'")
+    o <- s
   }
 }
 
 //
 //# AddCheck: method add a new check to the Checks struct
-func (c *CheckEngine) AddCheck(obj *CheckObject) error {
-  if err := c.Ck.AddCheck(obj); err != nil {
+func (eng *CheckEngine) AddCheck(obj *CheckObject) error {
+  if err := eng.Cks.AddCheck(obj); err != nil {
     return err
   }
   return nil
 }
 //
 //# ListCheckNames: returns an array with the check namess defined on Checks object 
-func (c *CheckEngine) ListCheckNames() []string {
-  return c.Ck.ListCheckNames()
+func (eng *CheckEngine) ListCheckNames() []string {
+  return eng.Cks.ListCheckNames()
 }
 //
 //# IsDefined: return if a check is defined
-func (c *CheckEngine) IsDefined(name string) bool {
-  return c.Ck.IsDefined(name)
+func (eng *CheckEngine) IsDefined(name string) bool {
+  return eng.Cks.IsDefined(name)
 }
 //
 //# GetCheckObjectByName: returns a check object gived a name
-func (c *CheckEngine) GetCheckObjectByName(checkname string) (error, *CheckObject) {
-  return c.Ck.GetCheckObjectByName(checkname)
+func (eng *CheckEngine) GetCheckObjectByName(checkname string) (error, *CheckObject) {
+  return eng.Cks.GetCheckObjectByName(checkname)
 }
 //
 //# GetCheckgroupByName: returns a check object gived a name
-func (c *CheckEngine) GetCheckgroupByName(checkgroupname string) (error, []string) {
-  return c.Cg.GetCheckgroupByName(checkgroupname)
+func (eng *CheckEngine) GetCheckgroupByName(checkgroupname string) (error, []string) {
+  return eng.Groups.GetCheckgroupByName(checkgroupname)
 }
 //
 //# GetAllChecks: return all checks
-func (c *CheckEngine) GetAllChecks() (error,[]byte) {
+func (eng *CheckEngine) GetAllChecks() (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetAllChecks)")
   var checks *Checks
 
-  if checks = c.GetChecks(); checks == nil {
+  if checks = eng.GetChecks(); checks == nil {
     msg := "(CheckEngine::GetAllChecks) There are no checks defined."
     env.Output.WriteChDebug(msg)
     return errors.New(msg), nil
   } 
 
-  return nil,utils.ObjectToJsonByte(checks)
+  return utils.ObjectToJsonByte(checks)
 }
 //
 //# GetCheck: return a checks
-func (c *CheckEngine) GetCheck(name string) (error,[]byte) {
+func (eng *CheckEngine) GetCheck(name string) (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetCheck)")
   var checks *Checks
   var check map[string] *CheckObject
@@ -344,7 +349,7 @@ func (c *CheckEngine) GetCheck(name string) (error,[]byte) {
   var exist bool
 
   // Get Checks attribute from CheckEngine
-  if checks = c.GetChecks(); checks == nil {
+  if checks = eng.GetChecks(); checks == nil {
     msg := "(CheckEngine::GetCheck) There are no checks defined."
     env.Output.WriteChDebug(msg)
     return errors.New(msg), nil
@@ -362,25 +367,25 @@ func (c *CheckEngine) GetCheck(name string) (error,[]byte) {
     return errors.New(msg), nil
   }
 
-  return nil,utils.ObjectToJsonByte(obj)
+  return utils.ObjectToJsonByte(obj)
 }
 //
 //# GetAllCheckgroups: return all checks
-func (c *CheckEngine) GetAllCheckgroups() (error,[]byte) {
+func (eng *CheckEngine) GetAllCheckgroups() (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetAllCheckgroups)")
   var groups *Checkgroups
 
-  if groups = c.GetCheckgroups(); groups == nil {
+  if groups = eng.GetCheckgroups(); groups == nil {
     msg := "(CheckEngine::GetAllCheckgroups) There are no check groups defined."
     env.Output.WriteChDebug(msg)
     return errors.New(msg), nil
   }
 
-  return nil,utils.ObjectToJsonByte(groups)
+  return utils.ObjectToJsonByte(groups)
 }
 //
 //# GetCheckgroup: return a checks
-func (c *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
+func (eng *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
   env.Output.WriteChDebug("(CheckEngine::GetCheckgroup)")
   var groups *Checkgroups
   var group map[string] []string
@@ -388,7 +393,7 @@ func (c *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
   var exist bool
 
   // Get Checkgroupss attribute from CheckEngine
-  if groups = c.GetCheckgroups(); groups == nil {
+  if groups = eng.GetCheckgroups(); groups == nil {
     msg := "(CheckEngine::GetCheckgroup) There are no check groups defined."
     env.Output.WriteChDebug(msg)
     return errors.New(msg), nil
@@ -406,7 +411,7 @@ func (c *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
     return errors.New(msg), nil
   }
   
-  return nil,utils.ObjectToJsonByte(obj)
+  return utils.ObjectToJsonByte(obj)
 }
 
 //#
@@ -414,8 +419,8 @@ func (c *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
 //#---------------------------------------------------------------------
 
 //# String: convert a Checks object to string
-func (c *CheckEngine) String() string {
-  if err, str := utils.ObjectToJsonString(c); err != nil{
+func (eng *CheckEngine) String() string {
+  if err, str := utils.ObjectToJsonString(eng); err != nil{
     return err.Error()
   } else{
     return str

@@ -40,3 +40,6 @@ verdmell
 .Trashes
 ehthumbs.db
 Thumbs.db 
+
+# custom
+_*

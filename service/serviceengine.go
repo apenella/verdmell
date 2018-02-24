@@ -15,6 +15,7 @@ package service
 import (
 	"errors"
 	"strconv"
+	
 	"verdmell/environment"
 	"verdmell/check"
 	"verdmell/utils"
@@ -31,7 +32,7 @@ var env *environment.Environment
 type ServiceEngine struct{
 	Ss *Services `json:"servicesroot"`
 	inputChannel chan interface{} `json:"-"`
-	outputChannels map[chan interface{}] bool `json: "-"`
+	outputChannels map[chan interface{}] string `json: "-"`
 }
 
 //
@@ -61,6 +62,7 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	sys.SetServices(srv)
 
 	// Set description for default service
+
 	desc := "Global services for node "+env.Config.Name
 	
 	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) Registering service '"+env.Config.Name+"'")
@@ -70,7 +72,7 @@ func NewServiceEngine(e *environment.Environment) (error, *ServiceEngine){
 	}
 
 	// Initialize the OutputChannels
-  	sys.outputChannels = make(map[chan interface{}] bool)
+  sys.outputChannels = make(map[chan interface{}] string)
 
 	// start the sample receiver
 	env.Output.WriteChDebug("(ServiceEngine::NewServiceEngine) Start")
@@ -99,7 +101,7 @@ func (s *ServiceEngine) SetInputChannel(c chan interface{}) {
 }
 //
 //# SetOutputChannels: method sets the channels to write service status
-func (s *ServiceEngine) SetOutputChannels(o map[chan interface{}] bool) {
+func (s *ServiceEngine) SetOutputChannels(o map[chan interface{}] string) {
   env.Output.WriteChDebug("(ServiceEngine::SetOutputChannels)")
   s.outputChannels = o
 }
@@ -116,7 +118,7 @@ func (s *ServiceEngine) GetInputChannel() chan interface{} {
 }
 //
 //# GetOutputChannels: methods return the channels to write samples
-func (s *ServiceEngine) GetOutputChannels() map[chan interface{}] bool {
+func (s *ServiceEngine) GetOutputChannels() map[chan interface{}] string {
   env.Output.WriteChDebug("(ServiceEngine::GetOutputChannels)")
   return s.outputChannels
 }
@@ -132,12 +134,12 @@ func (s *ServiceEngine) SayHi() {
 }
 //
 //# Subscribe: Add a new channel to write service status
-func (s *ServiceEngine) Subscribe(o chan interface{}) error {
+func (s *ServiceEngine) Subscribe(o chan interface{}, desc string) error {
   env.Output.WriteChDebug("(ServiceEngine::Subscribe)")
 
   channels := s.GetOutputChannels()
   if _, exist := channels[o]; !exist {
-    channels[o] = true
+    channels[o] = desc
   } else {
     return errors.New("(ServiceEngine::Subscribe) You are trying to add an existing channel")
   }
@@ -162,32 +164,35 @@ func (s *ServiceEngine) Start() error {
 				_,servicesCheck := s.GetServicesForCheck(sample.GetCheck())
 				for _,service := range servicesCheck {
 					_,srv := services.GetServiceObject(service)
-					env.Output.WriteChDebug("(ServiceEngine::Start) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
-					go srv.SendToSampleChannel(sample)
+					env.Output.WriteChDebug("(ServiceEngine::StartReceiver) Sample for '"+sample.GetCheck()+"' belongs to '"+srv.GetName()+"'")
+					go srv.RecevieData(sample)
 				}
 			}
 		}
 	}()
 	return nil
 }
+
 //
-//# SendSample: method prepares the system to wait sample and calculate the results for services
-func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
-	env.Output.WriteChDebug("(ServiceEngine::SendSample) Send sample "+sample.String())
+//# SendData: method that send services to other engines
+func (s *ServiceEngine) SendData(o *ServiceObject) error {
+	env.Output.WriteChDebug("(ServiceEngine::SendData)")
+	
+	for c,desc := range s.GetOutputChannels(){
+		env.Output.WriteChDebug("(ServiceEngine::SendData) Writing service to channel '"+desc+"' {service:'"+o.GetName()+"', status:"+strconv.Itoa(o.GetStatus())+", timestamp:"+strconv.Itoa(int(o.GetTimestamp()))+"}")
+		c <- o
+	}
+
+	return nil
+}
+//
+//# ReceiveData: method prepares the system to wait sample and calculate the results for services
+//func (s *ServiceEngine) SendSample(sample *sample.CheckSample) {
+func (s *ServiceEngine) ReceiveData(sample *sample.CheckSample) {
+	env.Output.WriteChDebug("(ServiceEngine::ReceiveData) Send sample "+sample.String())
 	s.inputChannel <- sample
 }
 
-//
-//# sendServicesStatus: method that send services to other engines
-func (s *ServiceEngine) sendServicesStatus(o *ServiceObject) error {
-  env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus)")
-	for c,_ := range s.GetOutputChannels(){
-     env.Output.WriteChDebug("(ServiceEngine::sendServicesStatus) ["+strconv.Itoa(int(o.GetTimestamp()))+"] Writing service status '"+o.GetName()+"' with status '"+strconv.Itoa(o.GetStatus())+"' into channel")
-			c <- o
-  }
-
-  return nil
-}
 //
 //# RegisterService: register a new service for service engine
 func (s *ServiceEngine) RegisterService(name string, desc string, checks []string) error {
@@ -223,7 +228,7 @@ func (sys *ServiceEngine) GetAllServices() (error, []byte) {
 	}
 
 	//return ss.String()
-	return nil, utils.ObjectToJsonByte(services)
+	return utils.ObjectToJsonByte(services)
 }
 //
 //# GetServices: return all information about a service
@@ -252,7 +257,7 @@ func (sys *ServiceEngine) GetService(name string) (error, []byte) {
 		return errors.New(msg), nil
 	}
 
-	return nil, utils.ObjectToJsonByte(obj)
+	return utils.ObjectToJsonByte(obj)
 }
 
 //

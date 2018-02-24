@@ -28,7 +28,7 @@ import(
 type ClusterMessage struct{
 	From string `json:"from"`
 	Timestamp int64 `json:"timestamp"`
-	Data []byte	`json:"data"`
+	Data []byte `json:"data"`
 }
 
 //
@@ -52,28 +52,28 @@ func NewClusterMessage(f string, t int64, i interface{}) (error, *ClusterMessage
 	}
 
 	switch i.(type) {
-	case []byte:
-		env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) []byte type arrived")
-		message.SetData(i.([]byte))
-	case *Cluster:
-		env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) *Cluster type arrived")
-		if err, data := utils.InterfaceToBytes(i); err != nil {
-			msg := "(ClusterMessage::NewClusterMessage) "+err.Error()
+		case []byte:
+			env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) []byte type arrived")
+			message.SetData(i.([]byte))
+			break;
+		case *Cluster:
+			env.Output.WriteChDebug("(ClusterMessage::NewClusterMessage) *Cluster type arrived")
+			if err, data := utils.InterfaceToBytes(i); err != nil {
+				msg := "(ClusterMessage::NewClusterMessage) "+err.Error()
+				env.Output.WriteChError(msg)
+				return errors.New(msg),nil	
+			} else {
+				message.SetData(data)
+			}
+			break;
+		default:
+			msg := "(ClusterMessage::NewClusterMessage) Not valid type to construct a message"
 			env.Output.WriteChError(msg)
-			return errors.New(msg),nil		
-		} else {
-			message.SetData(data)
-		}
-	default:
-		msg := "(ClusterMessage::NewClusterMessage) Not valid type to construct a message"
-		env.Output.WriteChError(msg)
-		return errors.New(msg),nil
+			return errors.New(msg),nil
 	}
 
-	
 	message.SetFrom(f)
 	message.SetTimestamp(t)
-	
 
 	return nil,	message
 }
