@@ -1,5 +1,8 @@
 package client
 
+import (
+	"github.com/mitchellh/cli"
+)
 
 /*
 	ClientWorker defines those objects which could work as a client 
@@ -14,6 +17,7 @@ type ClientWorker interface {
 type Client struct {
 	ID uint `json: "id"`
 	Worker ClientWorker
+	Ui cli.Ui
 }
 
 /*Init*/
