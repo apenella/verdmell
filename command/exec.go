@@ -56,6 +56,8 @@ func (c *ExecCommand) Run(args []string) int {
 		return 1
 	}
 
+	a.Stop()
+
 	return 0
 }
 

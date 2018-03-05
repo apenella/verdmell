@@ -5,9 +5,9 @@ package engine
 // Constants to define engine status
 const (
 	INITIALIZING = iota
-	INITIALIZED
+	READY
 	STARTING
-	STARTED
+	RUNNING
 	STOPPING
 	STOPPED
 	WAITING_DEPENDENCIES
@@ -30,6 +30,7 @@ type Engine interface {
 	GetID() uint
 	GetName() string
 	GetDependencies() []uint
+	GetInputChannel() chan interface{}
 	Init() error
 	Run() error
 	Stop() error
@@ -43,24 +44,32 @@ func ToHummanStatus(s uint) (string) {
 
 	status := map[uint] string {
 		INITIALIZING: "INITIALIZING",
-		INITIALIZED: "INITIALIZED",
+		READY: "READY",
 		STARTING: "STARTING",
-		STARTED: "STARTED",
+		RUNNING: "RUNNING",
 		STOPPING: "STOPPING",
 		STOPPED: "STOPPED",
 		WAITING_DEPENDENCIES: "WAITING_DEPENDENCIES",
 		NOT_INITIALIZED: "NOT_INITIALIZED",
 	}
 
-	return status[s]
+	humman, ok := status[s]
+	if !ok {
+		return "UNKNOWN"
+	}		
+	return humman
 }
 
 //
 // Basic engine definition
 type BasicEngine struct {
-	ID uint
-	Name string
-	Dependencies []uint
+	ID uint `json: "id"`
+	Name string `json: "name"`
+	Dependencies []uint `json: "dependencies"`
+	// subscriptions Channel
+	subscriptions map[chan interface{}] string `json: "-"`
+	// input channel
+	inputChannel chan interface{}`json: "-"`
 }
 // GetID
 func (e *BasicEngine)GetID() uint {
@@ -73,4 +82,20 @@ func (e *BasicEngine)GetName() string {
 // GetDependencies
 func (e *BasicEngine)GetDependencies() []uint {
 	return e.Dependencies
+}
+// SetSubscriptions
+func (e *BasicEngine) SetSubscriptions(s map[chan interface{}] string ) {
+	e.subscriptions = s
+}
+// GetSubscriptions
+func (e *BasicEngine) GetSubscriptions() map[chan interface{}] string {
+  return e.subscriptions
+}
+// SetSubscriptions
+func (e *BasicEngine) SetInputChannel(c chan interface{}) {
+	e.inputChannel = c
+}
+// GetInputChannel
+func (e *BasicEngine) GetInputChannel() chan interface{} {
+  return e.inputChannel
 }
