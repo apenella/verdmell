@@ -45,7 +45,7 @@ func TestValidateGraphEngine(t *testing.T) {
 				},
 				mock_id_2: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID: mock_id_1,
+						ID: mock_id_2,
 						Name: "Mock 2",
 						Dependencies: []uint{mock_id_0,mock_id_1},
 					},
@@ -75,36 +75,6 @@ func TestValidateGraphEngine(t *testing.T) {
 				},
 			},
 			err: errors.New("(Agent::validateGraphEngineHelper) Dependency loop with engine 'Mock 1' and engine 'Mock 0'."),
-		},
-		{
-			desc: "Testing a complex loop dependency.",
-			loglevel: 1,
-			configdir: "../test/conf.d",
-			configfile: "",
-			engines: map[uint] engine.Engine {
-				mock_id_0: &engine.MockEngine{
-					BasicEngine: engine.BasicEngine{
-						ID: mock_id_0,
-						Name: "Mock 0",
-						Dependencies: []uint{mock_id_1},
-					},
-				},
-				mock_id_1: &engine.MockEngine{
-					BasicEngine: engine.BasicEngine{
-						ID: mock_id_1,
-						Name: "Mock 1",
-						Dependencies: []uint{mock_id_2},
-					},
-				},
-				mock_id_2: &engine.MockEngine{
-					BasicEngine: engine.BasicEngine{
-						ID: mock_id_1,
-						Name: "Mock 2",
-						Dependencies: []uint{mock_id_0},
-					},
-				},
-			},
-			err: errors.New("(Agent::validateGraphEngineHelper) Dependency loop with engine 'Mock 2' and engine 'Mock 0'."),
 		},
 		{
 			desc: "Testing an unexistent dependency.",
@@ -141,7 +111,188 @@ func TestValidateGraphEngine(t *testing.T) {
 	}
 }
 
+func TestSetEngineSubscriptions(t *testing.T) {
+	mock_id_0 := uint(0)
+	mock_id_1 := uint(1)
+	mock_id_2 := uint(2)
 
+	tests := []struct{
+		desc string
+		loglevel int
+		configdir string
+		configfile string
+		engines map[uint] engine.Engine
+		engineStatus map[uint] uint
+		err error
+	}{
+		{
+			desc: "Testing subscriptions.",
+			loglevel: 1,
+			configdir: "../test/conf.d",
+			configfile: "",
+			engines: map[uint] engine.Engine {
+				mock_id_0: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_0,
+						Name: "Mock 0",
+						Dependencies: []uint{},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+						Status: engine.INITIALIZED,
+					},
+				},
+				mock_id_1: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_1,
+						Name: "Mock 1",
+						Dependencies: []uint{mock_id_0},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+						Status: engine.INITIALIZED,
+					},
+				},
+				mock_id_2: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_2,
+						Name: "Mock 2",
+						Dependencies: []uint{mock_id_0,mock_id_1},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+						Status: engine.INITIALIZED,
+					},
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "Testing subscribe to non initialized engine.",
+			loglevel: 1,
+			configdir: "../test/conf.d",
+			configfile: "",
+			engines: map[uint] engine.Engine {
+				mock_id_0: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_0,
+						Name: "Mock 0",
+						Dependencies: []uint{},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+						Status: engine.STOPPED,
+					},
+				},
+				mock_id_1: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_1,
+						Name: "Mock 1",
+						Dependencies: []uint{mock_id_0},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+						Status: engine.READY,
+					},
+				},
+				mock_id_2: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_2,
+						Name: "Mock 2",
+						Dependencies: []uint{mock_id_0,mock_id_1},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+						Status: engine.READY,	
+					},
+				},
+			},
+			err: errors.New("(Agent::setEnginesSubscriptions) Engine 'Mock 0' is not on 'Initialized' status"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Log(test.desc)
+		a := &Agent{
+			Loglevel: test.loglevel,
+			Configdir: test.configdir,
+			Configfile: test.configfile,
+			Engines: test.engines,
+			EngineStatus: test.engineStatus,
+		}
+
+		err := a.setEnginesSubscriptions()
+		if err != nil && assert.Error(t, err) {
+			assert.Equal(t, test.err, err)
+		}
+	}
+}
+
+// Test run
+func TestRun(t *testing.T) {
+	mock_id_0 := uint(0)
+	mock_id_1 := uint(1)
+	mock_id_2 := uint(2)
+
+	tests := []struct{
+		desc string
+		loglevel int
+		configdir string
+		configfile string
+		engines map[uint] engine.Engine
+		engineStatus map[uint] uint
+		err error
+	}{
+		{
+			desc: "Testing run.",
+			loglevel: 1,
+			configdir: "../test/conf.d",
+			configfile: "",
+			engines: map[uint] engine.Engine {
+				mock_id_0: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_0,
+						Name: "Mock 0",
+						Dependencies: []uint{},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+					},
+				},
+				mock_id_1: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_1,
+						Name: "Mock 1",
+						Dependencies: []uint{mock_id_0},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+					},
+				},
+				mock_id_2: &engine.MockEngine{
+					BasicEngine: engine.BasicEngine{
+						ID: mock_id_2,
+						Name: "Mock 2",
+						Dependencies: []uint{mock_id_0,mock_id_1},
+						Subscriptions: make(map[chan interface{}] string),
+						InputChannel: make(chan interface{}),
+					},
+				},
+			},
+			err: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Log(test.desc)
+		a := &Agent{
+			Loglevel: test.loglevel,
+			Configdir: test.configdir,
+			Configfile: test.configfile,
+			Engines: test.engines,
+			EngineStatus: test.engineStatus,
+		}
+
+		err := a.run()
+		if err != nil && assert.Error(t, err) {
+			assert.Equal(t, test.err, err)
+		}
+	}
+}
+
+// Start
 func TestStart(t *testing.T){
 	mock_id_0 := uint(0)
 	mock_id_1 := uint(1)

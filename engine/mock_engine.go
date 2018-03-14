@@ -49,8 +49,8 @@ func (m *MockEngine)Run() error {
 func (m *MockEngine)Stop() error {
 	fmt.Println("(MockEngine::Stop) ("+fmt.Sprint(m.ID)+") "+m.Name)
 	
-	if m.inputChannel != nil {
-		defer close(m.inputChannel)
+	if m.InputChannel != nil {
+		defer close(m.InputChannel)
 	}
 
 	return nil
@@ -68,12 +68,6 @@ func (m *MockEngine)Subscribe(o chan interface{}, desc string) error {
 	}
 
 	return nil
-}
-
-// Status
-func (m *MockEngine)Status() int {
-	fmt.Println("(MockEngine::Status) ("+fmt.Sprint(m.ID)+") "+m.Name)
-	return 0
 }
 
 // SayHi

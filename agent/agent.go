@@ -76,8 +76,7 @@ func (a *Agent) Start() (int, error) {
 
 	// Initialize Engines
 	for id, e := range a.Engines {
-		
-		a.EngineStatus[id] = engine.INITIALIZING
+		e.SetStatus(engine.INITIALIZING)
 		
 		// initialize current engine
 		go func(id uint, e engine.Engine) {
@@ -100,7 +99,8 @@ func (a *Agent) Start() (int, error) {
 			// wait to receive an id to set as initialized the engine
 			case id := <-a.initCh:
 				env.Output.WriteChInfo("(Agent::Start) ready",a.Engines[id].GetName())
-				a.EngineStatus[id] = engine.READY
+				e := a.Engines[id]
+				e.SetStatus(engine.INITIALIZED)
 
 			// wait to receive an error
 			case err = <-a.initErrCh:
@@ -121,6 +121,8 @@ func (a *Agent) Start() (int, error) {
 		return ERROR, err
 	}
 
+
+
 	if err = a.setEnginesSubscriptions(); err != nil {
 		// stop the agent before return 
 		a.Stop()
@@ -128,8 +130,8 @@ func (a *Agent) Start() (int, error) {
 	}
 
 	// Run engines
-	for id,_ := range a.Engines {
-		a.EngineStatus[id] = engine.STARTING
+	for _, e := range a.Engines {
+		e.SetStatus(engine.STARTING)
 	}
 
 	return OK, nil
@@ -140,9 +142,8 @@ func (a *Agent) Stop() int {
 
 	// Initialize Engines
 	for id, e := range a.Engines {
-		
-		a.EngineStatus[id] = engine.STOPPING
-		
+		e.SetStatus(engine.STOPPING)
+
 		// initialize current engine
 		go func(id uint, e engine.Engine) {
 			err := e.Stop()
@@ -162,7 +163,8 @@ func (a *Agent) Stop() int {
 		select{
 			// wait to receive an id to set as initialized the engine
 			case id := <-a.stopCh:
-				a.EngineStatus[id] = engine.STOPPED
+				e := a.Engines[id]
+				e.SetStatus(engine.STOPPED)
 
 			// wait to receive an error
 			case err = <-a.stopErrCh:
@@ -199,8 +201,8 @@ func (a *Agent) Status() int {
 		"------ | ------",
 	}
 
-	for id, e := range a.Engines {
-		lines = append(lines, e.GetName()+" | "+engine.ToHummanStatus(a.EngineStatus[id]))
+	for _, e := range a.Engines {
+		lines = append(lines, e.GetName()+" | "+engine.ToHummanStatus(e.GetStatus()))
 	}
 
 	fmt.Println(columnize.SimpleFormat(lines))
@@ -262,13 +264,49 @@ func (a *Agent) init() error {
 	return nil
 }
 
+// run
+func (a *Agent) run() error {
+	reverseDependency := make(map[uint] []uint)
+	reverseDependencyCount := make(map[uint]int)
+
+	// prepare reverse dependencies translation structures
+	for _,e := range a.Engines {
+		dep := e.GetDependencies()
+		for _,dep_id := range dep {
+			reverseDependency[uint(dep_id)] = append(reverseDependency[uint(dep_id)], e.GetID())
+			reverseDependencyCount[uint(dep_id)]++
+		}
+	}
+
+
+	for rdep_id, deps := range reverseDependency {
+		e := a.Engines[rdep_id]
+		
+		for _, dep := range deps {
+			fmt.Println("(Agent::run) reverse dependency:", e.GetName(), "<-",dep," count:", reverseDependencyCount[rdep_id])
+			
+			if err := a.runHelper(dep); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// runHelper
+func (a *Agent) runHelper(dep uint) error {
+	return nil
+}
+
 // setEnginesSubscriptions
 func (a *Agent) setEnginesSubscriptions() error {
 	for _,e := range a.Engines {
 		for _,id := range e.GetDependencies() {
 			d := a.Engines[id]
-			if a.EngineStatus[d.GetID()] != engine.READY {
-				return errors.New("(Agent::setEnginesSubscriptions) Engine '"+d.GetName()+"' is not on '"+engine.ToHummanStatus(engine.READY)+"' status")
+			//if a.EngineStatus[d.GetID()] < engine.INITIALIZED {
+			if d.GetStatus() < engine.INITIALIZED {
+				return errors.New("(Agent::setEnginesSubscriptions) Engine '"+d.GetName()+"' is not on '"+engine.ToHummanStatus(engine.INITIALIZED)+"' status")
 			}
 			d.Subscribe(e.GetInputChannel(),e.GetName())
 		}

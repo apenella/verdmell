@@ -1,13 +1,17 @@
 package engine
 
+import (
+	"sync"
+)
+
 // Engine is an interface to be accomplish for any verdmell component.
 
 // Constants to define engine status
 const (
 	INITIALIZING = iota
-	READY
+	INITIALIZED
 	STARTING
-	RUNNING
+	READY
 	STOPPING
 	STOPPED
 	WAITING_DEPENDENCIES
@@ -31,11 +35,13 @@ type Engine interface {
 	GetName() string
 	GetDependencies() []uint
 	GetInputChannel() chan interface{}
+	GetStatus() uint
+	SetStatus(s uint)
+
 	Init() error
 	Run() error
 	Stop() error
 	Subscribe(o chan interface{}, desc string) error
-	Status() int
 	SayHi()
 }
 
@@ -43,19 +49,19 @@ type Engine interface {
 func ToHummanStatus(s uint) (string) {
 
 	status := map[uint] string {
-		INITIALIZING: "INITIALIZING",
-		READY: "READY",
-		STARTING: "STARTING",
-		RUNNING: "RUNNING",
-		STOPPING: "STOPPING",
-		STOPPED: "STOPPED",
-		WAITING_DEPENDENCIES: "WAITING_DEPENDENCIES",
-		NOT_INITIALIZED: "NOT_INITIALIZED",
+		INITIALIZING: "Initializing",
+		INITIALIZED: "Initialized",
+		STARTING: "Starting",
+		READY: "Ready",
+		STOPPING: "Stopping",
+		STOPPED: "Stopped",
+		WAITING_DEPENDENCIES: "Waiting dependencies",
+		NOT_INITIALIZED: "Not initialized",
 	}
 
 	humman, ok := status[s]
 	if !ok {
-		return "UNKNOWN"
+		return "Unknown"
 	}		
 	return humman
 }
@@ -67,9 +73,13 @@ type BasicEngine struct {
 	Name string `json: "name"`
 	Dependencies []uint `json: "dependencies"`
 	// subscriptions Channel
-	subscriptions map[chan interface{}] string `json: "-"`
+	Subscriptions map[chan interface{}] string `json: "-"`
 	// input channel
-	inputChannel chan interface{}`json: "-"`
+	InputChannel chan interface{}`json: "-"`
+	// engine's current status
+	Status uint `json: "status"`
+	// status mutex
+	statusMutex sync.RWMutex `json: "-"`
 }
 // GetID
 func (e *BasicEngine)GetID() uint {
@@ -83,19 +93,36 @@ func (e *BasicEngine)GetName() string {
 func (e *BasicEngine)GetDependencies() []uint {
 	return e.Dependencies
 }
+// GetStatus
+func (e *BasicEngine)GetStatus() uint {
+	//read lock
+ 	e.statusMutex.RLock()
+ 	defer e.statusMutex.RUnlock()
+	
+	return e.Status
+}
+// SetStatus
+func (e *BasicEngine)SetStatus(s uint) {
+	//write lock
+  	e.statusMutex.Lock()
+	defer e.statusMutex.Unlock()
+
+	e.Status = s
+}
+
 // SetSubscriptions
 func (e *BasicEngine) SetSubscriptions(s map[chan interface{}] string ) {
-	e.subscriptions = s
+	e.Subscriptions = s
 }
 // GetSubscriptions
 func (e *BasicEngine) GetSubscriptions() map[chan interface{}] string {
-  return e.subscriptions
+  return e.Subscriptions
 }
 // SetSubscriptions
 func (e *BasicEngine) SetInputChannel(c chan interface{}) {
-	e.inputChannel = c
+	e.InputChannel = c
 }
 // GetInputChannel
 func (e *BasicEngine) GetInputChannel() chan interface{} {
-  return e.inputChannel
+  return e.InputChannel
 }
