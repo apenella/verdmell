@@ -12,6 +12,8 @@ type MockEngine struct {
 
 	// if its value is greater than 0, the init method gets slept value seconds
 	InitSleep int
+	// if its value is greater than 0, the run method gets slept value seconds
+	RunSleep int
 }
 
 //
@@ -21,6 +23,7 @@ type MockEngine struct {
 // Init
 func (m *MockEngine)Init() error {
 
+	m.SetStatus(INITIALIZING)
 	// sleep when InitSleep value is greater than 0
 	if m.InitSleep > 0 {
 		time.Sleep(time.Duration(m.InitSleep) * time.Second)
@@ -36,12 +39,21 @@ func (m *MockEngine)Init() error {
 	// initialize channel to receive notifications
 	m.SetInputChannel(make(chan interface{}))
 
+	m.SetStatus(INITIALIZED)
 	return nil
 }
 
 // Run
 func (m *MockEngine)Run() error {
+	m.SetStatus(STARTING)
 	fmt.Println("(MockEngine::Run) ("+fmt.Sprint(m.ID)+") "+m.Name)
+	
+	// sleep when RunSleep value is greater than 0
+	if m.RunSleep > 0 {
+		time.Sleep(time.Duration(m.RunSleep) * time.Second)
+	}
+
+	m.SetStatus(READY)
 	return nil
 }
 

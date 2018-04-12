@@ -80,6 +80,12 @@ type BasicEngine struct {
 	Status uint `json: "status"`
 	// status mutex
 	statusMutex sync.RWMutex `json: "-"`
+	// init mutex
+	initMutex sync.RWMutex `json: "-"`
+	// run mutex
+	runMutex sync.RWMutex `json: "-"`
+	// stop mutex
+	stopMutex sync.RWMutex `json: "-"`
 }
 // GetID
 func (e *BasicEngine)GetID() uint {
@@ -104,7 +110,7 @@ func (e *BasicEngine)GetStatus() uint {
 // SetStatus
 func (e *BasicEngine)SetStatus(s uint) {
 	//write lock
-  	e.statusMutex.Lock()
+	e.statusMutex.Lock()
 	defer e.statusMutex.Unlock()
 
 	e.Status = s
