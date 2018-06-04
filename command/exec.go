@@ -10,21 +10,17 @@ import (
 	"verdmell/utils"
 )
 
-/*
-	ExecCommand
-*/
+//	ExecCommand
 type ExecCommand struct{}
 
-/*
-	Run
-*/
+//	Run
 func (c *ExecCommand) Run(args []string) int {
 	flags := flag.NewFlagSet("exec",flag.ContinueOnError)
 	flags.Usage = func() {c.Help()}
 
 	// Data structure to set the engines required by agent
 	e := make(map[uint]engine.Engine)
-	
+
 	// Create check an empty check engine
 	ch := &check.CheckEngine{}
 	e[engine.CHECK] = ch
@@ -50,7 +46,7 @@ func (c *ExecCommand) Run(args []string) int {
 	if err := flags.Parse(args); err != nil {
 		return 1
 	}
-	
+
 	// start agent
 	if err := a.Start(); err != nil {
 		return 1
@@ -73,7 +69,6 @@ func (c *ExecCommand) Synopsis() string {
 
 //
 // Common methods
-//---------------------------------------------------------------------
 
 // String method transform the ExecCommand to string
 func (c *ExecCommand) String() string {
@@ -81,5 +76,5 @@ func (c *ExecCommand) String() string {
 		return err.Error()
 	} else{
 		return str
-	} 
+	}
 }

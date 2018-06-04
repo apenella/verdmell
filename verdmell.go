@@ -9,20 +9,22 @@ import (
 	"os"
 
 	"verdmell/command"
-	
 	"github.com/apenella/messageOutput"
 	"github.com/mitchellh/cli"
-
 )
 
-// Commands is the mapping of all the available Consul commands.
+// Commands is the mapping of all the available Verdmell commands.
 var Commands map[string]cli.CommandFactory
 
 func init() {
 	Commands = map[string]cli.CommandFactory {
 		"exec": func() (cli.Command, error) {
-			return &command.ExecCommand {}, nil 
+			return &command.ExecCommand {}, nil
 		},
+		Commands = map[string]cli.CommandFactory {
+			"healthcheck": func() (cli.Command, error) {
+				return &command.HealthCheckCommand {}, nil
+			},
 		/*
 			TODO
 			//standalone mode options
@@ -33,7 +35,7 @@ func init() {
 			    	-configdir: set configuration directory.
 			    	-loglevel: set loglevel.
 			    	-silence: no output message.
-			healthcheck: run a nodes health check
+			healthcheck: run a node health check
 				- options:
 					-configfile: set configuration file.
 			    	-configdir: set configuration directory.
@@ -87,7 +89,7 @@ func init() {
 func main() {
 	var err error
 	//var env *environment.Environment
-		
+
 	exitStatus := 0
 
 	// Filter out the configtest command from the help display

@@ -43,7 +43,7 @@ type Agent struct{
 	Engines map[uint]engine.Engine `json: "engines"`
 	EngineStatus map[uint]uint `json: "-"`
 
-	// Is the engines order to be run, decided by user 
+	// Is the engines order to be run, decided by user
 	RunOrder []uint `json: "-"`
 	// contains the order which the engines will run
 	RunVector []uint `json: "runvector"`
@@ -91,23 +91,23 @@ func (a *Agent) Start() (int, error) {
 
 	// Set up subscriptions among all engines
 	if err = a.initialize(); err != nil {
-		// stop the agent before return 
+		// stop the agent before return
 		a.Stop()
-		return ERROR, err		
+		return ERROR, err
 	}
 
 	// Set up subscriptions among all engines
 	if err = a.setEnginesSubscriptions(); err != nil {
-		// stop the agent before return 
+		// stop the agent before return
 		a.Stop()
-		return ERROR, err		
+		return ERROR, err
 	}
 
 	// Run engines
 	if err = a.run(); err != nil {
-		// stop the agent before return 
+		// stop the agent before return
 		a.Stop()
-		return ERROR, err	
+		return ERROR, err
 	}
 
 	return OK, nil
@@ -145,7 +145,7 @@ func (a *Agent) Stop() int {
 			// wait to receive an error
 			case err = <-a.stopErrCh:
 				env.Output.WriteChError("(Agent::Stop)",err)
-			
+
 			// define new error when timeout is reached an not all engines are initialized
 			case <- timeout:
 				msg := "(Agent::Stop) Not all engines have been stopped after "+strconv.Itoa(int(a.StopTimeout))+" seconds."
@@ -193,12 +193,11 @@ func (a *Agent) String() string {
 		return err.Error()
 	} else{
 		return str
-	} 
+	}
 }
 
 //
 // Private methods
-//
 
 // Initialize data structures required to agent to be run
 func (a *Agent) init() error {
@@ -259,7 +258,7 @@ func (a *Agent) init() error {
 	1 - Initialize engine
 	2 - In case of dependency loop, return
 	3 - If no reverse dependency, start engine
-	4 - Else, 
+	4 - Else,
 		4.1 Decrease reverse dependency counter
 		5.2 If reverse dependency counter is 0, start reverse dependency
 			5.2.1 when reverse dependency is ready, try to start dependent engines from 3.1
@@ -272,7 +271,7 @@ func (a *Agent) initialize() error {
 	// Initialize Engines
 	for id, e := range a.Engines {
 		//e.SetStatus(engine.INITIALIZING)
-		
+
 		// initialize current engine
 		go func(id uint, e engine.Engine) {
 			err := e.Init()
@@ -298,7 +297,7 @@ func (a *Agent) initialize() error {
 			// wait to receive an error
 			case err = <-a.initErrCh:
 				//env.Output.WriteChError("(Agent::Start)",err)
-			
+
 			// define new error when timeout is reached an not all engines are initialized
 			case <- timeout:
 				msg := "(Agent::initialize) Not all engines have been initialized after "+strconv.Itoa(int(a.InitTimeout))+" seconds."
@@ -361,7 +360,7 @@ func (a *Agent) run() error {
 		case <-a.readyCh:
 			// wait to receive an error
 		case err = <-a.readyErrCh:
-			env.Output.WriteChError("(Agent::run)",err)			
+			env.Output.WriteChError("(Agent::run)",err)
 		// define new error when timeout is reached an not all engines are initialized
 		case <- timeout:
 			msg := "(Agent::run) Not all engines have been ready after "+strconv.Itoa(int(a.ReadyTimeout))+" seconds."
@@ -372,7 +371,7 @@ func (a *Agent) run() error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -427,7 +426,7 @@ func (a *Agent) validateGraphEngineHelper(id uint, markedEngines map[uint]bool) 
 				return errors.New(msg)
 			} else {
 				if err := a.validateGraphEngineHelper(uint(dep_id), markedEngines); err != nil {
-					return err			
+					return err
 				}
 			}
 		}
@@ -441,7 +440,7 @@ func ToHummanExitStatus(e uint) string {
 		WARN: "WARN",
 		ERROR: "ERROR",
 	}
-	
+
 	humman, ok := exit[e]
 	if !ok {
 		return "UNKNOWN"
