@@ -79,10 +79,18 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
 
 //
 // Interface Engine requirements
-func (c *CheckEngine) Init() error { return nil}
-func (c *CheckEngine) Run() error { return nil}
-func (c *CheckEngine) Stop() error { return nil}
-func (c *CheckEngine) Status() int { return 0}
+
+func (c *CheckEngine) Init() error { return nil }
+func (c *CheckEngine) Run() error { return nil }
+func (c *CheckEngine) Stop() error { return nil }
+func (c *CheckEngine) Status() int { return 0 }
+
+func (c *CheckEngine)	GetID() uint { return uint(0) }
+func (c *CheckEngine)	GetName() string { return "" }
+func (c *CheckEngine) GetDependencies() []uint { return nil }
+func (c *CheckEngine) GetInputChannel() chan interface{} { return nil }
+func (c *CheckEngine) GetStatus() uint { return uint(0) }
+func (c *CheckEngine) SetStatus(s uint) {}
 
 //#
 //# Getters and Setters
@@ -101,7 +109,7 @@ func (eng *CheckEngine) SetCheckgroups(groups *Checkgroups) {
   eng.Groups = groups
 }
 //
-//# SetSubscriptions: method sets the channels to write samples 
+//# SetSubscriptions: method sets the channels to write samples
 func (eng *CheckEngine) SetSubscriptions(o map[chan interface{}] string) {
   env.Output.WriteChDebug("(CheckEngine::SetSubscriptions) Set value")
   eng.subscriptions = o
@@ -131,7 +139,7 @@ func (eng *CheckEngine) GetSubscriptions() map[chan interface{}] string {
 //#---------------------------------------------------------------------
 
 //
-//# SayHi: 
+//# SayHi:
 func (eng *CheckEngine) SayHi() {
   env.Output.WriteChInfo("(CheckEngine::SayHi) Hi! I'm your new check engine instance")
 }
@@ -158,7 +166,7 @@ func (eng *CheckEngine) InitCheckRunningQueues() error {
 
   for _,obj := range cks.GetCheck() {
       go func(checkObj *CheckObject) {
-        env.Output.WriteChDebug("(CheckEngine::InitCheckRunningQueues) CheckQueue for '"+checkObj.GetName()+"'") 
+        env.Output.WriteChDebug("(CheckEngine::InitCheckRunningQueues) CheckQueue for '"+checkObj.GetName()+"'")
         checkObj.StartQueue()
       }(obj)
   }
@@ -179,7 +187,7 @@ func (eng *CheckEngine) Start(i interface{}) error {
   check := new(Checks)
   // checks will contain all the CheckObject definition
   checks := make(map[string]*CheckObject)
-  
+
   switch req := i.(type){
   case *CheckObject:
     env.Output.WriteChDebug("(CheckEngine::Start) Starting the check '"+req.String()+"'")
@@ -253,7 +261,7 @@ func (eng *CheckEngine) Start(i interface{}) error {
     case err := <-errChan:
       return err
     }
-    
+
   default:
     checks :=  eng.GetChecks()
     // startCheckTaskPools requiere the Sample system to sent sample to it and OutputSampleChan to send samples to ServiceSystem
@@ -306,7 +314,7 @@ func (eng *CheckEngine) AddCheck(obj *CheckObject) error {
   return nil
 }
 //
-//# ListCheckNames: returns an array with the check namess defined on Checks object 
+//# ListCheckNames: returns an array with the check namess defined on Checks object
 func (eng *CheckEngine) ListCheckNames() []string {
   return eng.Cks.ListCheckNames()
 }
@@ -335,7 +343,7 @@ func (eng *CheckEngine) GetAllChecks() (error,[]byte) {
     msg := "(CheckEngine::GetAllChecks) There are no checks defined."
     env.Output.WriteChDebug(msg)
     return errors.New(msg), nil
-  } 
+  }
 
   return utils.ObjectToJsonByte(checks)
 }
@@ -410,7 +418,7 @@ func (eng *CheckEngine) GetCheckgroup(name string) (error,[]byte) {
     env.Output.WriteChDebug(msg)
     return errors.New(msg), nil
   }
-  
+
   return utils.ObjectToJsonByte(obj)
 }
 

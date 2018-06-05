@@ -1,18 +1,18 @@
 package command
 
 import (
-	"testing"
+//	"testing"
 
 	"github.com/mitchellh/cli"
 )
 
-type testsRun struct {
-	Args []string
-	Value int
-}
+// type testsRun struct {
+// 	Args []string
+// 	Value int
+// }
 
-var Commands = map[string]cli.CommandFactory{
-	"healthcheck": func() (cli.Command, error) {
-		return new(HealthCheckCommand),nil
-	},
+var HealthCheckCommands = map[string]cli.CommandFactory{
+	// "healthcheck": func() (cli.Command, error) {
+	// 	return new(HealthCheckCommand),nil
+	// },
 }

@@ -13,12 +13,12 @@ type testsRun struct {
 }
 
 var Commands = map[string]cli.CommandFactory{
-			"exec": func() (cli.Command, error) {
-				return new(ExecCommand),nil
-			},
-		}
+	"exec": func() (cli.Command, error) {
+		return new(ExecCommand),nil
+	},
+}
 
-var tests = []testsRun{	
+var tests = []testsRun{
 	{
 		Args: []string {"exec","-loglevel","1"},
 		Value: 1,
@@ -44,7 +44,7 @@ var tests = []testsRun{
 
 func TestRun(t *testing.T){
 
-	var i int = 0 
+	var i int = 0
 	for _, test := range tests {
 		c := &cli.CLI{
 			Args: test.Args,

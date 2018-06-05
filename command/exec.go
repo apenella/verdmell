@@ -48,8 +48,8 @@ func (c *ExecCommand) Run(args []string) int {
 	}
 
 	// start agent
-	if err := a.Start(); err != nil {
-		return 1
+	if exit, err := a.Start(); err != nil {
+		return exit
 	}
 
 	a.Stop()

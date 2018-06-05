@@ -1,14 +1,5 @@
 package command
 
-import (
-	"flag"
-
-	"verdmell/agent"
-	"verdmell/check"
-	"verdmell/client"
-	"verdmell/engine"
-	"verdmell/utils"
-)
 
 //	ExecCommand
 type HealthCheckCommand struct{}

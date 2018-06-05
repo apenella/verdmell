@@ -22,6 +22,12 @@ func (c *Client) Init() error {
 	return nil
 }
 
+func (c *Client)	GetID() uint { return uint(0) }
+func (c *Client)	GetName() string { return "" }
+func (c *Client) GetDependencies() []uint { return nil }
+func (c *Client) GetInputChannel() chan interface{} { return nil }
+func (c *Client) GetStatus() uint { return uint(0) }
+func (c *Client) SetStatus(s uint) {}
 
 // Run is responsable to run worker
 func (c *Client) Run() error {
