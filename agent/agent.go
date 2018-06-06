@@ -166,7 +166,7 @@ func (a *Agent) Stop() int {
 		return ERROR
 	}
 
-	a.Status()
+	//a.Status()
 	return OK
 }
 

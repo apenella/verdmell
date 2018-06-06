@@ -21,10 +21,9 @@ func init() {
 		"exec": func() (cli.Command, error) {
 			return &command.ExecCommand {}, nil
 		},
-		Commands = map[string]cli.CommandFactory {
-			"healthcheck": func() (cli.Command, error) {
-				return &command.HealthCheckCommand {}, nil
-			},
+		"healthcheck": func() (cli.Command, error) {
+			return &command.HealthCheckCommand {}, nil
+		},
 		/*
 			TODO
 			//standalone mode options
