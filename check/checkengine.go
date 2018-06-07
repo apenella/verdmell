@@ -81,7 +81,10 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
 // Interface Engine requirements
 
 func (c *CheckEngine) Init() error { return nil }
-func (c *CheckEngine) Run() error { return nil }
+// Run
+func (c *CheckEngine) Run() error {
+  return nil
+}
 func (c *CheckEngine) Stop() error { return nil }
 func (c *CheckEngine) Status() int { return 0 }
 

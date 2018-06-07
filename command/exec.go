@@ -30,10 +30,16 @@ func (c *ExecCommand) Run(args []string) int {
 	cl := &client.Client{}
 	e[engine.CLIENT] = cl
 
-	ce := &client.ClientExec{}
+	ce := &client.ClientExec{
+		Engine: ch,
+	}
 	// Create an agent
 	a := &agent.Agent{
 		Engines: e,
+		RunOrder: []uint {
+			engine.CHECK,
+			engine.CLIENT,
+		},
 	}
 
 	flags.IntVar(&a.Loglevel, "loglevel", 0, "Loglevel definition [0: INFO | 1: WARN | 2: ERROR | 3: DEBUG]")

@@ -13,8 +13,8 @@ type ClientWorker interface {
 // Client works is done by an implementation of clientWorker interface. Each kind of user interaction is implemented by a diferent client worker.
 type Client struct {
 	ID uint `json: "id"`
-	Worker ClientWorker
-	Ui cli.Ui
+ 	Worker ClientWorker `json: "-"`
+	Ui cli.Ui `json: "-"`
 }
 
 // Init
@@ -22,8 +22,8 @@ func (c *Client) Init() error {
 	return nil
 }
 
-func (c *Client)	GetID() uint { return uint(0) }
-func (c *Client)	GetName() string { return "" }
+func (c *Client) GetID() uint { return uint(c.ID) }
+func (c *Client) GetName() string { return "" }
 func (c *Client) GetDependencies() []uint { return nil }
 func (c *Client) GetInputChannel() chan interface{} { return nil }
 func (c *Client) GetStatus() uint { return uint(0) }
