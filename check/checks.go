@@ -293,6 +293,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
 
       go func() {
         // env.Output.WriteChWarn("(Checks::InitCheckTasks) Countdown for '"+checkObj.GetName()+"'")
+        log.Warn("(Checks::InitCheckTasks) Countdown for '"+checkObj.GetName()+"'")
         timeout := time.After(time.Duration(checkObj.GetInterval()) * time.Second)
         for{
           select{
@@ -301,13 +302,13 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
           }
         }
       }()
-
     }
   }else{
     //
     // recursive ending condition: No dependency is found
     //
     // env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' hasn't dependencies")
+    log.Debug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' hasn't dependencies")
     // delete the check to runGraphList
     delete(runGraphList,checkObj.GetName())
     // queue the object to be run
@@ -316,6 +317,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
     checksample = <-checkObj.SampleChan
     exitStatus = checksample.GetExit()
     // env.Output.WriteChDebug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
+    log.Debug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
   }
 
   return nil, checksample
@@ -325,12 +327,13 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
 //  The method requieres a file path.
 //  The method returns a pointer to Checks object
 func UnmarshalCheck(file string) *Checks {
-  env.Output.WriteChDebug("(Checks::UnmarshalCheck)")
-
+  // env.Output.WriteChDebug("(Checks::UnmarshalCheck)")
+  log.Debug("(Checks::UnmarshalCheck)")
   c := new(Checks)
   // extract the content from the file and dumps it on the CHecks object
   if err := utils.LoadJSONFile(file, c); err != nil {
-    env.Output.WriteChError("(Checks::UnmarshalCheck) The input file '"+file+"' has an invalid json structure")
+    // env.Output.WriteChError("(Checks::UnmarshalCheck) The input file '"+file+"' has an invalid json structure")
+    log.Error("(Checks::UnmarshalCheck) The input file '"+file+"' has an invalid json structure")
   }
 
   return c
@@ -352,7 +355,8 @@ func RetrieveChecks(folder string) *Checks{
   // goroutine for extract each check object from file
   retrieveChecksFromFile := func(f os.FileInfo) {
     checkFile := folder+string(os.PathSeparator)+f.Name()
-    env.Output.WriteChDebug("(Checks::RetrieveChecks) File found: "+checkFile)
+    // env.Output.WriteChDebug("(Checks::RetrieveChecks) File found: "+checkFile)
+    log.Debug("(Checks::RetrieveChecks) File found: "+checkFile)
 
     c := UnmarshalCheck(checkFile)
 
@@ -371,19 +375,21 @@ func RetrieveChecks(folder string) *Checks{
       checkObj.SetTimestamp(0)
 
       if checkObj.GetExpirationTime() < 0 {
-        env.Output.WriteChDebug("(Checks::RetrieveChecks) The expiration time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
+        // env.Output.WriteChDebug("(Checks::RetrieveChecks) The expiration time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
+        log.Warn("(Checks::RetrieveChecks) The expiration time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
         checkObj.SetExpirationTime(300)
       }
 
       if checkObj.GetInterval() < checkObj.GetExpirationTime() {
-        env.Output.WriteChDebug("(Checks::RetrieveChecks) The interval time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
+        // env.Output.WriteChDebug("(Checks::RetrieveChecks) The interval time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
+        log.Warn("(Checks::RetrieveChecks) The interval time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
         checkObj.SetInterval(checkObj.GetExpirationTime())
       }
 
       // sending the CheckObject to be stored
       checkObjChan <- checkObj
-      env.Output.WriteChDebug("(Checks::RetrieveChecks) Check '"+checkName+"' defined")
-      env.Output.WriteChDebug("(Checks::RetrieveChecks) '"+checkObj.String()+"'")
+      // env.Output.WriteChDebug("(Checks::RetrieveChecks) Check '"+checkName+"' defined")
+      // env.Output.WriteChDebug("(Checks::RetrieveChecks) '"+checkObj.String()+"'")
     }
     // a message is send when all CheckObject defined into a file have been sent to store
     checkFileEndChan <- true
@@ -408,7 +414,8 @@ func RetrieveChecks(folder string) *Checks{
       select{
         // get a CheckObject object
         case obj := <- checkObjChan:
-          env.Output.WriteChDebug("(Checks::RetrieveChecks::routine) New check to register '"+obj.GetName()+"'")
+          // env.Output.WriteChDebug("(Checks::RetrieveChecks::routine) New check to register '"+obj.GetName()+"'")
+          log.Debug("(Checks::RetrieveChecks::routine) New check to register '"+obj.GetName()+"'")
           if _,exist := checks[obj.GetName()]; !exist{
             checks[obj.GetName()] = obj
           }

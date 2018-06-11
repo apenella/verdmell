@@ -1,8 +1,8 @@
-/*
-Configuration: manage all about configuration.
+//
+// Configuration: manage all about configuration.
+//
+// -Configuration
 
--Configuration
-*/
 package configuration
 
 import (
@@ -19,24 +19,24 @@ type test_data struct {
 }
 
 var tests = []test_data{
-	{ 	
+	{
 		"",
 		"../conf.d",
 		map[string]string {"name": "apenella", "checks": "../conf.d/checks", "services": "../conf.d/services"},
 		nil,
 	},
-	{ 	
+	{
 		"config.json",
 		"../conf.d",
 		map[string]string {"name": "apenella", "checks": "../conf.d/checks", "services": "../conf.d/services"},
 		nil,
 	},
-} 
+}
 
 
 func TestNewConfiguration(t *testing.T){
 	output := message.GetInstance(3)
-	
+
 	for _,test := range tests {
 		if err, configuration := NewConfiguration(test.file, test.folder, output); err != nil {
 			t.Error(err)

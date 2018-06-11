@@ -1,8 +1,8 @@
-/*
-Configuration: manage all about configuration.
+//
+// Configuration: manage all about configuration.
+//
+// -Configuration
 
--Configuration
-*/
 package configuration
 
 import (
@@ -13,7 +13,7 @@ import (
 	"github.com/apenella/messageOutput"
 )
 
-// environment variable VERDMELL_HOME 
+// environment variable VERDMELL_HOME
 const (
 	VERDMELL_HOME string = "VERDMELL_HOME"
 	CONF_DIR string = "conf.d"
@@ -53,7 +53,7 @@ type Configuration struct {
 	// Configuration for services
 	Services *ServicesConfiguration `json: "services"`
 	// output manager
-	output *message.Message
+	log *message.Message
 }
 
 func init() {
@@ -69,9 +69,9 @@ func init() {
 }
 
 // NewConfiguration: create new instance for configuration
-func NewConfiguration(file string, dir string, output *message.Message) (error, *Configuration){
+func NewConfiguration(file string, dir string, log *message.Message) (error, *Configuration){
 	configuration := new(Configuration)
-	configuration.output = output
+	configuration.log = log
 
 	// change configuration dir and file when a dir is not empty
 	if dir != "" {

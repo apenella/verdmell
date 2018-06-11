@@ -19,8 +19,7 @@ import (
 
   "github.com/apenella/messageOutput"
 )
-// variable to set environment information
-var env *environment.Environment
+
 // manage messages/logger
 var log *message.Message
 
@@ -35,6 +34,8 @@ type CheckEngine struct{
   Groups *Checkgroups  `json:"groups"`
   // Service Channel
   subscriptions map[chan interface{}] string `json: "-"`
+  // variable to set environment information
+  conf *configuration.Configuration  `json: "-"`
 }
 //
 //# NewCheckEngine: return a CheckEngine instance to be run
@@ -53,7 +54,7 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
 
   // Get defined checks
   // validate checks and set the checks into check system
-  cks := RetrieveChecks(env.Config.Checks.Folder)
+  cks := RetrieveChecks(config.Checks.Folder)
   if err = cks.ValidateChecks(nil); err == nil {
     eng.SetChecks(cks)
     //Init the running queues to proceed the executions
@@ -85,26 +86,41 @@ func NewCheckEngine(e *environment.Environment) (error, *CheckEngine){
 // Interface Engine requirements
 
 // Init
-func (c *CheckEngine) Init() error {
+func (eng *CheckEngine) Init() error {
+  // initialize logger
   if log == nil {
     log = message.New(message.INFO,nil,0)
   }
 
+  // Get defined checks
+  // validate checks and set the checks into check system
+  cks := RetrieveChecks(env.Config.Checks.Folder)
+  if err := cks.ValidateChecks(nil); err == nil {
+    eng.SetChecks(cks)
+    //Init the running queues to proceed the executions
+    eng.InitCheckRunningQueues()
+  } else {
+    return err
+  }
+
+  // Initialize the Subscriptions
+  eng.subscriptions = make(map[chan interface{}] string)
+
   return nil
 }
 // Run
-func (c *CheckEngine) Run() error {
+func (eng *CheckEngine) Run() error {
   return nil
 }
-func (c *CheckEngine) Stop() error { return nil }
-func (c *CheckEngine) Status() int { return 0 }
+func (eng *CheckEngine) Stop() error { return nil }
+func (eng *CheckEngine) Status() int { return 0 }
 
-func (c *CheckEngine)	GetID() uint { return uint(0) }
-func (c *CheckEngine)	GetName() string { return "" }
-func (c *CheckEngine) GetDependencies() []uint { return nil }
-func (c *CheckEngine) GetInputChannel() chan interface{} { return nil }
-func (c *CheckEngine) GetStatus() uint { return uint(0) }
-func (c *CheckEngine) SetStatus(s uint) {}
+func (eng *CheckEngine)	GetID() uint { return uint(0) }
+func (eng *CheckEngine)	GetName() string { return "" }
+func (eng *CheckEngine) GetDependencies() []uint { return nil }
+func (eng *CheckEngine) GetInputChannel() chan interface{} { return nil }
+func (eng *CheckEngine) GetStatus() uint { return uint(0) }
+func (eng *CheckEngine) SetStatus(s uint) {}
 
 //
 // Getters and Setters
