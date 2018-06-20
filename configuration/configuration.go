@@ -53,7 +53,7 @@ type Configuration struct {
 	// Configuration for services
 	Services *ServicesConfiguration `json: "services"`
 	// output manager
-	log *message.Message
+	Log *message.Message
 }
 
 func init() {
@@ -71,7 +71,7 @@ func init() {
 // NewConfiguration: create new instance for configuration
 func NewConfiguration(file string, dir string, log *message.Message) (error, *Configuration){
 	configuration := new(Configuration)
-	configuration.log = log
+	configuration.Log = log
 
 	// change configuration dir and file when a dir is not empty
 	if dir != "" {

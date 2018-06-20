@@ -15,6 +15,7 @@ import (
   "errors"
   "strconv"
   "time"
+  "verdmell/configuration"
   "verdmell/sample"
   "verdmell/utils"
 )
@@ -24,6 +25,15 @@ import (
 //# Checks is an struct where the checks are stored
 type Checks struct{
   Check map[string] *CheckObject `json:"checks"`
+  // variable to set configuration
+  config *configuration.Configuration `json: "-"`
+}
+
+func NewChecks(c *configuration.Configuration) *Checks {
+  return &Checks {
+    Check: make(map[string] *CheckObject),
+    config: c,
+  }
 }
 
 //
@@ -45,8 +55,7 @@ func (c *Checks) GetCheck() map[string]*CheckObject{
 //# AddCheck: method add a new check to the Checks struct
 func (c *Checks) AddCheck(obj *CheckObject) error {
   if _,exist := c.Check[obj.GetName()]; !exist{
-    // env.Output.WriteChDebug("(Checks::AddCheck) New Check '"+obj.GetName()+"'")
-    log.Debug("(Checks::AddCheck) New Check '"+obj.GetName()+"'")
+    c.config.Log.Debug("(Checks::AddCheck) New Check '"+obj.GetName()+"'")
     c.Check[obj.GetName()] = obj
   }
   return nil
@@ -57,8 +66,7 @@ func (c *Checks) AddCheck(obj *CheckObject) error {
 func (c *Checks) ListCheckNames() []string {
   var names []string
   for checkname, _ := range c.Check {
-    // env.Output.WriteChDebug("(Checks::ListCheckNames) check name: "+checkname)
-    log.Debug("(Checks::ListCheckNames) check name: "+checkname)
+    c.config.Log.Debug("(Checks::ListCheckNames) check name: "+checkname)
     // append each check name to names array
     names = append(names, checkname)
   }
@@ -77,8 +85,7 @@ func (c *Checks) GetCheckObjectByName(checkname string) (error,*CheckObject) {
   checkObj := new(CheckObject)
   check := c.GetCheck()
 
-  // env.Output.WriteChDebug("(Checks::GetCheckObjectByName) Looking for check '"+checkname+"'")
-  log.Debug("(Checks::GetCheckObjectByName) Looking for check '"+checkname+"'")
+  c.config.Log.Debug("(Checks::GetCheckObjectByName) Looking for check '"+checkname+"'")
 
   if checkObj, err = check[checkname]; err == false {
     return errors.New("(Checks::GetCheckObjectByName) The check '"+checkname+"' has never been load before."),nil
@@ -124,8 +131,7 @@ func (c *Checks) ValidateChecks(i interface{}) error {
 //
 //# StartCheckTaskPools: start a pool for each check. For each pool are generated the check execution tasks
 func (c *Checks) StartCheckTaskPools() error {
-  // env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Ready to start all pools for checks")
-  log.Debug("(Checks::StartCheckTaskPools) Ready to start all pools for checks")
+  c.config.Log.Debug("(Checks::StartCheckTaskPools) Ready to start all pools for checks")
 
   sampleChan := make(chan *sample.CheckSample)
   defer close(sampleChan)
@@ -144,8 +150,7 @@ func (c *Checks) StartCheckTaskPools() error {
     runGraphList[check.GetName()] = nil
     // each check will run under its own goroutine
     go func (obj *CheckObject, rgl map[string]interface{}) {
-      // env.Output.WriteChDebug("(Checks::StartCheckTaskPools) Initializing tasks for '"+obj.GetName()+"''s pool")
-      log.Debug("(Checks::StartCheckTaskPools) Initializing tasks for '"+obj.GetName()+"''s pool")
+      c.config.Log.Debug("(Checks::StartCheckTaskPools) Initializing tasks for '"+obj.GetName()+"''s pool")
       if err, checksample := c.InitCheckTasks(obj, rgl); err == nil {
         sampleChan <- checksample
       } else {
@@ -156,21 +161,18 @@ func (c *Checks) StartCheckTaskPools() error {
 
   // waiting the CheckObjects results
   go func(){
-    // env.Output.WriteChDebug("(Checks::StartCheckTaskPools) waiting for tasks "+strconv.Itoa(len(c.GetCheck()))+" to be finished")
-    log.Debug("(Checks::StartCheckTaskPools) waiting for tasks "+strconv.Itoa(len(c.GetCheck()))+" to be finished")
+    c.config.Log.Debug("(Checks::StartCheckTaskPools) waiting for tasks "+strconv.Itoa(len(c.GetCheck()))+" to be finished")
     for i:= 0; i<len(c.GetCheck()); i++{
       select{
       case checksample := <-sampleChan:
-        // env.Output.WriteChDebug("(Checks::StartCheckTaskPools)["+strconv.Itoa(int(checksample.GetTimestamp()))+"] End of task has been notified for '"+checksample.GetCheck()+"'")
-        log.Debug("(Checks::StartCheckTaskPools)["+strconv.Itoa(int(checksample.GetTimestamp()))+"] End of task has been notified for '"+checksample.GetCheck()+"'")
+        c.config.Log.Debug("(Checks::StartCheckTaskPools)["+strconv.Itoa(int(checksample.GetTimestamp()))+"] End of task has been notified for '"+checksample.GetCheck()+"'")
         //
         // The samples will be send from the command invocation
         //
         // checkEngine := env.GetCheckEngine().(*CheckEngine)
         // checkEngine.sendSample(checksample)
       case err := <-errChan:
-        // env.Output.WriteChDebug(err)
-        log.Error(err)
+        c.config.Log.Error(err)
       }
     }
     doneChan <- true
@@ -185,8 +187,7 @@ func (c *Checks) StartCheckTaskPools() error {
 //# InitCheckTasks: is going to initialize a task for each check and its dependencies.
 //# The task enqueu the check to be executed. All its dependencies have to be executed before it to be enqueued
 func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]interface{}) (error, *sample.CheckSample) {
-  // env.Output.WriteChDebug("(Checks::InitCheckTasks) Initializing the tasks for check '"+checkObj.GetName()+"'")
-  log.Debug("(Checks::InitCheckTasks) Initializing the tasks for check '"+checkObj.GetName()+"'")
+  c.config.Log.Debug("(Checks::InitCheckTasks) Initializing the tasks for check '"+checkObj.GetName()+"'")
   var err error
   exitStatus := -1
   checkengine := env.GetCheckEngine().(*CheckEngine)
@@ -205,9 +206,8 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
   if len(checkObj.GetDepend()) > 0 {
     //
     // recursive condition: A dependency is found
-    //
-    // env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has dependencies")
-    log.Debug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has dependencies")
+
+    c.config.Log.Debug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' has dependencies")
     // Add to the runGraphList all CheckObjects to be run before the current object
     // If the object has already exist into the runGraphList then exist a cycle dependency.
     // The current object couldn't exist to it's dependency graph
@@ -216,14 +216,12 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
         // validate that the check doesn't already exist into list
         if _,exist := rgl[dep]; exist {
           // if it exist an error is launch for this execution branch
-          //env.Output.WriteChError(append([]interface{}{"(Checks::InitCheckTasks) ",dep,checkObj.GetName()},rgl))
-          log.Error(append([]interface{}{"(Checks::InitCheckTasks) ",dep,checkObj.GetName()},rgl))
+          c.config.Log.Error(append([]interface{}{"(Checks::InitCheckTasks) ",dep,checkObj.GetName()},rgl))
           jumpDueErrChan <- errors.New("(Checks::InitCheckTasks) Your defined check has a cycle dependency for '"+dep+"'. Detected while running '"+checkObj.GetName()+"'.")
         } else {
           // get a CheckObject by its name
           if err,obj := checkengine.GetCheckObjectByName(dep); err == nil {
-            // env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' depends to '"+dep+"'")
-            log.Debug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' depends to '"+dep+"'")
+            c.config.Log.Debug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' depends to '"+dep+"'")
             // the current check must be marked into runGraphList
             rgl[d] = nil
             if err, sampleDedend := c.InitCheckTasks(obj, rgl); err != nil {
@@ -246,12 +244,10 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
       for i:=0; i < len(checkObj.GetDepend());i++{
         select{
           case err = <- errChan:
-            // env.Output.WriteChError(err)
-            log.Error(err)
+            c.config.Log.Error(err)
             exitStatus = 4
           case err = <-jumpDueErrChan:
-            // env.Output.WriteChError(err)
-            log.Error(err)
+            c.config.Log.Error(err)
             exitStatus = 4
           case s := <-sampleChan:
             //Exit codes
@@ -274,8 +270,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
 
     // once all dependent checks have been executed the current object is executed
     if exitStatus != 2 {
-      // env.Output.WriteChDebug("(Checks::InitCheckTasks) The '"+checkObj.GetName()+"''s dependencies has been already executed")
-      log.Debug("(Checks::InitCheckTasks) The '"+checkObj.GetName()+"''s dependencies has been already executed")
+      c.config.Log.Debug("(Checks::InitCheckTasks) The '"+checkObj.GetName()+"''s dependencies has been already executed")
       // delete the check to runGraphList
       delete(runGraphList,checkObj.GetName())
       // queue the object to be run
@@ -283,17 +278,14 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
       // Once the task are queued and executed the result is sent using the CheckObject's SampleChan
       checksample = <-checkObj.SampleChan
       exitStatus = checksample.GetExit()
-      // env.Output.WriteChDebug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
-      log.Debug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
+      c.config.Log.Debug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
     }else{
       outputMessage := "Wrong status for '"+checkObj.GetName()+"' because it depends to another check with "+sample.Itoa(exitStatus)+" status"
-      // env.Output.WriteChWarn("(Checks::InitCheckTasks) "+outputMessage)
-      log.Warn("(Checks::InitCheckTasks) "+outputMessage)
+      c.config.Log.Warn("(Checks::InitCheckTasks) "+outputMessage)
       _,checksample = checkObj.GenerateCheckSample(-1,outputMessage,time.Duration(0)*time.Second, time.Duration(0)*time.Second, checkObj.GetTimestamp())
 
       go func() {
-        // env.Output.WriteChWarn("(Checks::InitCheckTasks) Countdown for '"+checkObj.GetName()+"'")
-        log.Warn("(Checks::InitCheckTasks) Countdown for '"+checkObj.GetName()+"'")
+        c.config.Log.Warn("(Checks::InitCheckTasks) Countdown for '"+checkObj.GetName()+"'")
         timeout := time.After(time.Duration(checkObj.GetInterval()) * time.Second)
         for{
           select{
@@ -306,9 +298,8 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
   }else{
     //
     // recursive ending condition: No dependency is found
-    //
-    // env.Output.WriteChDebug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' hasn't dependencies")
-    log.Debug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' hasn't dependencies")
+
+    c.config.Log.Debug("(Checks::InitCheckTasks) The check '"+checkObj.GetName()+"' hasn't dependencies")
     // delete the check to runGraphList
     delete(runGraphList,checkObj.GetName())
     // queue the object to be run
@@ -316,8 +307,7 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
     // Once the task are queued and executed the result is sent using the CheckObject's SampleChan
     checksample = <-checkObj.SampleChan
     exitStatus = checksample.GetExit()
-    // env.Output.WriteChDebug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
-    log.Debug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
+    c.config.Log.Debug("(Checks::InitCheckTasks) Received a check status for '"+checkObj.GetName()+"': '"+strconv.Itoa(exitStatus)+"'")
   }
 
   return nil, checksample
@@ -327,13 +317,11 @@ func (c *Checks) InitCheckTasks(checkObj *CheckObject, runGraphList map[string]i
 //  The method requieres a file path.
 //  The method returns a pointer to Checks object
 func UnmarshalCheck(file string) *Checks {
-  // env.Output.WriteChDebug("(Checks::UnmarshalCheck)")
-  log.Debug("(Checks::UnmarshalCheck)")
+  c.config.Log.Debug("(Checks::UnmarshalCheck)")
   c := new(Checks)
   // extract the content from the file and dumps it on the CHecks object
   if err := utils.LoadJSONFile(file, c); err != nil {
-    // env.Output.WriteChError("(Checks::UnmarshalCheck) The input file '"+file+"' has an invalid json structure")
-    log.Error("(Checks::UnmarshalCheck) The input file '"+file+"' has an invalid json structure")
+    c.config.Log.Error("(Checks::UnmarshalCheck) The input file '"+file+"' has an invalid json structure")
   }
 
   return c
@@ -356,7 +344,7 @@ func RetrieveChecks(folder string) *Checks{
   retrieveChecksFromFile := func(f os.FileInfo) {
     checkFile := folder+string(os.PathSeparator)+f.Name()
     // env.Output.WriteChDebug("(Checks::RetrieveChecks) File found: "+checkFile)
-    log.Debug("(Checks::RetrieveChecks) File found: "+checkFile)
+c.config.Log.Debug("(Checks::RetrieveChecks) File found: "+checkFile)
 
     c := UnmarshalCheck(checkFile)
 
@@ -376,13 +364,13 @@ func RetrieveChecks(folder string) *Checks{
 
       if checkObj.GetExpirationTime() < 0 {
         // env.Output.WriteChDebug("(Checks::RetrieveChecks) The expiration time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
-        log.Warn("(Checks::RetrieveChecks) The expiration time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
+c.config.Log.Warn("(Checks::RetrieveChecks) The expiration time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
         checkObj.SetExpirationTime(300)
       }
 
       if checkObj.GetInterval() < checkObj.GetExpirationTime() {
         // env.Output.WriteChDebug("(Checks::RetrieveChecks) The interval time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
-        log.Warn("(Checks::RetrieveChecks) The interval time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
+c.config.Log.Warn("(Checks::RetrieveChecks) The interval time for '"+checkObj.GetName()+"' has not been defined properly and will be overwritten")
         checkObj.SetInterval(checkObj.GetExpirationTime())
       }
 
@@ -415,7 +403,7 @@ func RetrieveChecks(folder string) *Checks{
         // get a CheckObject object
         case obj := <- checkObjChan:
           // env.Output.WriteChDebug("(Checks::RetrieveChecks::routine) New check to register '"+obj.GetName()+"'")
-          log.Debug("(Checks::RetrieveChecks::routine) New check to register '"+obj.GetName()+"'")
+c.config.Log.Debug("(Checks::RetrieveChecks::routine) New check to register '"+obj.GetName()+"'")
           if _,exist := checks[obj.GetName()]; !exist{
             checks[obj.GetName()] = obj
           }
