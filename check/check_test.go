@@ -80,12 +80,11 @@ func TestValidateCheck(t *testing.T) {
 
 // test ExecuteCommand
 func TestExecuteCommand(t *testing.T) {
-  NewCheckEngine("")
-  t.Log(logger)
 
   tests := []struct{
       desc string
       c *Check
+      r *Result
       err error
   }{
     {
@@ -100,17 +99,46 @@ func TestExecuteCommand(t *testing.T) {
         Interval: 0,
         Timestamp: int64(0),
       },
+      r: &Result{
+        Check: "",
+        Command: "",
+        Output: "verdmell",
+        ExitCode: 0,
+      },
+    },
+    {
+      desc: "Testing unexisting command",
+      err: errors.New("(Check::ExecuteCommand) Error during 'test_check' command execution."),
+      c: &Check{
+        Name: "test_check",
+        Description: "testing echo",
+        Command: "unexistent",
+        Depend: []string{},
+        ExpirationTime: 0,
+        Interval: 0,
+        Timestamp: int64(0),
+      },
+      r: &Result{
+        Check: "",
+        Command: "",
+        Output: "",
+        ExitCode: 0,
+      },
     },
   }
 
   for _, test := range tests {
 		t.Log(test.desc)
-    t.Log(test.c)
 
-		r,_ := test.c.ExecuteCommand()
-    t.Log(r)
-		// if err != nil && assert.Error(t, err) {
-		// 	assert.Equal(t, test.err, err)
-		// }
+		res, err := test.c.ExecuteCommand()
+    t.Log(res, test.r.Output)
+
+    if err != nil && test.r.Output != "" {
+      assert.Equal(t, test.r.Output, res.Output, "Output is not equal.")
+    }
+
+    if err != nil && assert.Error(t, err) {
+		 	assert.Equal(t, test.err, err)
+		}
 	}
 }
