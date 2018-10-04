@@ -21,6 +21,9 @@ import (
   "verdmell/utils"
 )
 
+// default Timeout
+const TIMEOUT int = 60
+
 // Check stuct:
 // Check defines a check to be executed
 type Check struct{
@@ -31,6 +34,7 @@ type Check struct{
   ExpirationTime int `json:"expiration_time"`
   Interval int `json:"interval"`
   Custom interface{} `json:"-"`
+  Timeout int `json:"timeout"`
   // Timestamp
   Timestamp int64 `json:"timestamp"`
   //Queues
@@ -65,8 +69,14 @@ func (c *Check) ValidateCheck() error {
     err := errors.New("(Check::ValidateCheck) Check '"+c.Name+"' has an invalid expiration time")
     return err
   }
+
   if c.Interval < 0 {
-    err := errors.New("(Check::ValidateCheck) Check '"+c.Name+"' has an invalid interval")
+    err := errors.New("(Check::ValidateCheck) Check '"+c.Name+"' has an invalid interval. Interval is lower than 0")
+    return err
+  }
+
+  if c.Interval < c.Timeout {
+    err := errors.New("(Check::ValidateCheck) Check '"+c.Name+"' has an invalid interval. Timeout should not be greater than interval")
     return err
   }
 
@@ -76,52 +86,60 @@ func (c *Check) ValidateCheck() error {
 //
 // ExecuteCommand: executes the command defined on check an return the result
 func (c *Check) ExecuteCommand() (*Result, error) {
-  if c == nil {
-    return nil, errors.New("(Check::ExecuteCommand) Could not been executed a nil check command")
-  }
 
+  var elapsedTime time.Duration
+  cmdDone := make(chan error)
+  exitCode := -1
+  output := ""
   //Exit codes
   // OK: 0
   // WARN: 1
   // ERROR: 2
   // UNKNOWN: other (-1)
   cmdSplitted := strings.SplitN(c.Command," ",2)
-  timeInit := time.Now()
+
   args := []string{}
   if len(cmdSplitted) > 1 {
     args = strings.Split(cmdSplitted[1]," ")
   }
-  cmdOutput, err := exec.Command(cmdSplitted[0], args...).Output()
-  elapsedTime := time.Since(timeInit)
+  cmd := exec.Command(cmdSplitted[0], args...)
+  timeInit := time.Now()
+  cmd.Start()
 
-  // When the exec has exit code, these code is achived. If is not possible to achive it, then is set to '-1', the unknown code.
-  if err != nil {
-    return nil, errors.New("(Check::ExecuteCommand) Error during '"+c.Name+"' command execution.")
-  }
+  go func() { cmdDone <- cmd.Wait() }()
 
-  // achive exit status code
-  exitCode := -1
-  if exiterr, ok := err.(*exec.ExitError); ok {
-    if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-      exitCode = status.ExitStatus()
-      if exitCode > 2 || exitCode < 0 {
+  select {
+  case err := <-cmdDone:
+    elapsedTime = time.Since(timeInit)
+
+    // achive exit status code
+    if exiterr, ok := err.(*exec.ExitError); ok {
+      if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+        exitCode = status.ExitStatus()
+        if exitCode > 2 || exitCode < 0 {
+          exitCode = -1
+        }
+      } else {
         exitCode = -1
       }
-    } else {
-      exitCode = -1
     }
-  }
+    // Get command's stdout message
+    stdout,_ := cmd.Output()
+    if len(stdout) > 0 {
+      output = string(stdout[:len(stdout)-1])
+    }
 
-  // Get command's stdout message
-  stdout := ""
-  if len(cmdOutput) > 0 {
-    stdout = string(cmdOutput[:len(cmdOutput)-1])
+  case <-time.After(time.Duration(c.Timeout) * time.Second):
+      // timed out
+      elapsedTime = time.Since(timeInit)
+      output = "The command has not finished after "+strconv.Itoa(c.Timeout)+" seconds"
+      cmd.Process.Kill()
   }
 
   return &Result{
     Check: c.Name,
     Command: c.Command,
-    Output: stdout,
+    Output: output,
     ExitCode: exitCode,
     InitTime: timeInit,
     ElapsedTime: elapsedTime,
