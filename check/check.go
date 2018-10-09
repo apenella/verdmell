@@ -11,6 +11,7 @@ The package 'check' is used by verdmell to manage the monitoring checks defined 
 package check
 
 import (
+  "bytes"
   "os/exec"
   "syscall"
   "errors"
@@ -91,18 +92,17 @@ func (c *Check) ExecuteCommand() (*Result, error) {
   cmdDone := make(chan error)
   exitCode := -1
   output := ""
-  //Exit codes
-  // OK: 0
-  // WARN: 1
-  // ERROR: 2
-  // UNKNOWN: other (-1)
+  var stdout bytes.Buffer
+
   cmdSplitted := strings.SplitN(c.Command," ",2)
 
   args := []string{}
   if len(cmdSplitted) > 1 {
     args = strings.Split(cmdSplitted[1]," ")
   }
+
   cmd := exec.Command(cmdSplitted[0], args...)
+  cmd.Stdout = &stdout
   timeInit := time.Now()
   cmd.Start()
 
@@ -111,31 +111,36 @@ func (c *Check) ExecuteCommand() (*Result, error) {
   select {
   case err := <-cmdDone:
     elapsedTime = time.Since(timeInit)
+    output = strings.TrimSuffix(stdout.String(), "\n")
 
-    // achive exit status code
-    if exiterr, ok := err.(*exec.ExitError); ok {
-      if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-        exitCode = status.ExitStatus()
-        if exitCode > 2 || exitCode < 0 {
+    // exit status code
+    if err == nil {
+      exitCode = 0
+    } else {
+      if exiterr, ok := err.(*exec.ExitError); ok {
+        if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+          exitCode = status.ExitStatus()
+          if exitCode > 2 || exitCode < 0 {
+            exitCode = -1
+          }
+        } else {
           exitCode = -1
         }
-      } else {
-        exitCode = -1
       }
-    }
-    // Get command's stdout message
-    stdout,_ := cmd.Output()
-    if len(stdout) > 0 {
-      output = string(stdout[:len(stdout)-1])
     }
 
   case <-time.After(time.Duration(c.Timeout) * time.Second):
-      // timed out
-      elapsedTime = time.Since(timeInit)
-      output = "The command has not finished after "+strconv.Itoa(c.Timeout)+" seconds"
-      cmd.Process.Kill()
+    // timed out
+    elapsedTime = time.Since(timeInit)
+    output = "The command has not finished after "+strconv.Itoa(c.Timeout)+" seconds"
+    cmd.Process.Kill()
   }
 
+  //Exit codes
+  // OK: 0
+  // WARN: 1
+  // ERROR: 2
+  // UNKNOWN: other (-1)
   return &Result{
     Check: c.Name,
     Command: c.Command,

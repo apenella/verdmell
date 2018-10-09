@@ -106,12 +106,12 @@ func TestExecuteCommand(t *testing.T) {
       err error
   }{
     {
-      desc: "Testing a simple echo command",
+      desc: "Testing command execution",
       err: nil,
       c: &Check{
         Name: "test_check",
-        Description: "testing echo",
-        Command: "echo \"hola\"",
+        Description: "testing a command",
+        Command: "../test/conf.d/scripts/verdmelltest.sh 0 0 Testing!",
         Depend: []string{},
         ExpirationTime: 0,
         Interval: 0,
@@ -121,8 +121,48 @@ func TestExecuteCommand(t *testing.T) {
       r: &Result{
         Check: "",
         Command: "",
-        Output: "verdmell",
+        Output: "Testing!. (exit: 0)",
         ExitCode: 0,
+      },
+    },
+    {
+      desc: "Testing timeout on command execution",
+      err: nil,
+      c: &Check{
+        Name: "test_check",
+        Description: "testing a command",
+        Command: "../test/conf.d/scripts/verdmelltest.sh 0 2 Testing!",
+        Depend: []string{},
+        ExpirationTime: 0,
+        Interval: 0,
+        Timeout: 1,
+        Timestamp: int64(0),
+      },
+      r: &Result{
+        Check: "",
+        Command: "",
+        Output: "The command has not finished after 1 seconds",
+        ExitCode: -1,
+      },
+    },
+    {
+      desc: "Testing non zero exit code",
+      err: errors.New("(Check::ExecuteCommand) Error during 'test_check' command execution."),
+      c: &Check{
+        Name: "test_check",
+        Description: "testing a command",
+        Command: "../test/conf.d/scripts/verdmelltest.sh 1 0 Testing!",
+        Depend: []string{},
+        ExpirationTime: 0,
+        Interval: 0,
+        Timeout: 60,
+        Timestamp: int64(0),
+      },
+      r: &Result{
+        Check: "",
+        Command: "",
+        Output: "Testing!. (exit: 1)",
+        ExitCode: 1,
       },
     },
     {
@@ -142,7 +182,7 @@ func TestExecuteCommand(t *testing.T) {
         Check: "",
         Command: "",
         Output: "",
-        ExitCode: 0,
+        ExitCode: -1,
       },
     },
   }
@@ -151,14 +191,12 @@ func TestExecuteCommand(t *testing.T) {
 		t.Log(test.desc)
 
 		res, err := test.c.ExecuteCommand()
-    t.Log(res, test.r.Output)
 
-    if err != nil && test.r.Output != "" {
-      assert.Equal(t, test.r.Output, res.Output, "Output is not equal.")
-    }
+    assert.Equal(t, test.r.Output, res.Output, "Unexpected output.")
+    assert.Equal(t, test.r.ExitCode, res.ExitCode, "Unexpected exit code.")
 
     if err != nil && assert.Error(t, err) {
-		 	assert.Equal(t, test.err, err)
+		 	assert.Equal(t,test.err, err)
 		}
 	}
 }
