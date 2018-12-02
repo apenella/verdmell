@@ -40,3 +40,9 @@ verdmell
 .Trashes
 ehthumbs.db
 Thumbs.db 
+
+# custom
+_*
+*.lock
+vendor/
+.vendor-new/

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+RANGE=$1
+OUTPUT=$2
+
+EXITCODE=$RANDOM
+let "EXITCODE %= RANGE"
+
+echo $OUTPUT $EXITCODE
+
+exit $EXITCODE
