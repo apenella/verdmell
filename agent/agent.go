@@ -25,6 +25,11 @@ const (
 	UNKNOWN
 )
 
+const DEFAULT_TIMEOUT int = 60
+const DEFAULT_INIT_TIMEOUT int = 60
+const DEFAULT_READY_TIMEOUT int = 60
+const DEFAULT_STOP_TIMEOUT int = 60
+
 var env *environment.Environment
 
 // Agent is the element that coordinates all components
@@ -89,7 +94,7 @@ func (a *Agent) Start() (int, error) {
 		return ERROR, err
 	}
 
-	// Set up subscriptions among all engines
+	// Initialize all engines
 	if err = a.initialize(); err != nil {
 		// stop the agent before return
 		a.Stop()
@@ -237,16 +242,16 @@ func (a *Agent) init() error {
 
 	// set initialization timeout
 	if a.InitTimeout <= 0 {
-		a.InitTimeout = 60
+		a.InitTimeout = DEFAULT_INIT_TIMEOUT
 	}
 	// set ready timeout
 	if a.ReadyTimeout <= 0 {
-		a.ReadyTimeout = 60
+		a.ReadyTimeout = DEFAULT_READY_TIMEOUT
 	}
 
 	// set stop timeout
 	if a.StopTimeout <= 0 {
-		a.StopTimeout = 60
+		a.StopTimeout = DEFAULT_STOP_TIMEOUT
 	}
 
 	return nil

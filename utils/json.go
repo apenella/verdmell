@@ -6,12 +6,11 @@ import (
   "io/ioutil"
 )
 
-//# 
-//# functions for JSON
-//#--------------------------------------------------------------------
+// 
+// functions for JSON
 
 //
-//# LoadJSONFile: function to dump data from the file f to object
+// LoadJSONFile: function to dump data from the file f to object
 func LoadJSONFile(f string, object interface{}) error {
   file, err := ioutil.ReadFile(f)
 
