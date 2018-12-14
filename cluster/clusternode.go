@@ -1,7 +1,7 @@
 /*
 Cluster Engine management
 
-The package 'cluster' is used by verdmell to manage the cluster. 
+The package 'cluster' is used by verdmell to manage the cluster.
 
 => Is known as a cluster a set of nodes.
 
@@ -15,24 +15,25 @@ The package 'cluster' is used by verdmell to manage the cluster.
 package cluster
 
 import (
-  "errors"
-  "strconv"
-  "verdmell/service"
-  "verdmell/utils"
+	"errors"
+	"strconv"
+	"verdmell/service"
+	"verdmell/utils"
 )
 
 //#
 //#
 //# ClusterNode struct:
 //# ClusterNode is defined by a node name and its URL
-type ClusterNode struct{
-	Name string `json:"name"`
-	URL string	`json:"URL"`
-  Timestamp int64 `json:"timestamp"`
-  Status int `json:"status"`
-  NodeServices map[string] *service.ServiceObject `json:"services"`
-  CandidateForDetelion bool `json:"candidatefordeletion"`
+type ClusterNode struct {
+	Name                 string                            `json:"name"`
+	URL                  string                            `json:"URL"`
+	Timestamp            int64                             `json:"timestamp"`
+	Status               int                               `json:"status"`
+	NodeServices         map[string]*service.ServiceObject `json:"services"`
+	CandidateForDetelion bool                              `json:"candidatefordeletion"`
 }
+
 //
 //# NewClusterNode: return a CheckEngine instance to be run
 func NewClusterNode(name string, url string) (error, *ClusterNode) {
@@ -41,11 +42,11 @@ func NewClusterNode(name string, url string) (error, *ClusterNode) {
 
 	node.SetName(name)
 	node.SetURL(url)
-  node.SetStatus(-1)
-  node.SetTimestamp(0)
-  node.SetCandidateForDeletion(false)
+	node.SetStatus(-1)
+	node.SetTimestamp(0)
+	node.SetCandidateForDeletion(false)
 
-  node.NodeServices = make( map[string]*service.ServiceObject )
+	node.NodeServices = make(map[string]*service.ServiceObject)
 
 	return nil, node
 }
@@ -57,75 +58,87 @@ func NewClusterNode(name string, url string) (error, *ClusterNode) {
 //
 //# SetName: attribute from ClusterNode
 func (c *ClusterNode) SetName(name string) {
-  env.Output.WriteChDebug("(ClusterNode::SetName) Set value '"+name+"'")
-  c.Name = name
+	env.Output.WriteChDebug("(ClusterNode::SetName) Set value '" + name + "'")
+	c.Name = name
 }
+
 //
 //# SetURL: attribute from ClusterNode
 func (c *ClusterNode) SetURL(url string) {
-  env.Output.WriteChDebug("(ClusterNode::SetURL) Set value '"+url+"'")
-  c.URL = url
+	env.Output.WriteChDebug("(ClusterNode::SetURL) Set value '" + url + "'")
+	c.URL = url
 }
+
 //
 //# SetStatus: attribute from ClusterNode
 func (c *ClusterNode) SetStatus(status int) {
-  env.Output.WriteChDebug("(ClusterNode::SetStatus) Set value")
-  c.Status = status
+	env.Output.WriteChDebug("(ClusterNode::SetStatus) Set value")
+	c.Status = status
 }
+
 //
 //# SetTimestamp: attribute from ClusterNode
 func (c *ClusterNode) SetTimestamp(t int64) {
-  env.Output.WriteChDebug("(ClusterNode::SetTimestamp)")
-  c.Timestamp = t
+	env.Output.WriteChDebug("(ClusterNode::SetTimestamp)")
+	c.Timestamp = t
 }
+
 //
 //# SetNodeServices: attribute from ClusterNode
-func (c *ClusterNode) SetNodeServices(s map[string] *service.ServiceObject) {
-  env.Output.WriteChDebug("(ClusterNode::SetNodeServices)")
-  c.NodeServices = s
+func (c *ClusterNode) SetNodeServices(s map[string]*service.ServiceObject) {
+	env.Output.WriteChDebug("(ClusterNode::SetNodeServices)")
+	c.NodeServices = s
 }
+
 //
 //# SetCandidateForDetelion: attribute from ClusterNode
 func (c *ClusterNode) SetCandidateForDeletion(d bool) {
-  env.Output.WriteChDebug("(ClusterNode::SetCandidateForDeletion)")
-  c.CandidateForDetelion = d
+	env.Output.WriteChDebug("(ClusterNode::SetCandidateForDeletion)")
+	c.CandidateForDetelion = d
 }
+
 //
 //# GetName: attribute from ClusterNode
 func (c *ClusterNode) GetName() string {
-  env.Output.WriteChDebug("(ClusterNode::GetName) Get value '"+c.Name+"'")
-  return c.Name
+	env.Output.WriteChDebug("(ClusterNode::GetName) Get value '" + c.Name + "'")
+	return c.Name
 }
+
 //
 //# GetURL: attribute from ClusterNode
 func (c *ClusterNode) GetURL() string {
-  env.Output.WriteChDebug("(ClusterNode::GetName) Get value '"+c.URL+"'")
-  return c.URL
+	env.Output.WriteChDebug("(ClusterNode::GetName) Get value '" + c.URL + "'")
+	return c.URL
 }
+
 //
 //# GetStatus: attribute from ClusterNode
 func (c *ClusterNode) GetStatus() int {
-  env.Output.WriteChDebug("(ClusterNode::GetStatus) Get value")
-  return c.Status
+	env.Output.WriteChDebug("(ClusterNode::GetStatus) Get value")
+	return c.Status
 }
+
 //
 //# GetTimestamp: attribute from ClusterNode
 func (c *ClusterNode) GetTimestamp() int64 {
-  env.Output.WriteChDebug("(ClusterNode::GetTimestamp)")
-  return c.Timestamp
+	env.Output.WriteChDebug("(ClusterNode::GetTimestamp)")
+	return c.Timestamp
 }
+
 //
 //# GetNodeServices: attribute from ClusterNode
-func (c *ClusterNode) GetNodeServices() map[string] *service.ServiceObject {
-  env.Output.WriteChDebug("(ClusterNode::GetNodeServices)")
-  return c.NodeServices
+func (c *ClusterNode) GetNodeServices() map[string]*service.ServiceObject {
+	env.Output.WriteChDebug("(ClusterNode::GetNodeServices)")
+	return c.NodeServices
 }
+
 //
 //# SetCandidateForDetelion: attribute from ClusterNode
 func (c *ClusterNode) GetCandidateForDeletion() bool {
-  env.Output.WriteChDebug("(ClusterNode::GetCandidateForDetelion)")
-  return c.CandidateForDetelion
+	env.Output.WriteChDebug("(ClusterNode::GetCandidateForDetelion)")
+	return c.CandidateForDetelion
 }
+
 //#
 //# Specific methods
 //#---------------------------------------------------------------------
@@ -133,84 +146,86 @@ func (c *ClusterNode) GetCandidateForDeletion() bool {
 //
 //# CopyClusterNode: method copies a cluster node
 func (c *ClusterNode) CopyClusterNode() *ClusterNode {
-  env.Output.WriteChDebug("(ClusterNode::CopyClusterNode)")
-  if c == nil {
-    return nil
-  }
-  
-  node := new(ClusterNode)
-  node.SetName(c.GetName())
-  node.SetURL(c.GetURL())
-  node.SetStatus(c.GetStatus())
-  node.SetTimestamp(c.GetTimestamp())
-  node.SetCandidateForDeletion(c.GetCandidateForDeletion())
-  node.SetNodeServices(c.GetNodeServices())
+	env.Output.WriteChDebug("(ClusterNode::CopyClusterNode)")
+	if c == nil {
+		return nil
+	}
 
-  return node
+	node := new(ClusterNode)
+	node.SetName(c.GetName())
+	node.SetURL(c.GetURL())
+	node.SetStatus(c.GetStatus())
+	node.SetTimestamp(c.GetTimestamp())
+	node.SetCandidateForDeletion(c.GetCandidateForDeletion())
+	node.SetNodeServices(c.GetNodeServices())
+
+	return node
 }
+
 //
 //# HasService: method return if a service is defined on cluster node
 func (c *ClusterNode) HasService(s string) (error, *service.ServiceObject) {
-  env.Output.WriteChDebug("(ClusterNode::HasService) "+s)
+	env.Output.WriteChDebug("(ClusterNode::HasService) " + s)
 
-  if srv, exist := c.NodeServices[s]; !exist {
-    msg := "(ClusterNode::HasService) Service '"+s+"' does not exit on node "+c.GetName()
-    env.Output.WriteChDebug(msg)
-    return errors.New(msg), nil
-  } else {
-    return nil, srv    
-  }
+	if srv, exist := c.NodeServices[s]; !exist {
+		msg := "(ClusterNode::HasService) Service '" + s + "' does not exit on node " + c.GetName()
+		env.Output.WriteChDebug(msg)
+		return errors.New(msg), nil
+	} else {
+		return nil, srv
+	}
 }
+
 //
 //# AddService: method add a service to cluster node
 func (c *ClusterNode) AddService(s *service.ServiceObject) error {
-  env.Output.WriteChDebug("(ClusterNode::AddService) Add service to clusternode {node:'"+c.GetName()+"', service:'"+s.GetName()+"', service_status:"+strconv.Itoa(int(s.GetStatus()))+", service_timestamp:"+strconv.Itoa(int(s.GetTimestamp()))+"}")
-  c.NodeServices[s.GetName()] = s
-  if s.GetName() == c.GetName() {
-    c.SetStatus(s.GetStatus())
-    env.Output.WriteChDebug("(ClusterNode::AddService) Node has changed its status {node:"+c.GetName()+", status:"+strconv.Itoa(int(c.GetStatus()))+"}")
-  }
-  // if err,_ := c.HasService(s.GetName()); err != nil {
-  //   c.NodeServices[s.GetName()] = s
-  //   env.Output.WriteChDebug("(ClusterNode::AddService) Service '"+s.GetName()+"' added on node '"+c.GetName()+"'")
-  //   if s.GetName() == c.GetName() {
-  //     c.SetStatus(s.GetStatus())
-  //     env.Output.WriteChDebug("(ClusterNode::AddService) Node has changed its status {node:"+c.GetName()+", status:"+strconv.Itoa(int(c.GetStatus()))+"}")
-  //   }
-  // } else {
-  //   //return errors.New("(ClusterNode::AddService) "+err.Error())
-  //   return err
-  // }
-  return nil
+	env.Output.WriteChDebug("(ClusterNode::AddService) Add service to clusternode {node:'" + c.GetName() + "', service:'" + s.GetName() + "', service_status:" + strconv.Itoa(int(s.GetStatus())) + ", service_timestamp:" + strconv.Itoa(int(s.GetTimestamp())) + "}")
+	c.NodeServices[s.GetName()] = s
+	if s.GetName() == c.GetName() {
+		c.SetStatus(s.GetStatus())
+		env.Output.WriteChDebug("(ClusterNode::AddService) Node has changed its status {node:" + c.GetName() + ", status:" + strconv.Itoa(int(c.GetStatus())) + "}")
+	}
+	// if err,_ := c.HasService(s.GetName()); err != nil {
+	//   c.NodeServices[s.GetName()] = s
+	//   env.Output.WriteChDebug("(ClusterNode::AddService) Service '"+s.GetName()+"' added on node '"+c.GetName()+"'")
+	//   if s.GetName() == c.GetName() {
+	//     c.SetStatus(s.GetStatus())
+	//     env.Output.WriteChDebug("(ClusterNode::AddService) Node has changed its status {node:"+c.GetName()+", status:"+strconv.Itoa(int(c.GetStatus()))+"}")
+	//   }
+	// } else {
+	//   //return errors.New("(ClusterNode::AddService) "+err.Error())
+	//   return err
+	// }
+	return nil
 }
+
 //
 //# DeleteService: method deletes a service to cluster node
 func (c *ClusterNode) DeleteService(service string) error {
-  env.Output.WriteChDebug("(ClusterNode::DeleteService) Delete service '"+service+"' on node '"+c.GetName()+"'")
-  delete(c.NodeServices,service)
+	env.Output.WriteChDebug("(ClusterNode::DeleteService) Delete service '" + service + "' on node '" + c.GetName() + "'")
+	delete(c.NodeServices, service)
 
-  return nil
+	return nil
 }
+
 //
 //# IncreaseTimestamp: method increade the timestamp to cluster node
 func (c *ClusterNode) IncreaseTimestamp() error {
-  env.Output.WriteChDebug("(ClusterNode::IncreaseTimestamp) Node '"+c.GetName()+"'")
-  c.Timestamp++
-  return nil
+	env.Output.WriteChDebug("(ClusterNode::IncreaseTimestamp) Node '" + c.GetName() + "'")
+	c.Timestamp++
+	return nil
 }
-
-//#
-//# Common methods
-//#---------------------------------------------------------------------
 
 //
-//# string: convert a ClusterService object to string
+// String method convert a ClusterNode object to string
 func (c *ClusterNode) String() string {
-  if err, str := utils.ObjectToJsonString(c); err != nil{
-    return err.Error()
-  } else{
-    return str
-  }
-}
+	var str string
+	var err error
 
-//#######################################################################################################
+	str, err = utils.ObjectToJSONString(c)
+	if err != nil {
+		return err.Error()
+	}
+
+	return str
+}

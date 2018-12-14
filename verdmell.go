@@ -8,21 +8,21 @@ package main
 import (
 	"os"
 
-	"verdmell/command"
 	"github.com/apenella/messageOutput"
 	"github.com/mitchellh/cli"
+	"verdmell/command"
 )
 
 // Commands is the mapping of all the available Verdmell commands.
 var Commands map[string]cli.CommandFactory
 
 func init() {
-	Commands = map[string]cli.CommandFactory {
+	Commands = map[string]cli.CommandFactory{
 		"exec": func() (cli.Command, error) {
-			return &command.ExecCommand {}, nil
+			return &command.ExecCommand{}, nil
 		},
 		"healthcheck": func() (cli.Command, error) {
-			return &command.HealthCheckCommand {}, nil
+			return &command.HealthCheckCommand{}, nil
 		},
 		/*
 			TODO
@@ -100,9 +100,9 @@ func main() {
 	args := os.Args[1:]
 
 	c := &cli.CLI{
-		Args: args,
+		Args:     args,
 		Commands: Commands,
-		Version: "2.0.0",
+		Version:  "2.0.0",
 		HelpFunc: cli.FilteredHelpFunc(included, cli.BasicHelpFunc("verdmell")),
 	}
 

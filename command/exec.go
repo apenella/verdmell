@@ -6,20 +6,23 @@ import (
 	"verdmell/agent"
 	"verdmell/check"
 	"verdmell/client"
+	"verdmell/context"
 	"verdmell/engine"
 	"verdmell/utils"
 )
 
-//	ExecCommand
+// ExecCommand
 type ExecCommand struct{}
 
-//	Run
+// Run starts the agent and set the context and the engines
 func (c *ExecCommand) Run(args []string) int {
-	flags := flag.NewFlagSet("exec",flag.ContinueOnError)
-	flags.Usage = func() {c.Help()}
+	flags := flag.NewFlagSet("exec", flag.ContinueOnError)
+	flags.Usage = func() { c.Help() }
 
 	// Data structure to set the engines required by agent
 	e := make(map[uint]engine.Engine)
+
+	ctx := &context.Context{}
 
 	// Create check an empty check engine
 	ch := &check.CheckEngine{}
@@ -33,21 +36,23 @@ func (c *ExecCommand) Run(args []string) int {
 	ce := &client.ClientExec{
 		Engine: ch,
 	}
+
+	flags.IntVar(&ctx.Loglevel, "loglevel", 0, "Loglevel definition [0: INFO | 1: WARN | 2: ERROR | 3: DEBUG]")
+	flags.StringVar(&ctx.Configfile, "configfile", "", "Configuration file")
+	flags.StringVar(&ctx.Configdir, "configdir", "", "Folder where configuration is placed")
+	flags.Var(&ce.Checks, "check", "Checks to execute")
+
+	cl.Worker = ce
+
 	// Create an agent
 	a := &agent.Agent{
+		Ctx:     ctx,
 		Engines: e,
-		RunOrder: []uint {
+		RunOrder: []uint{
 			engine.CHECK,
 			engine.CLIENT,
 		},
 	}
-
-	flags.IntVar(&a.Loglevel, "loglevel", 0, "Loglevel definition [0: INFO | 1: WARN | 2: ERROR | 3: DEBUG]")
-	flags.StringVar(&a.Configfile,"configfile","","Configuration file")
-	flags.StringVar(&a.Configdir,"configdir","","Folder where configuration is placed")
-	flags.Var(&ce.Checks,"check","Checks to execute")
-
-	cl.Worker = ce
 
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -71,16 +76,16 @@ func (c *ExecCommand) Synopsis() string {
 	return "Execute checks on isolated mode"
 }
 
-
-
 //
-// Common methods
-
 // String method transform the ExecCommand to string
 func (c *ExecCommand) String() string {
-	if err, str := utils.ObjectToJsonString(c); err != nil{
+	var str string
+	var err error
+
+	str, err = utils.ObjectToJSONString(c)
+	if err != nil {
 		return err.Error()
-	} else{
-		return str
 	}
+
+	return str
 }

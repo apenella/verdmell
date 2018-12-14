@@ -451,11 +451,13 @@ func (c *Checks) ValidateChecks(i interface{}) error {
 
 //# String: convert a Checks object to string
 func (c *Checks) String() string {
-	if err, str := utils.ObjectToJsonString(c); err != nil {
-		return err.Error()
-	} else {
-		return str
-	}
-}
+	var str string
+	var err error
 
-//#######################################################################################################
+	str, err = utils.ObjectToJSONString(c)
+	if err != nil {
+		return err.Error()
+	}
+
+	return str
+}

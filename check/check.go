@@ -149,13 +149,18 @@ func (c *Check) ExecuteCommand() (*Result, error) {
 
 }
 
-// String: converts a Check object to string
+//
+// String method converts a Check to a string
 func (c *Check) String() string {
-	if err, str := utils.ObjectToJsonString(c); err != nil {
+	var str string
+	var err error
+
+	str, err = utils.ObjectToJSONString(c)
+	if err != nil {
 		return err.Error()
-	} else {
-		return str
 	}
+
+	return str
 }
 
 //---------TODEL----------------------------------------------------------------

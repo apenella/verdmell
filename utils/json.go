@@ -1,49 +1,57 @@
 package utils
 
 import (
-  "errors"
-  "encoding/json"
-  "io/ioutil"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
 )
 
-// 
+//
 // functions for JSON
 
 //
-// LoadJSONFile: function to dump data from the file f to object
+// LoadJSONFile method dumps data from the file f to object
 func LoadJSONFile(f string, object interface{}) error {
-  file, err := ioutil.ReadFile(f)
+	file, err := ioutil.ReadFile(f)
 
-  if err != nil {
-    return errors.New("(utils::loadJSONFile) Error on loading file '"+f+"' "+err.Error())
-  }
+	if err != nil {
+		return errors.New("(utils::loadJSONFile) Error on loading file '" + f + "' " + err.Error())
+	}
 
-  return json.Unmarshal(file, object)
+	return json.Unmarshal(file, object)
 }
 
 //
-//# ObjectToJsonString: converst any object to a json string
-func ObjectToJsonString(object interface{}) (error, string) {
-  if jsoned, err := json.Marshal(object); err != nil{
-    return err, err.Error() 
-  }else{
-    return nil, string(jsoned)
-  }
-}
-//
-//# ObjectToJsonString: converst any object to a json string
-func ObjectToJsonStringPretty(object interface{}) (error,string) {
-  if jsoned, err := json.MarshalIndent(object,"","	"); err != nil{
-    return err,err.Error() 
-  }else{
-    return nil,string(jsoned)
-  }
-}
-//
-//# ObjectToJsonByte: converst any object to a json byte
-func ObjectToJsonByte(object interface{}) (error, []byte) {
-  jsoned, _ := json.Marshal(object)
-  return nil, jsoned
+// ObjectToJSONString converts any object to a json string
+func ObjectToJSONString(object interface{}) (string, error) {
+	var jsoned []byte
+	var err error
+
+	jsoned, err = json.Marshal(object)
+	if err != nil {
+		return err.Error(), err
+	}
+
+	return string(jsoned), nil
 }
 
-//#######################################################################################################
+//
+// ObjectToJSONStringPretty converts any object to a json string with a pretty format
+func ObjectToJSONStringPretty(object interface{}) (string, error) {
+	var jsoned []byte
+	var err error
+
+	jsoned, err = json.MarshalIndent(object, "", "	")
+	if err != nil {
+		return err.Error(), err
+	}
+
+	return string(jsoned), nil
+
+}
+
+//
+// ObjectToJSONByte converts any object to a json byte
+func ObjectToJSONByte(object interface{}) ([]byte, error) {
+	return json.Marshal(object)
+}

@@ -55,14 +55,21 @@ func NewCheckEngine() *CheckEngine {
 //
 // Interface Engine requirements
 
-// Init
+// Init prepares CheckEngine to be run
 func (eng *CheckEngine) Init() error {
 	var err error
-	var cks *Checks
 
 	// initialize logger.Er
 	if logger == nil {
 		logger = message.New(message.INFO, nil, 0)
+	}
+
+	if eng.Checks == nil {
+		eng.Checks = make(map[string]*Check)
+	}
+
+	if eng.subscriptions == nil {
+		eng.subscriptions = make(map[chan interface{}]string)
 	}
 
 	if eng.checksFolder != "" {
@@ -70,16 +77,14 @@ func (eng *CheckEngine) Init() error {
 		if err = eng.LoadChecks(""); err != nil {
 			return errors.New("(CheckEngine::Init) " + err.Error())
 		}
-		// validate checks and set the checks into check system
-		if err = cks.ValidateChecks(nil); err != nil {
-			return errors.New("(CheckEngine::Init) " + err.Error())
-		}
+	} else {
+		logger.Warn("(CheckEngine::Init) CheckEngine is initialized without checks.")
 	}
 
 	return nil
 }
 
-// Run
+// Run starts doing the Engine work
 func (eng *CheckEngine) Run() error {
 	return nil
 }
@@ -396,15 +401,13 @@ func (eng *CheckEngine) GetCheckObjectByName(checkname string) (*Check, error) {
 // }
 
 //
-// Common methods
-
-//
 // String: convert a Checks object to string
 func (eng *CheckEngine) String() string {
 	var err error
 	var str string
 
-	if err, str = utils.ObjectToJsonString(eng); err != nil {
+	str, err = utils.ObjectToJSONString(eng)
+	if err != nil {
 		return err.Error()
 	}
 
