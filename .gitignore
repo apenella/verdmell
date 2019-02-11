@@ -1,8 +1,7 @@
 # verdmell	#
 #################
 verdmell
-context/
-
+workspace.code-workspace
 
 # Compiled source #
 ###################

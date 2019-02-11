@@ -1,20 +1,23 @@
 package client
 
 import (
-	"fmt"
-
 	"verdmell/check"
+	"verdmell/context"
 	"verdmell/utils"
 )
 
 // ClientExec struct
-type ClientExec struct {
-	Checks utils.StringList   `json: "checks"`
+type Exec struct {
+	// Checks
+	Checks utils.StringList `json: "checks"`
+	// Engine
 	Engine *check.CheckEngine `json: "engine"`
+	// Context contains information about the runtime state
+	Context *context.Context `json: "-"`
 }
 
-// Run
-func (c *ClientExec) Run() error {
+// Run does the client tasks
+func (c *Exec) Run() error {
 	// if len(c.Checks) == 0 {
 	// 	chk := c.Engine.GetChecks()
 	// 	for name,_ := range chk.GetCheck() {
@@ -22,6 +25,9 @@ func (c *ClientExec) Run() error {
 	// 	}
 	// }
 
-	fmt.Println(len(c.Checks), c.Checks)
+	c.Engine.Start()
+	c.Context.Logger.Info(c.Checks)
+	//c.Engine.Stop()
 	return nil
+
 }

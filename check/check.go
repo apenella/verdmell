@@ -1,28 +1,15 @@
 /*
-Check Engine management
-
-The package 'check' is used by verdmell to manage the monitoring checks defined by user
-
--Checks
--Check
--Check
-
+Package check is used by verdmell to manage the monitoring checks defined by user
 */
 package check
 
 import (
-	"bytes"
 	"errors"
-	"os/exec"
-	"strconv"
-	"strings"
-	"syscall"
-	"time"
 	"verdmell/sample"
 	"verdmell/utils"
 )
 
-// Check stuct:
+// Check stuct
 // Check defines a check to be executed
 type Check struct {
 	Name           string      `json:"name"`
@@ -41,19 +28,8 @@ type Check struct {
 	SampleChan chan *sample.CheckSample `json:"-"`
 }
 
-// Result stuct:
-// It defines the command execution result
-type Result struct {
-	Check       string
-	Command     string
-	Output      string
-	ExitCode    int
-	InitTime    time.Time
-	ElapsedTime time.Duration
-}
-
 //
-// ValidateCheck: ensures that the Check has all the required data set. The method returns an error object once a definition method is found
+// ValidateCheck ensures that the Check has all the required data set. The method returns an error object once a definition method is found
 func (c *Check) ValidateCheck() error {
 	if c.Name == "" {
 		return errors.New("(Check::ValidateCheck) Check requires a Name")
@@ -79,74 +55,6 @@ func (c *Check) ValidateCheck() error {
 	}
 
 	return nil
-}
-
-//
-// ExecuteCommand: executes the command defined on check an return the result
-func (c *Check) ExecuteCommand() (*Result, error) {
-
-	var elapsedTime time.Duration
-	cmdDone := make(chan error)
-	exitCode := -1
-	output := ""
-	var stdout bytes.Buffer
-
-	cmdSplitted := strings.SplitN(c.Command, " ", 2)
-
-	args := []string{}
-	if len(cmdSplitted) > 1 {
-		args = strings.Split(cmdSplitted[1], " ")
-	}
-
-	cmd := exec.Command(cmdSplitted[0], args...)
-	cmd.Stdout = &stdout
-	timeInit := time.Now()
-	cmd.Start()
-
-	go func() { cmdDone <- cmd.Wait() }()
-
-	select {
-	case err := <-cmdDone:
-		elapsedTime = time.Since(timeInit)
-		output = strings.TrimSuffix(stdout.String(), "\n")
-
-		// exit status code
-		if err == nil {
-			exitCode = 0
-		} else {
-			if exiterr, ok := err.(*exec.ExitError); ok {
-				if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-					exitCode = status.ExitStatus()
-					if exitCode > 2 || exitCode < 0 {
-						exitCode = -1
-					}
-				} else {
-					exitCode = -1
-				}
-			}
-		}
-
-	case <-time.After(time.Duration(c.Timeout) * time.Second):
-		// timed out
-		elapsedTime = time.Since(timeInit)
-		output = "The command has not finished after " + strconv.Itoa(c.Timeout) + " seconds"
-		cmd.Process.Kill()
-	}
-
-	//Exit codes
-	// OK: 0
-	// WARN: 1
-	// ERROR: 2
-	// UNKNOWN: other (-1)
-	return &Result{
-		Check:       c.Name,
-		Command:     c.Command,
-		Output:      output,
-		ExitCode:    exitCode,
-		InitTime:    timeInit,
-		ElapsedTime: elapsedTime,
-	}, nil
-
 }
 
 //

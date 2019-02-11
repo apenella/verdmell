@@ -6,15 +6,14 @@ package agent
 import (
 	"errors"
 	"fmt"
-	//	"log"
-	//	"os"
+	"log"
+	"os"
 	"strconv"
 	"time"
 
 	"verdmell/configuration"
 	"verdmell/context"
 	"verdmell/engine"
-	"verdmell/environment"
 	"verdmell/utils"
 
 	"github.com/apenella/messageOutput"
@@ -40,12 +39,10 @@ const (
 	DEFAULT_STOP_TIMEOUT int = 60
 )
 
-var env *environment.Environment
-
 // Agent is the element that coordinates all components
 type Agent struct {
 	// context
-	Ctx *context.Context
+	Context *context.Context
 
 	// loglevel for agent
 	Loglevel int `json:"loglevel"`
@@ -58,7 +55,8 @@ type Agent struct {
 	Engines      map[uint]engine.Engine `json:"engines"`
 	EngineStatus map[uint]uint
 
-	// Is the engines order to be run, decided by user
+	// Is the order on which engines will start
+	// This is decideb by user
 	RunOrder []uint
 	// contains the order which the engines will run
 	RunVector []uint `json:"runvector"`
@@ -87,40 +85,50 @@ type Agent struct {
 // Start method initialize the agent and the engines, make them run and work together
 func (a *Agent) Start() (int, error) {
 	var err error
+	a.Context.Logger.Debug("(Agent::Start)")
 
 	// initialize agent
 	err = a.init()
 	if err != nil {
-		env.Output.WriteChError("(Agent::Start)", err)
+		a.Context.Logger.Error("(Agent::Start)", err)
 		return ERROR, err
 	}
+	a.Context.Logger.Debug("(Agent::Start) Agent initialized")
 
 	// validate whether there is a dependency loop on engines
-	if err = a.validateGraphEngine(); err != nil {
-		env.Output.WriteChError("(Agent::Start)", err)
+	err = a.validateGraphEngine()
+	if err != nil {
+		a.Context.Logger.Error("(Agent::Start)", err)
 		return ERROR, err
 	}
+	a.Context.Logger.Debug("(Agent::Start) Graph of engines validated")
 
 	// Initialize all engines
-	if err = a.initialize(); err != nil {
+	err = a.initializeEngines()
+	if err != nil {
 		// stop the agent before return
 		a.Stop()
 		return ERROR, err
 	}
+	a.Context.Logger.Debug("(Agent::Start) Engines initialized")
 
 	// Set up subscriptions among all engines
-	if err = a.setEnginesSubscriptions(); err != nil {
+	err = a.setEnginesSubscriptions()
+	if err != nil {
 		// stop the agent before return
 		a.Stop()
 		return ERROR, err
 	}
+	a.Context.Logger.Debug("(Agent::Start) Engine subscriptions already set")
 
 	// Run engines
-	if err = a.run(); err != nil {
+	err = a.runEngines()
+	if err != nil {
 		// stop the agent before return
 		a.Stop()
 		return ERROR, err
 	}
+	a.Context.Logger.Debug("(Agent::Start) Engines running and ready to start working")
 
 	return OK, nil
 }
@@ -128,17 +136,18 @@ func (a *Agent) Start() (int, error) {
 // Stop method coordinates a graceful engines stop
 func (a *Agent) Stop() int {
 	var err error
+	a.Context.Logger.Debug("(Agent::Stop)")
 
 	// Initialize Engines
 	for id, e := range a.Engines {
 		e.SetStatus(engine.STOPPING)
-
+		a.Context.Logger.Debug("(Agent::Stop) Stopping engine with id: " + strconv.Itoa(int(id)))
 		// initialize current engine
 		go func(id uint, e engine.Engine) {
 			err := e.Stop()
 			// write on error init channel whether there is an error on Init
 			if err != nil {
-				env.Output.WriteChInfo("(Agent::Stop)", err)
+				a.Context.Logger.Info("(Agent::Stop)", err)
 				a.stopErrCh <- err
 			}
 			// write engine id on init channel to notify that engine is already initialized
@@ -154,16 +163,16 @@ func (a *Agent) Stop() int {
 		case id := <-a.stopCh:
 			e := a.Engines[id]
 			e.SetStatus(engine.STOPPED)
-
+			a.Context.Logger.Debug("(Agent::Stop) Stopped engine with id: " + strconv.Itoa(int(id)))
 		// wait to receive an error
 		case err = <-a.stopErrCh:
-			env.Output.WriteChError("(Agent::Stop)", err)
+			a.Context.Logger.Error("(Agent::Stop)", err)
 
 		// define new error when timeout is reached an not all engines are initialized
 		case <-timeout:
 			msg := "(Agent::Stop) Not all engines have been stopped after " + strconv.Itoa(int(a.StopTimeout)) + " seconds."
 			err = errors.New(msg)
-			env.Output.WriteChError(err)
+			a.Context.Logger.Error(err)
 		}
 	}
 
@@ -185,7 +194,7 @@ func (a *Agent) Stop() int {
 
 // Status returns the engines status
 func (a *Agent) Status() int {
-
+	a.Context.Logger.Debug("(Agent::Status)")
 	lines := []string{
 		"ENGINE |  STATUS",
 		//"------ | ------",
@@ -221,28 +230,28 @@ func (a *Agent) String() string {
 // init method initialize data structures required to agent to be run
 func (a *Agent) init() error {
 
-	// initialize environment
-	env = &environment.Environment{
-		Output: message.GetInstance(a.Loglevel),
+	if a.Context.Logger == nil {
+		a.Context.Logger = message.New(a.Context.Loglevel, os.Stderr, log.LstdFlags)
 	}
-	//a.Ctx.Logger = message.New(a.Ctx.Loglevel, os.Stderr, log.LstdFlags)
 
 	// generate a configuration
-	configuration, err := configuration.NewConfiguration(a.Ctx.Configfile, a.Ctx.Configdir)
+	configuration, err := configuration.NewConfiguration(a.Context.Configfile, a.Context.Configdir)
 	if err != nil {
 		msg := "(Agent::init) " + err.Error()
-		a.Ctx.Logger.Error(msg)
+		a.Context.Logger.Error(msg)
 		return errors.New(msg)
 	}
-	a.Ctx.Host = configuration.IP
-	a.Ctx.Port = configuration.Port
-	a.Ctx.Cluster = configuration.Cluster
+	a.Context.Host = configuration.IP
+	a.Context.Port = configuration.Port
+	a.Context.Cluster = configuration.Cluster
 
 	// initialize engine status data structure
 	a.EngineStatus = make(map[uint]uint)
 
-	// initialize run order structure
-	a.RunOrder = []uint{}
+	// initialize run order structure when ist not already defined
+	if len(a.RunOrder) == 0 {
+		a.RunOrder = []uint{}
+	}
 
 	// initialize channel to receive just initialited engines id
 	a.initCh = make(chan uint)
@@ -288,8 +297,8 @@ func (a *Agent) init() error {
 			5.2.1 when reverse dependency is ready, try to start dependent engines from 3.1
 */
 
-// method to initialize engines
-func (a *Agent) initialize() error {
+// method to initializeEngines engines
+func (a *Agent) initializeEngines() error {
 	var err error
 
 	// Initialize Engines
@@ -300,7 +309,7 @@ func (a *Agent) initialize() error {
 			err := e.Init()
 			// write on error init channel whether there is an error on Init
 			if err != nil {
-				env.Output.WriteChInfo("(Agent::initialize)", err)
+				a.Context.Logger.Info("(Agent::initialize)", err)
 				a.initErrCh <- err
 			}
 			// write engine id on init channel to notify that engine is already initialized
@@ -315,11 +324,11 @@ func (a *Agent) initialize() error {
 		select {
 		// wait to receive an id to set as initialized the engine
 		case <-a.initCh:
-			//env.Output.WriteChInfo("(Agent::Start) ready",a.Engines[id].GetName())
+			//a.Context.Logger.Info("(Agent::Start) ready",a.Engines[id].GetName())
 
 		// wait to receive an error
 		case err = <-a.initErrCh:
-			//env.Output.WriteChError("(Agent::Start)",err)
+			//a.Context.Logger.Error("(Agent::Start)",err)
 
 		// define new error when timeout is reached an not all engines are initialized
 		case <-timeout:
@@ -335,8 +344,9 @@ func (a *Agent) initialize() error {
 	return nil
 }
 
-// method to run engines
-func (a *Agent) run() error {
+// runEngines is responsible run all engines
+func (a *Agent) runEngines() error {
+
 	var err error
 	// runVector contains the engines order to be run
 	runVector := []uint{}
@@ -345,6 +355,7 @@ func (a *Agent) run() error {
 	for _, id := range a.RunOrder {
 		runVector = append(runVector, uint(id))
 	}
+
 	// Append to run vector engines with no order requiered
 	if len(runVector) != len(a.Engines) {
 		for engineID := range a.Engines {
@@ -362,16 +373,16 @@ func (a *Agent) run() error {
 
 	// run all engines
 	go func(v []uint) {
-		var err error
+		//var err error
 		for _, id := range v {
 			e := a.Engines[id]
-			err = e.Run()
+			go e.Run()
+			// err = e.Run()
+			// if err != nil {
+			// 	a.readyErrCh <- err
+			// }
 		}
-		if err != nil {
-			a.readyErrCh <- err
-		} else {
-			a.readyCh <- uint(0)
-		}
+		a.readyCh <- uint(0)
 	}(runVector)
 
 	// Waiting for all engines to be run
@@ -380,14 +391,14 @@ func (a *Agent) run() error {
 	select {
 	// receive a ready
 	case <-a.readyCh:
-		// wait to receive an error
+	// wait to receive an error
 	case err = <-a.readyErrCh:
-		env.Output.WriteChError("(Agent::run)", err)
+		a.Context.Logger.Error("(Agent::run)", err)
 	// define new error when timeout is reached an not all engines are initialized
 	case <-timeout:
 		msg := "(Agent::run) Not all engines have been ready after " + strconv.Itoa(int(a.ReadyTimeout)) + " seconds."
 		err = errors.New(msg)
-		//env.Output.WriteChError(err)
+		//a.Context.Logger.Error(err)
 	}
 
 	if err != nil {
@@ -415,15 +426,19 @@ func (a *Agent) setEnginesSubscriptions() error {
 // validateGraphEngine
 func (a *Agent) validateGraphEngine() error {
 	var markedEngines map[uint]bool
+
 	for _, e := range a.Engines {
 		markedEngines = map[uint]bool{}
 		markedEngines[uint(e.GetID())] = true
 		for _, id := range e.GetDependencies() {
-			if err := a.validateGraphEngineHelper(uint(id), markedEngines); err != nil {
+			err := a.validateGraphEngineHelper(uint(id), markedEngines)
+			if err != nil {
 				return err
 			}
 		}
+
 	}
+
 	return nil
 }
 

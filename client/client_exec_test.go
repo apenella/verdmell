@@ -6,18 +6,18 @@ import (
 	"verdmell/engine"
 )
 
-func TestRun(t *testing.T){
+func TestRun(t *testing.T) {
 
-	c := &Client {
+	c := &Client{
 		ID: engine.CLIENT,
-		Worker: &ClientExec {
-					Checks: []string{"foo","bar"},
-				},
+		Worker: &Exec{
+			Checks: []string{"foo", "bar"},
+		},
 	}
 
 	err := c.Run()
 	if err != nil {
-		t.Fatalf("(Client::TestRun) ",err)		
+		t.Fatalf("(Client::TestRun) ", err)
 	}
 
 }
