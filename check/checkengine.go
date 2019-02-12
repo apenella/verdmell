@@ -29,17 +29,12 @@ var logger *message.Message
 
 // CheckEngine manages
 type CheckEngine struct {
+	// promoted BasicEngine
+	engine.BasicEngine
 	// Map to storage the checks
-	// Cks *Checks `json:"checks"`
 	Checks map[string]*Check `json:"checks"`
-	// Status is the current engine status
-	Status uint `json:"status"`
-	// Context contains information about the runtime state
-	Context *context.Context
 	// Executors define a executor depending of kind of check
 	Executors map[string]ExecutorFactory `json:"-"`
-	// Service Channel
-	subscriptions map[chan interface{}]string
 	// Folder where are found check files
 	checksFolder string
 	// startSignal notify to engine to start working with scheduled jobs
@@ -59,9 +54,11 @@ func NewCheckEngine() *CheckEngine {
 	}
 
 	eng := &CheckEngine{
+		BasicEngine: engine.BasicEngine{
+			Subscriptions: make(map[chan interface{}]string),
+			Context: ctx,
+		},
 		Checks:        make(map[string]*Check),
-		subscriptions: make(map[chan interface{}]string),
-		Context:       ctx,
 	}
 	eng.Context.Logger.Debug("(CheckEngine::NewCheckEngine) Create new engine instance")
 	return eng
@@ -89,8 +86,8 @@ func (eng *CheckEngine) Init() error {
 		eng.Checks = make(map[string]*Check)
 	}
 
-	if eng.subscriptions == nil {
-		eng.subscriptions = make(map[chan interface{}]string)
+	if eng.Subscriptions == nil {
+		eng.Subscriptions = make(map[chan interface{}]string)
 	}
 
 	if eng.checksFolder != "" {
@@ -168,13 +165,6 @@ func (eng *CheckEngine) Stop() error {
 	return nil
 }
 
-func (eng *CheckEngine) GetID() uint                       { return uint(0) }
-func (eng *CheckEngine) GetName() string                   { return "" }
-func (eng *CheckEngine) GetDependencies() []uint           { return nil }
-func (eng *CheckEngine) GetInputChannel() chan interface{} { return nil }
-func (eng *CheckEngine) GetStatus() uint                   { return uint(0) }
-func (eng *CheckEngine) SetStatus(s uint)                  {}
-
 //
 // Specific methods
 
@@ -189,7 +179,7 @@ func (eng *CheckEngine) SayHi() {
 func (eng *CheckEngine) Subscribe(o chan interface{}, desc string) error {
 	eng.Context.Logger.Debug("(CheckEngine::Subscribe) ", desc)
 
-	channels := eng.subscriptions
+	channels := eng.Subscriptions
 	if _, exist := channels[o]; !exist {
 		channels[o] = desc
 	} else {
@@ -260,7 +250,7 @@ func retrieveChecksFromFile(file string) ([]*Check, error) {
 // notify: function write samples to defined samples
 func (eng *CheckEngine) notify(s *sample.CheckSample) {
 	eng.Context.Logger.Debug("(CheckEngine::notify)")
-	for o, desc := range eng.subscriptions {
+	for o, desc := range eng.Subscriptions {
 		eng.Context.Logger.Debug("(CheckEngine::notify) [" + strconv.Itoa(int(s.GetTimestamp())) + "] Notify sample '" + s.GetCheck() + "' with exit '" + strconv.Itoa(s.GetExit()) + "' on channel '" + desc + "'")
 		o <- s
 	}

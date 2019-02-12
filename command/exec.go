@@ -35,7 +35,9 @@ func (c *ExecCommand) Run(args []string) int {
 
 	// Create check an empty check engine
 	ch := &check.CheckEngine{
-		Context: ctx,
+		BasicEngine: engine.BasicEngine{
+			Context: ctx,
+		},
 	}
 	e[engine.CHECK] = ch
 

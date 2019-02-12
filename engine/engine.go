@@ -2,6 +2,8 @@ package engine
 
 import (
 	"sync"
+
+	"verdmell/context"
 )
 
 // Engine is an interface to be accomplish for any verdmell component.
@@ -72,6 +74,8 @@ type BasicEngine struct {
 	ID           uint   `json: "id"`
 	Name         string `json: "name"`
 	Dependencies []uint `json: "dependencies"`
+	// Context contains information about the runtime state
+	Context *context.Context
 	// subscriptions Channel
 	Subscriptions map[chan interface{}]string `json: "-"`
 	// input channel
