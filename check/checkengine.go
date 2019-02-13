@@ -119,6 +119,7 @@ func (eng *CheckEngine) Run() error {
 		case <-eng.startSignal:
 			eng.Context.Logger.Info("(CheckEngine::Run) start")
 			eng.Status = engine.READY
+			// TODO
 			go func() {
 				for true {
 					fmt.Print(".")

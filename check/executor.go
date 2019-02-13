@@ -15,17 +15,18 @@ import (
 
 // Result defines the command execution result
 type Result struct {
-	Check       string
-	Command     string
-	Output      string
-	ExitCode    int
-	InitTime    time.Time
-	ElapsedTime time.Duration
+	Check       string `json:"check"`
+	Command     string `json:"command"`
+	Output      string `json:"output"`
+	ExitCode    int `json:"exit"`
+	InitTime    time.Time `json:"inittime"`
+	ElapsedTime time.Duration `json:"elapsedtime"`
 }
 
 // Executor interface defines and element which could be execute to achieve a Result
+// The Run command must receive and id name, a command to execute and the timeout in seconds to stop waiting for the command ends
 type Executor interface {
-	Run(c *Check) (*Result, error)
+	Run(name string, command string, timeout int) (*Result, error)
 }
 
 // ExecutorFactory is a type of function that is a factory for commands.
@@ -35,7 +36,7 @@ type ExecutorFactory func() (Executor, error)
 type CommandExecutor struct{}
 
 // Run executes the command defined on check an return the result
-func (e *CommandExecutor) Run(c *Check) (*Result, error) {
+func (e *CommandExecutor) Run(name string, command string, timeout int) (*Result, error) {
 	var elapsedTime time.Duration
 	cmdDone := make(chan error)
 	defer close(cmdDone)
@@ -45,7 +46,7 @@ func (e *CommandExecutor) Run(c *Check) (*Result, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmdSplitted := strings.SplitN(c.Command, " ", 2)
+	cmdSplitted := strings.SplitN(command, " ", 2)
 
 	args := []string{}
 	if len(cmdSplitted) > 1 {
@@ -86,10 +87,10 @@ func (e *CommandExecutor) Run(c *Check) (*Result, error) {
 			}
 		}
 
-	case <-time.After(time.Duration(c.Timeout) * time.Second):
+	case <-time.After(time.Duration(timeout) * time.Second):
 		// timed out
 		elapsedTime = time.Since(timeInit)
-		output = "The command has not finished after " + strconv.Itoa(c.Timeout) + " seconds"
+		output = "The command has not finished after " + strconv.Itoa(timeout) + " seconds"
 		cmd.Process.Kill()
 	}
 
@@ -99,8 +100,8 @@ func (e *CommandExecutor) Run(c *Check) (*Result, error) {
 	// ERROR: 2
 	// UNKNOWN: other (-1)
 	return &Result{
-		Check:       c.Name,
-		Command:     c.Command,
+		Check:       name,
+		Command:     command,
 		Output:      output,
 		ExitCode:    exitCode,
 		InitTime:    timeInit,

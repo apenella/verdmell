@@ -104,7 +104,7 @@ func TestCommandExecutorRun(t *testing.T) {
 	for _, test := range tests {
 		t.Log(test.desc)
 		ex := &CommandExecutor{}
-		res, err := ex.Run(test.c)
+		res, err := ex.Run(test.c.Name, test.c.Command, test.c.Timeout)
 
 		if err != nil && assert.Error(t, err) {
 			assert.Equal(t, test.err, err, err.Error())
