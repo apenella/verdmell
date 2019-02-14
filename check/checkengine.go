@@ -56,9 +56,9 @@ func NewCheckEngine() *CheckEngine {
 	eng := &CheckEngine{
 		BasicEngine: engine.BasicEngine{
 			Subscriptions: make(map[chan interface{}]string),
-			Context: ctx,
+			Context:       ctx,
 		},
-		Checks:        make(map[string]*Check),
+		Checks: make(map[string]*Check),
 	}
 	eng.Context.Logger.Debug("(CheckEngine::NewCheckEngine) Create new engine instance")
 	return eng
