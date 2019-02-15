@@ -15,18 +15,19 @@ import (
 
 // Result defines the command execution result
 type Result struct {
-	Check       string `json:"check"`
-	Command     string `json:"command"`
-	Output      string `json:"output"`
-	ExitCode    int `json:"exit"`
-	InitTime    time.Time `json:"inittime"`
+	Check       string        `json:"check"`
+	Command     string        `json:"command"`
+	Output      string        `json:"output"`
+	ExitCode    int           `json:"exit"`
+	InitTime    time.Time     `json:"inittime"`
 	ElapsedTime time.Duration `json:"elapsedtime"`
 }
 
 // Executor interface defines and element which could be execute to achieve a Result
 // The Run command must receive and id name, a command to execute and the timeout in seconds to stop waiting for the command ends
 type Executor interface {
-	Run(name string, command string, timeout int) (*Result, error)
+	Run(name string, command string, timeout int) error
+	Callback()
 }
 
 // ExecutorFactory is a type of function that is a factory for commands.
@@ -36,7 +37,7 @@ type ExecutorFactory func() (Executor, error)
 type CommandExecutor struct{}
 
 // Run executes the command defined on check an return the result
-func (e *CommandExecutor) Run(name string, command string, timeout int) (*Result, error) {
+func (e *CommandExecutor) Run(name string, command string, timeout int, callback func()) error {
 	var elapsedTime time.Duration
 	cmdDone := make(chan error)
 	defer close(cmdDone)
@@ -94,18 +95,19 @@ func (e *CommandExecutor) Run(name string, command string, timeout int) (*Result
 		cmd.Process.Kill()
 	}
 
+	return nil
 	//Exit codes
 	// OK: 0
 	// WARN: 1
 	// ERROR: 2
 	// UNKNOWN: other (-1)
-	return &Result{
-		Check:       name,
-		Command:     command,
-		Output:      output,
-		ExitCode:    exitCode,
-		InitTime:    timeInit,
-		ElapsedTime: elapsedTime,
-	}, nil
+	// return &Result{
+	// 	Check:       name,
+	// 	Command:     command,
+	// 	Output:      output,
+	// 	ExitCode:    exitCode,
+	// 	InitTime:    timeInit,
+	// 	ElapsedTime: elapsedTime,
+	// }, nil
 
 }

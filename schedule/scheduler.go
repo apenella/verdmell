@@ -27,8 +27,6 @@ type Unit struct {
 	Name string `json:"name"`
 	// Interval of execution
 	Interval int `json:"interval"`
-	// Notify is a func which could be used as a callback when a unit finishes to be run
-	Notify func() `json:"-"`
 }
 
 // Job is and structure which defines a execution Unit in runtime
@@ -57,25 +55,6 @@ type BasicScheduler struct {
 	Units []*Unit `json:"units"`
 	// Jobs has the
 	Jobs []*Job `json:"jobs"`
-}
-
-// Schedule method append a new unit to the sched
-func (s *BasicScheduler) Schedule(u *Unit) {
-	if s.Jobs == nil {
-		s.Jobs = []*Job{}
-	}
-	for _, u := range s.Units {
-		job := &Job{
-			Unit:  u,
-			State: STOPPED,
-		}
-		s.Jobs = append(s.Jobs, job)
-	}
-}
-
-// Stop method append a new unit to the sched
-func (s *BasicScheduler) Stop(u *Unit) {
-	return
 }
 
 // Add method append a new unit to the sched
