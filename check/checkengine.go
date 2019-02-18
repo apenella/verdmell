@@ -13,6 +13,7 @@ import (
 	"verdmell/engine"
 	"verdmell/environment"
 	"verdmell/sample"
+	"verdmell/schedule"
 	"verdmell/utils"
 
 	"github.com/apenella/messageOutput"
@@ -35,6 +36,8 @@ type CheckEngine struct {
 	Checks map[string]*Check `json:"checks"`
 	// Executors define a executor depending of kind of check
 	Executors map[string]ExecutorFactory `json:"-"`
+	// Scheduler is
+	Scheduler schedule.Scheduler
 	// Folder where are found check files
 	checksFolder string
 	// startSignal notify to engine to start working with scheduled jobs
@@ -166,17 +169,12 @@ func (eng *CheckEngine) Stop() error {
 	return nil
 }
 
-//
-// Specific methods
-
-//
-// SayHi:
+// SayHi is a validation method
 func (eng *CheckEngine) SayHi() {
 	eng.Context.Logger.Info("(CheckEngine::SayHi) Hi! I'm your new check engine instance")
 }
 
-//
-// Subscribe:
+// Subscribe method let other engines to get notifed when is generated a new result from a check
 func (eng *CheckEngine) Subscribe(o chan interface{}, desc string) error {
 	eng.Context.Logger.Debug("(CheckEngine::Subscribe) ", desc)
 
@@ -190,11 +188,10 @@ func (eng *CheckEngine) Subscribe(o chan interface{}, desc string) error {
 	return nil
 }
 
-//
-// LoadChecks
+// LoadChecks read checks from configuration and loads them to the engine
 func (eng *CheckEngine) LoadChecks(folder string) error {
-	checksQueue := make(chan []*Check)
-	checksQueueErr := make(chan error)
+	checksChan := make(chan []*Check)
+	checksChanErr := make(chan error)
 
 	// files is an array with all files found inside the folder
 	if folder == "" {
@@ -207,18 +204,18 @@ func (eng *CheckEngine) LoadChecks(folder string) error {
 		go func(f os.FileInfo) {
 			checks, err := retrieveChecksFromFile(folder + string(os.PathSeparator) + f.Name())
 			if err != nil {
-				checksQueueErr <- err
+				checksChanErr <- err
 			} else {
-				checksQueue <- checks
+				checksChan <- checks
 			}
 		}(file)
 	}
 
 	// analize response
 	select {
-	case err := <-checksQueueErr:
+	case err := <-checksChanErr:
 		eng.Context.Logger.Info("(CheckEngine::LoadChecks) " + err.Error())
-	case checks := <-checksQueue:
+	case checks := <-checksChan:
 		for _, check := range checks {
 			err := check.ValidateCheck()
 			if err != nil {
@@ -234,7 +231,6 @@ func (eng *CheckEngine) LoadChecks(folder string) error {
 	return nil
 }
 
-//
 // retrieveChecksFromFile
 func retrieveChecksFromFile(file string) ([]*Check, error) {
 	var checks map[string][]*Check
@@ -247,18 +243,16 @@ func retrieveChecksFromFile(file string) ([]*Check, error) {
 	return checks[CHECKS_KEY], nil
 }
 
-//
-// notify: function write samples to defined samples
-func (eng *CheckEngine) notify(s *sample.CheckSample) {
+// notify function write samples to defined samples
+func (eng *CheckEngine) notify(res *Result) {
 	eng.Context.Logger.Debug("(CheckEngine::notify)")
-	for o, desc := range eng.Subscriptions {
-		eng.Context.Logger.Debug("(CheckEngine::notify) [" + strconv.Itoa(int(s.GetTimestamp())) + "] Notify sample '" + s.GetCheck() + "' with exit '" + strconv.Itoa(s.GetExit()) + "' on channel '" + desc + "'")
-		o <- s
+	for o := range eng.Subscriptions {
+		//eng.Context.Logger.Debug("(CheckEngine::notify) [" + strconv.Itoa(int(s.GetTimestamp())) + "] Notify sample '" + s.GetCheck() + "' with exit '" + strconv.Itoa(s.GetExit()) + "' on channel '" + desc + "'")
+		o <- res
 	}
 }
 
-//
-// AddCheck: method add a new check to the Checks struct
+// AddCheck method add a new check to the Checks struct
 func (eng *CheckEngine) AddCheck(check *Check) error {
 	eng.Checks[check.Name] = check
 

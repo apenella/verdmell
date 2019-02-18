@@ -102,9 +102,16 @@ func TestCommandExecutorRun(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		res := &Result{}
+		callback := func(i interface{}) {
+			res = i.(*Result)
+		}
+
 		t.Log(test.desc)
-		ex := &CommandExecutor{}
-		res, err := ex.Run(test.c.Name, test.c.Command, test.c.Timeout)
+		ex := &CommandExecutor{
+			Check: test.c,
+		}
+		err := ex.Run(callback)
 
 		if err != nil && assert.Error(t, err) {
 			assert.Equal(t, test.err, err, err.Error())

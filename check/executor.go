@@ -26,18 +26,19 @@ type Result struct {
 // Executor interface defines and element which could be execute to achieve a Result
 // The Run command must receive and id name, a command to execute and the timeout in seconds to stop waiting for the command ends
 type Executor interface {
-	Run(name string, command string, timeout int) error
-	Callback()
+	Run(f func(i interface{})) error
 }
 
 // ExecutorFactory is a type of function that is a factory for commands.
 type ExecutorFactory func() (Executor, error)
 
 // CommandExecutor runs shell commands
-type CommandExecutor struct{}
+type CommandExecutor struct {
+	Check *Check
+}
 
 // Run executes the command defined on check an return the result
-func (e *CommandExecutor) Run(name string, command string, timeout int, callback func()) error {
+func (e *CommandExecutor) Run(callback func(i interface{})) error {
 	var elapsedTime time.Duration
 	cmdDone := make(chan error)
 	defer close(cmdDone)
@@ -47,7 +48,7 @@ func (e *CommandExecutor) Run(name string, command string, timeout int, callback
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmdSplitted := strings.SplitN(command, " ", 2)
+	cmdSplitted := strings.SplitN(e.Check.Command, " ", 2)
 
 	args := []string{}
 	if len(cmdSplitted) > 1 {
@@ -60,7 +61,7 @@ func (e *CommandExecutor) Run(name string, command string, timeout int, callback
 	timeInit := time.Now()
 	err := cmd.Start()
 	if err != nil {
-		return nil, errors.New("(CommandExecutor::Run) " + err.Error())
+		return errors.New("(CommandExecutor::Run) " + err.Error())
 	}
 
 	go func() { cmdDone <- cmd.Wait() }()
@@ -88,26 +89,29 @@ func (e *CommandExecutor) Run(name string, command string, timeout int, callback
 			}
 		}
 
-	case <-time.After(time.Duration(timeout) * time.Second):
+	case <-time.After(time.Duration(e.Check.Timeout) * time.Second):
 		// timed out
 		elapsedTime = time.Since(timeInit)
-		output = "The command has not finished after " + strconv.Itoa(timeout) + " seconds"
+		output = "The command has not finished after " + strconv.Itoa(e.Check.Timeout) + " seconds"
 		cmd.Process.Kill()
 	}
 
-	return nil
 	//Exit codes
 	// OK: 0
 	// WARN: 1
 	// ERROR: 2
 	// UNKNOWN: other (-1)
-	// return &Result{
-	// 	Check:       name,
-	// 	Command:     command,
-	// 	Output:      output,
-	// 	ExitCode:    exitCode,
-	// 	InitTime:    timeInit,
-	// 	ElapsedTime: elapsedTime,
-	// }, nil
 
+	callback(
+		&Result{
+			Check:       e.Check.Name,
+			Command:     e.Check.Command,
+			Output:      output,
+			ExitCode:    exitCode,
+			InitTime:    timeInit,
+			ElapsedTime: elapsedTime,
+		},
+	)
+
+	return nil
 }
