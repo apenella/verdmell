@@ -28,7 +28,6 @@ type Check struct {
 	SampleChan chan *sample.CheckSample `json:"-"`
 }
 
-//
 // ValidateCheck ensures that the Check has all the required data set. The method returns an error object once a definition method is found
 func (c *Check) ValidateCheck() error {
 	if c.Name == "" {

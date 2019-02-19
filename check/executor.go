@@ -13,20 +13,10 @@ import (
 	"time"
 )
 
-// Result defines the command execution result
-type Result struct {
-	Check       string        `json:"check"`
-	Command     string        `json:"command"`
-	Output      string        `json:"output"`
-	ExitCode    int           `json:"exit"`
-	InitTime    time.Time     `json:"inittime"`
-	ElapsedTime time.Duration `json:"elapsedtime"`
-}
-
 // Executor interface defines and element which could be execute to achieve a Result
 // The Run command must receive and id name, a command to execute and the timeout in seconds to stop waiting for the command ends
 type Executor interface {
-	Run(f func(i interface{})) error
+	Run() error
 }
 
 // ExecutorFactory is a type of function that is a factory for commands.
@@ -34,11 +24,12 @@ type ExecutorFactory func() (Executor, error)
 
 // CommandExecutor runs shell commands
 type CommandExecutor struct {
-	Check *Check
+	Check    *Check
+	Callback func(i interface{})
 }
 
 // Run executes the command defined on check an return the result
-func (e *CommandExecutor) Run(callback func(i interface{})) error {
+func (e *CommandExecutor) Run() error {
 	var elapsedTime time.Duration
 	cmdDone := make(chan error)
 	defer close(cmdDone)
@@ -102,14 +93,17 @@ func (e *CommandExecutor) Run(callback func(i interface{})) error {
 	// ERROR: 2
 	// UNKNOWN: other (-1)
 
-	callback(
+	e.Callback(
 		&Result{
-			Check:       e.Check.Name,
-			Command:     e.Check.Command,
-			Output:      output,
-			ExitCode:    exitCode,
-			InitTime:    timeInit,
-			ElapsedTime: elapsedTime,
+			Metadata: &MetadataResult{
+				Timestamp:   0,
+				InitTime:    timeInit,
+				ElapsedTime: elapsedTime,
+			},
+			Check:    e.Check.Name,
+			Command:  e.Check.Command,
+			Output:   output,
+			ExitCode: exitCode,
 		},
 	)
 

@@ -39,8 +39,8 @@ type Job struct {
 
 // Scheduler interface defines and element which could be used to run jobs
 type Scheduler interface {
-	Schedule() error
-	Stop() error
+	Schedule()
+	Stop()
 	Add(u *Unit)
 }
 

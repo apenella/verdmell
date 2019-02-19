@@ -10,12 +10,9 @@ The package 'check' is used by verdmell to manage the monitoring checks defined 
 */
 package check
 
-import (
-	"errors"
-	//	"os"
+import ( //	"os"
 	// "strconv"
 	//	"time"
-
 	// "verdmell/sample"
 	"verdmell/utils"
 )
@@ -48,89 +45,91 @@ func (c *Checks) GetCheck() map[string]*CheckObject {
 	return c.Check
 }
 
+// -- TODEL REFACTOR V2
+
 //
 // Specific methods
 
 //
 //# AddCheck: method add a new check to the Checks struct
-func (c *Checks) AddCheck(obj *CheckObject) error {
-	if _, exist := c.Check[obj.GetName()]; !exist {
-		logger.Debug("(Checks::AddCheck) New Check '" + obj.GetName() + "'")
-		c.Check[obj.GetName()] = obj
-	}
-	return nil
-}
-
+// func (c *Checks) AddCheck(obj *CheckObject) error {
+// 	if _, exist := c.Check[obj.GetName()]; !exist {
+// 		logger.Debug("(Checks::AddCheck) New Check '" + obj.GetName() + "'")
+// 		c.Check[obj.GetName()] = obj
+// 	}
+// 	return nil
+// }
 //
-//# ListCheckNames: returns an array with the check namess defined on Checks object
-func (c *Checks) ListCheckNames() []string {
-	var names []string
-	for checkname, _ := range c.Check {
-		logger.Debug("(Checks::ListCheckNames) check name: " + checkname)
-		// append each check name to names array
-		names = append(names, checkname)
-	}
-	return names
-}
-
+// //
+// //# ListCheckNames: returns an array with the check namess defined on Checks object
+// func (c *Checks) ListCheckNames() []string {
+// 	var names []string
+// 	for checkname, _ := range c.Check {
+// 		logger.Debug("(Checks::ListCheckNames) check name: " + checkname)
+// 		// append each check name to names array
+// 		names = append(names, checkname)
+// 	}
+// 	return names
+// }
 //
-// IsDefined: return if a check is defined
-func (c *Checks) IsDefined(name string) bool {
-	_, exist := c.Check[name]
-	return exist
-}
-
+// //
+// // IsDefined: return if a check is defined
+// func (c *Checks) IsDefined(name string) bool {
+// 	_, exist := c.Check[name]
+// 	return exist
+// }
 //
-// GetCheckObjectByName: returns a check object gived a name
-func (c *Checks) GetCheckObjectByName(checkname string) (error, *CheckObject) {
-	var err bool
-	checkObj := new(CheckObject)
-	check := c.GetCheck()
-
-	logger.Debug("(Checks::GetCheckObjectByName) Looking for check '" + checkname + "'")
-
-	if checkObj, err = check[checkname]; err == false {
-		return errors.New("(Checks::GetCheckObjectByName) The check '" + checkname + "' has never been load before."), nil
-	}
-
-	return nil, checkObj
-}
-
-// ValidateChecks: ensures that all the CheckObject from the Checks object have been defined correctly.
-func (c *Checks) ValidateChecks(i interface{}) error {
-	errorChan := make(chan error)
-	statusChan := make(chan bool)
-
-	// validation is a goroutine that will validate one CheckObjet and will write the status into a channel
-	validation := func(c *CheckObject) {
-		if err := c.ValidateCheckObject(); err != nil {
-			errorChan <- err
-		} else {
-			statusChan <- true
-		}
-	}
-
-	// for each CheckObject is launched a validation function
-	for _, checkObj := range c.GetCheck() {
-		go validation(checkObj)
-	}
-
-	// the method waits for all the status. If an error occurs, the function returns it
-	for i := 0; i < len(c.GetCheck()); i++ {
-		select {
-		case err := <-errorChan:
-			close(errorChan)
-			return err
-		case <-statusChan:
-			break
-		}
-	}
-
-	close(statusChan)
-	// if no error has been found, all CheckObjects have been defined correctly
-	return nil
-}
-
+// //
+// // GetCheckObjectByName: returns a check object gived a name
+// func (c *Checks) GetCheckObjectByName(checkname string) (error, *CheckObject) {
+// 	var err bool
+// 	checkObj := new(CheckObject)
+// 	check := c.GetCheck()
+//
+// 	logger.Debug("(Checks::GetCheckObjectByName) Looking for check '" + checkname + "'")
+//
+// 	if checkObj, err = check[checkname]; err == false {
+// 		return errors.New("(Checks::GetCheckObjectByName) The check '" + checkname + "' has never been load before."), nil
+// 	}
+//
+// 	return nil, checkObj
+// }
+//
+// // ValidateChecks: ensures that all the CheckObject from the Checks object have been defined correctly.
+// func (c *Checks) ValidateChecks(i interface{}) error {
+// 	errorChan := make(chan error)
+// 	statusChan := make(chan bool)
+//
+// 	// validation is a goroutine that will validate one CheckObjet and will write the status into a channel
+// 	validation := func(c *CheckObject) {
+// 		if err := c.ValidateCheckObject(); err != nil {
+// 			errorChan <- err
+// 		} else {
+// 			statusChan <- true
+// 		}
+// 	}
+//
+// 	// for each CheckObject is launched a validation function
+// 	for _, checkObj := range c.GetCheck() {
+// 		go validation(checkObj)
+// 	}
+//
+// 	// the method waits for all the status. If an error occurs, the function returns it
+// 	for i := 0; i < len(c.GetCheck()); i++ {
+// 		select {
+// 		case err := <-errorChan:
+// 			close(errorChan)
+// 			return err
+// 		case <-statusChan:
+// 			break
+// 		}
+// 	}
+//
+// 	close(statusChan)
+// 	// if no error has been found, all CheckObjects have been defined correctly
+// 	return nil
+// }
+//
 //
 //# StartCheckTaskPools: start a pool for each check. For each pool are generated the check execution tasks
 // func (c *Checks) StartCheckTaskPools() error {

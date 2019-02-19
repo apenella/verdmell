@@ -109,9 +109,10 @@ func TestCommandExecutorRun(t *testing.T) {
 
 		t.Log(test.desc)
 		ex := &CommandExecutor{
-			Check: test.c,
+			Check:    test.c,
+			Callback: callback,
 		}
-		err := ex.Run(callback)
+		err := ex.Run()
 
 		if err != nil && assert.Error(t, err) {
 			assert.Equal(t, test.err, err, err.Error())

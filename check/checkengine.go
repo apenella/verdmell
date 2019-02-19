@@ -7,12 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 	"verdmell/context"
 	"verdmell/engine"
 	"verdmell/environment"
-	"verdmell/sample"
 	"verdmell/schedule"
 	"verdmell/utils"
 
@@ -28,7 +26,7 @@ const CHECKS_KEY string = "checks"
 var env *environment.Environment
 var logger *message.Message
 
-// CheckEngine manages
+// CheckEngine is the responsible to run checks an notify about its results
 type CheckEngine struct {
 	// promoted BasicEngine
 	engine.BasicEngine
@@ -36,7 +34,7 @@ type CheckEngine struct {
 	Checks map[string]*Check `json:"checks"`
 	// Executors define a executor depending of kind of check
 	Executors map[string]ExecutorFactory `json:"-"`
-	// Scheduler is
+	// Scheduler has the checks execution strategy
 	Scheduler schedule.Scheduler
 	// Folder where are found check files
 	checksFolder string
@@ -62,6 +60,12 @@ func NewCheckEngine() *CheckEngine {
 			Context:       ctx,
 		},
 		Checks: make(map[string]*Check),
+		Scheduler: &schedule.OnceScheduler{
+			BasicScheduler: schedule.BasicScheduler{
+				Units: []*schedule.Unit{},
+				Jobs:  []*schedule.Job{},
+			},
+		},
 	}
 	eng.Context.Logger.Debug("(CheckEngine::NewCheckEngine) Create new engine instance")
 	return eng
@@ -100,6 +104,17 @@ func (eng *CheckEngine) Init() error {
 		}
 	} else {
 		eng.Context.Logger.Warn("(CheckEngine::Init) CheckEngine is initialized without checks.")
+	}
+
+	// define a default scheduler if is not already defined.
+	// By default once scheduler is defined.
+	if eng.Scheduler == nil {
+		eng.Scheduler = &schedule.OnceScheduler{
+			BasicScheduler: schedule.BasicScheduler{
+				Units: []*schedule.Unit{},
+				Jobs:  []*schedule.Job{},
+			},
+		}
 	}
 
 	eng.Executors = map[string]ExecutorFactory{
@@ -188,6 +203,16 @@ func (eng *CheckEngine) Subscribe(o chan interface{}, desc string) error {
 	return nil
 }
 
+// CheckExecutor return the executor need by the check
+func (eng *CheckEngine) CheckExecutor(c *Check) Executor {
+	if c.Command != "" {
+		return &CommandExecutor{
+			Check:    c,
+			Callback: eng.notify(nil),
+		}
+	}
+}
+
 // LoadChecks read checks from configuration and loads them to the engine
 func (eng *CheckEngine) LoadChecks(folder string) error {
 	checksChan := make(chan []*Check)
@@ -221,7 +246,16 @@ func (eng *CheckEngine) LoadChecks(folder string) error {
 			if err != nil {
 				eng.Context.Logger.Warn("(CheckEngine::LoadChecks) " + err.Error())
 			} else {
+				// add check to engines checks
 				eng.AddCheck(check)
+
+				// define the execution unit and add it to the scheduler
+				unit := &schedule.Unit{
+					Runner:   nil,
+					Name:     check.Name,
+					Interval: check.Interval,
+				}
+				eng.Scheduler.Add(unit)
 			}
 		}
 	case <-time.After(time.Duration(DEFAULT_TIMEOUT) * time.Second):
@@ -373,29 +407,28 @@ func (eng *CheckEngine) AddCheck(check *Check) error {
 
 //
 // sendSamples: method that send samples to other engines
-func (eng *CheckEngine) sendSample(s *sample.CheckSample) error {
-	eng.Context.Logger.Debug("(CheckEngine::sendSample)[" + strconv.Itoa(int(s.GetTimestamp())) + "] Send sample for '" + s.GetCheck() + "' check with exit '" + strconv.Itoa(s.GetExit()) + "'")
-	sampleEngine := env.GetSampleEngine().(*sample.SampleEngine)
-
-	// send samples to ServiceEngine
-	// GetSample return an error if no samples has been add before for that check
-	if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
-		// sending sample to service using the output channel
-		eng.notify(s)
-	} else {
-		// if a sample for that exist
-		// the sample will not send to service system unless it has modified it exit status
-		if sam.GetTimestamp() < s.GetTimestamp() {
-			// sending sample to service using the output channel
-			eng.notify(s)
-		}
-	}
-
-	return nil
-}
-
+// func (eng *CheckEngine) sendSample(s *sample.CheckSample) error {
+// 	eng.Context.Logger.Debug("(CheckEngine::sendSample)[" + strconv.Itoa(int(s.GetTimestamp())) + "] Send sample for '" + s.GetCheck() + "' check with exit '" + strconv.Itoa(s.GetExit()) + "'")
+// 	sampleEngine := env.GetSampleEngine().(*sample.SampleEngine)
 //
-// ListCheckNames: returns an array with the check namess defined on Checks object
+// 	// send samples to ServiceEngine
+// 	// GetSample return an error if no samples has been add before for that check
+// 	if err, sam := sampleEngine.GetSample(s.GetCheck()); err != nil {
+// 		// sending sample to service using the output channel
+// 		eng.notify(s)
+// 	} else {
+// 		// if a sample for that exist
+// 		// the sample will not send to service system unless it has modified it exit status
+// 		if sam.GetTimestamp() < s.GetTimestamp() {
+// 			// sending sample to service using the output channel
+// 			eng.notify(s)
+// 		}
+// 	}
+//
+// 	return nil
+// }
+
+// ListCheckNames returns an array with the check namess defined on Checks object
 func (eng *CheckEngine) ListCheckNames() []string {
 	checkNames := []string{}
 	for name := range eng.Checks {
@@ -404,8 +437,7 @@ func (eng *CheckEngine) ListCheckNames() []string {
 	return checkNames
 }
 
-//
-// IsDefined: return if a check is defined
+// IsDefined return if a check is defined
 func (eng *CheckEngine) IsDefined(name string) bool {
 	_, ok := eng.Checks[name]
 	return ok
