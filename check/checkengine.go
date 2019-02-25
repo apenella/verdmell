@@ -5,7 +5,6 @@ package check
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"time"
 	"verdmell/context"
@@ -44,6 +43,8 @@ type CheckEngine struct {
 	stopSignal chan bool
 	// stoppedSignal notifies that the engine has finished its stop tasks
 	stoppedSignal chan bool
+	// resultCallback is the channel which receive results from scheduled tasks
+	resultCallback chan *Result
 }
 
 //
@@ -83,6 +84,7 @@ func (eng *CheckEngine) Init() error {
 	eng.startSignal = make(chan bool)
 	eng.stopSignal = make(chan bool)
 	eng.stoppedSignal = make(chan bool)
+	eng.resultCallback = make(chan *Result)
 
 	// initialize eng.Context.Logger.Er
 	if logger == nil {
@@ -136,14 +138,13 @@ func (eng *CheckEngine) Run() error {
 		select {
 		case <-eng.startSignal:
 			eng.Context.Logger.Info("(CheckEngine::Run) start")
-			eng.Status = engine.READY
-			// TODO
+			// ready to receive results from scheduler
 			go func() {
 				for true {
-					fmt.Print(".")
-					time.Sleep(time.Duration(1) * time.Second)
+					eng.notify(<-eng.resultCallback)
 				}
 			}()
+			eng.Status = engine.READY
 		case <-eng.stopSignal:
 			eng.Status = engine.STOPPING
 			eng.Context.Logger.Info("(CheckEngine::Run) stopping")
@@ -152,6 +153,11 @@ func (eng *CheckEngine) Run() error {
 			stop = true
 		}
 	}
+
+	defer close(eng.startSignal)
+	defer close(eng.stopSignal)
+	defer close(eng.stoppedSignal)
+	defer close(eng.resultCallback)
 
 	return nil
 }
@@ -177,9 +183,6 @@ func (eng *CheckEngine) Stop() error {
 		eng.Status = engine.STOPPED
 	case <-timeout:
 	}
-
-	defer close(eng.startSignal)
-	defer close(eng.stopSignal)
 
 	return nil
 }
@@ -207,10 +210,11 @@ func (eng *CheckEngine) Subscribe(o chan interface{}, desc string) error {
 func (eng *CheckEngine) CheckExecutor(c *Check) Executor {
 	if c.Command != "" {
 		return &CommandExecutor{
-			Check:    c,
-			Callback: eng.notify(nil),
+			Check:          c,
+			resultCallback: eng.resultCallback,
 		}
 	}
+	return nil
 }
 
 // LoadChecks read checks from configuration and loads them to the engine

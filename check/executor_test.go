@@ -83,7 +83,7 @@ func TestCommandExecutorRun(t *testing.T) {
 			desc: "Testing unexisting command",
 			err:  errors.New("(CommandExecutor::Run) exec: \"unexistent\": executable file not found in $PATH"),
 			c: &Check{
-				Name:           "test_check",
+				Name:           "test_chdck",
 				Description:    "testing echo",
 				Command:        "unexistent",
 				Depend:         []string{},
@@ -102,17 +102,27 @@ func TestCommandExecutorRun(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res := &Result{}
-		callback := func(i interface{}) {
-			res = i.(*Result)
-		}
+		errChan := make(chan error)
+		resultCallback := make(chan *Result)
+		var err error
+		var res *Result
 
 		t.Log(test.desc)
 		ex := &CommandExecutor{
-			Check:    test.c,
-			Callback: callback,
+			Check:          test.c,
+			resultCallback: resultCallback,
 		}
-		err := ex.Run()
+
+		go func() {
+			rErr := ex.Run()
+			if rErr != nil {
+				errChan <- rErr
+			}
+		}()
+		select {
+		case res = <-resultCallback:
+		case err = <-errChan:
+		}
 
 		if err != nil && assert.Error(t, err) {
 			assert.Equal(t, test.err, err, err.Error())
@@ -120,5 +130,6 @@ func TestCommandExecutorRun(t *testing.T) {
 			assert.Equal(t, test.r.Output, res.Output, "Unexpected output")
 			assert.Equal(t, test.r.ExitCode, res.ExitCode, "Unexpected exit code")
 		}
+		close(resultCallback)
 	}
 }

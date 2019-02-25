@@ -24,8 +24,8 @@ type ExecutorFactory func() (Executor, error)
 
 // CommandExecutor runs shell commands
 type CommandExecutor struct {
-	Check    *Check
-	Callback func(i interface{})
+	Check          *Check
+	resultCallback chan *Result
 }
 
 // Run executes the command defined on check an return the result
@@ -92,20 +92,19 @@ func (e *CommandExecutor) Run() error {
 	// WARN: 1
 	// ERROR: 2
 	// UNKNOWN: other (-1)
-
-	e.Callback(
-		&Result{
-			Metadata: &MetadataResult{
-				Timestamp:   0,
-				InitTime:    timeInit,
-				ElapsedTime: elapsedTime,
-			},
-			Check:    e.Check.Name,
-			Command:  e.Check.Command,
-			Output:   output,
-			ExitCode: exitCode,
+	res := &Result{
+		Metadata: &MetadataResult{
+			Timestamp:   0,
+			InitTime:    timeInit,
+			ElapsedTime: elapsedTime,
 		},
-	)
+		Check:    e.Check.Name,
+		Command:  e.Check.Command,
+		Output:   output,
+		ExitCode: exitCode,
+	}
+
+	e.resultCallback <- res
 
 	return nil
 }
