@@ -4,7 +4,6 @@ Package check is used by verdmell to manage the monitoring checks defined by use
 package check
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,11 +16,9 @@ func TestCommandExecutorRun(t *testing.T) {
 		desc string
 		c    *Check
 		r    *Result
-		err  error
 	}{
 		{
 			desc: "Testing command execution",
-			err:  nil,
 			c: &Check{
 				Name:           "test_check",
 				Description:    "testing a command",
@@ -41,7 +38,6 @@ func TestCommandExecutorRun(t *testing.T) {
 		},
 		{
 			desc: "Testing timeout on command execution",
-			err:  nil,
 			c: &Check{
 				Name:           "test_check",
 				Description:    "testing a command",
@@ -61,7 +57,6 @@ func TestCommandExecutorRun(t *testing.T) {
 		},
 		{
 			desc: "Testing non zero exit code",
-			err:  nil,
 			c: &Check{
 				Name:           "test_check",
 				Description:    "testing a command",
@@ -81,9 +76,8 @@ func TestCommandExecutorRun(t *testing.T) {
 		},
 		{
 			desc: "Testing unexisting command",
-			err:  errors.New("(CommandExecutor::Run) exec: \"unexistent\": executable file not found in $PATH"),
 			c: &Check{
-				Name:           "test_chdck",
+				Name:           "test_check",
 				Description:    "testing echo",
 				Command:        "unexistent",
 				Depend:         []string{},
@@ -95,17 +89,14 @@ func TestCommandExecutorRun(t *testing.T) {
 			r: &Result{
 				Check:    "",
 				Command:  "",
-				Output:   "",
+				Output:   "exec: \"unexistent\": executable file not found in $PATH",
 				ExitCode: -1,
 			},
 		},
 	}
 
 	for _, test := range tests {
-		errChan := make(chan error)
 		resultCallback := make(chan *Result)
-		var err error
-		var res *Result
 
 		t.Log(test.desc)
 		ex := &CommandExecutor{
@@ -114,22 +105,14 @@ func TestCommandExecutorRun(t *testing.T) {
 		}
 
 		go func() {
-			rErr := ex.Run()
-			if rErr != nil {
-				errChan <- rErr
-			}
+			ex.Run()
 		}()
-		select {
-		case res = <-resultCallback:
-		case err = <-errChan:
-		}
 
-		if err != nil && assert.Error(t, err) {
-			assert.Equal(t, test.err, err, err.Error())
-		} else {
-			assert.Equal(t, test.r.Output, res.Output, "Unexpected output")
-			assert.Equal(t, test.r.ExitCode, res.ExitCode, "Unexpected exit code")
-		}
+		res := <-resultCallback
+
+		assert.Equal(t, test.r.Output, res.Output, "Unexpected output")
+		assert.Equal(t, test.r.ExitCode, res.ExitCode, "Unexpected exit code")
+
 		close(resultCallback)
 	}
 }
