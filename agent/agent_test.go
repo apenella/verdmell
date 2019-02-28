@@ -13,9 +13,9 @@ import (
 )
 
 func TestValidateGraphEngine(t *testing.T) {
-	mock_id_0 := uint(0)
-	mock_id_1 := uint(1)
-	mock_id_2 := uint(2)
+	mockID0 := uint(0)
+	mockID1 := uint(1)
+	mockID2 := uint(2)
 
 	tests := []struct {
 		desc        string
@@ -32,25 +32,25 @@ func TestValidateGraphEngine(t *testing.T) {
 			configdir:  "../test/conf.d",
 			configfile: "",
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_0,
+						ID:           mockID0,
 						Name:         "Mock 0",
 						Dependencies: []uint{},
 					},
 				},
-				mock_id_1: &engine.MockEngine{
+				mockID1: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_1,
+						ID:           mockID1,
 						Name:         "Mock 1",
-						Dependencies: []uint{mock_id_0},
+						Dependencies: []uint{mockID0},
 					},
 				},
-				mock_id_2: &engine.MockEngine{
+				mockID2: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_2,
+						ID:           mockID2,
 						Name:         "Mock 2",
-						Dependencies: []uint{mock_id_0, mock_id_1},
+						Dependencies: []uint{mockID0, mockID1},
 					},
 				},
 			},
@@ -62,18 +62,18 @@ func TestValidateGraphEngine(t *testing.T) {
 			configdir:  "../test/conf.d",
 			configfile: "",
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_0,
+						ID:           mockID0,
 						Name:         "Mock 0",
-						Dependencies: []uint{mock_id_1},
+						Dependencies: []uint{mockID1},
 					},
 				},
-				mock_id_1: &engine.MockEngine{
+				mockID1: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_1,
+						ID:           mockID1,
 						Name:         "Mock 1",
-						Dependencies: []uint{mock_id_0},
+						Dependencies: []uint{mockID0},
 					},
 				},
 			},
@@ -85,11 +85,11 @@ func TestValidateGraphEngine(t *testing.T) {
 			configdir:  "../test/conf.d",
 			configfile: "",
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_0,
+						ID:           mockID0,
 						Name:         "Mock 0",
-						Dependencies: []uint{mock_id_1},
+						Dependencies: []uint{mockID1},
 					},
 				},
 			},
@@ -100,13 +100,28 @@ func TestValidateGraphEngine(t *testing.T) {
 	for _, test := range tests {
 		t.Log(test.desc)
 		a := &Agent{
-			Loglevel:    test.loglevel,
-			Configdir:   test.configdir,
-			Configfile:  test.configfile,
 			Engines:     test.engines,
 			InitTimeout: test.InitTimeout,
 		}
+		/*
+		   TO BE REVIEW
 
+		   agent_test.go:101: Testing an engine graph with loops.
+		   	 agent_test.go:109:
+		   				 Error Trace:	agent_test.go:109
+		   				 Error:      	Not equal:
+		   											 expected: &errors.errorString{s:"(Agent::validateGraphEngineHelper) Dependency loop with engine 'Mock 1' and engine 'Mock 0'."}
+		   											 actual  : &errors.errorString{s:"(Agent::validateGraphEngineHelper) Dependency loop with engine 'Mock 0' and engine 'Mock 1'."}
+
+		   											 Diff:
+		   											 --- Expected
+		   											 +++ Actual
+		   											 @@ -1,2 +1,2 @@
+		   											 -(*errors.errorString)((Agent::validateGraphEngineHelper) Dependency loop with engine 'Mock 1' and engine 'Mock 0'.)
+		   											 +(*errors.errorString)((Agent::validateGraphEngineHelper) Dependency loop with engine 'Mock 0' and engine 'Mock 1'.)
+
+		   				 Test:       	TestValidateGraphEngine
+		*/
 		err := a.validateGraphEngine()
 		if err != nil && assert.Error(t, err) {
 			assert.Equal(t, test.err, err)
@@ -115,9 +130,9 @@ func TestValidateGraphEngine(t *testing.T) {
 }
 
 func TestSetEngineSubscriptions(t *testing.T) {
-	mock_id_0 := uint(0)
-	mock_id_1 := uint(1)
-	mock_id_2 := uint(2)
+	mockID0 := uint(0)
+	mockID1 := uint(1)
+	mockID2 := uint(2)
 
 	tests := []struct {
 		desc         string
@@ -134,9 +149,9 @@ func TestSetEngineSubscriptions(t *testing.T) {
 			configdir:  "../test/conf.d",
 			configfile: "",
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_0,
+						ID:            mockID0,
 						Name:          "Mock 0",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
@@ -144,21 +159,21 @@ func TestSetEngineSubscriptions(t *testing.T) {
 						Status:        engine.INITIALIZED,
 					},
 				},
-				mock_id_1: &engine.MockEngine{
+				mockID1: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_1,
+						ID:            mockID1,
 						Name:          "Mock 1",
-						Dependencies:  []uint{mock_id_0},
+						Dependencies:  []uint{mockID0},
 						Subscriptions: make(map[chan interface{}]string),
 						InputChannel:  make(chan interface{}),
 						Status:        engine.INITIALIZED,
 					},
 				},
-				mock_id_2: &engine.MockEngine{
+				mockID2: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_2,
+						ID:            mockID2,
 						Name:          "Mock 2",
-						Dependencies:  []uint{mock_id_0, mock_id_1},
+						Dependencies:  []uint{mockID0, mockID1},
 						Subscriptions: make(map[chan interface{}]string),
 						InputChannel:  make(chan interface{}),
 						Status:        engine.INITIALIZED,
@@ -173,9 +188,9 @@ func TestSetEngineSubscriptions(t *testing.T) {
 			configdir:  "../test/conf.d",
 			configfile: "",
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_0,
+						ID:            mockID0,
 						Name:          "Mock 0",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
@@ -183,21 +198,21 @@ func TestSetEngineSubscriptions(t *testing.T) {
 						Status:        engine.STOPPED,
 					},
 				},
-				mock_id_1: &engine.MockEngine{
+				mockID1: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_1,
+						ID:            mockID1,
 						Name:          "Mock 1",
-						Dependencies:  []uint{mock_id_0},
+						Dependencies:  []uint{mockID0},
 						Subscriptions: make(map[chan interface{}]string),
 						InputChannel:  make(chan interface{}),
 						Status:        engine.READY,
 					},
 				},
-				mock_id_2: &engine.MockEngine{
+				mockID2: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_2,
+						ID:            mockID2,
 						Name:          "Mock 2",
-						Dependencies:  []uint{mock_id_0, mock_id_1},
+						Dependencies:  []uint{mockID0, mockID1},
 						Subscriptions: make(map[chan interface{}]string),
 						InputChannel:  make(chan interface{}),
 						Status:        engine.READY,
@@ -211,9 +226,6 @@ func TestSetEngineSubscriptions(t *testing.T) {
 	for _, test := range tests {
 		t.Log(test.desc)
 		a := &Agent{
-			Loglevel:     test.loglevel,
-			Configdir:    test.configdir,
-			Configfile:   test.configfile,
 			Engines:      test.engines,
 			EngineStatus: test.engineStatus,
 		}
@@ -227,7 +239,7 @@ func TestSetEngineSubscriptions(t *testing.T) {
 
 // Test run
 func TestInitialize(t *testing.T) {
-	mock_id_0 := uint(0)
+	mockID0 := uint(0)
 
 	tests := []struct {
 		desc         string
@@ -247,9 +259,9 @@ func TestInitialize(t *testing.T) {
 			configfile:  "",
 			InitTimeout: 30,
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_0,
+						ID:           mockID0,
 						Name:         "Mock 0",
 						Dependencies: []uint{},
 					},
@@ -264,9 +276,9 @@ func TestInitialize(t *testing.T) {
 			configfile:  "",
 			InitTimeout: 1,
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_0,
+						ID:           mockID0,
 						Name:         "Mock 0",
 						Dependencies: []uint{},
 					},
@@ -280,9 +292,6 @@ func TestInitialize(t *testing.T) {
 	for _, test := range tests {
 		t.Log(test.desc)
 		a := &Agent{
-			Loglevel:     test.loglevel,
-			Configdir:    test.configdir,
-			Configfile:   test.configfile,
 			Engines:      test.engines,
 			EngineStatus: test.engineStatus,
 			RunOrder:     test.runOrder,
@@ -291,7 +300,7 @@ func TestInitialize(t *testing.T) {
 			initErrCh:    make(chan error),
 		}
 
-		err := a.initialize()
+		err := a.initializeEngines()
 		if err != nil && assert.Error(t, err) {
 			assert.Equal(t, test.err, err)
 		}
@@ -302,9 +311,9 @@ func TestInitialize(t *testing.T) {
 
 // Test run
 func TestRun(t *testing.T) {
-	mock_id_0 := uint(0)
-	mock_id_1 := uint(1)
-	mock_id_2 := uint(2)
+	mockID0 := uint(0)
+	mockID1 := uint(1)
+	mockID2 := uint(2)
 	mock_id_3 := uint(3)
 
 	tests := []struct {
@@ -325,9 +334,9 @@ func TestRun(t *testing.T) {
 			configfile:   "",
 			readyTimeout: 1,
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_0,
+						ID:            mockID0,
 						Name:          "Mock 0",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
@@ -345,27 +354,27 @@ func TestRun(t *testing.T) {
 			configfile:   "",
 			readyTimeout: 30,
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_0,
+						ID:            mockID0,
 						Name:          "Mock 0",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
 						InputChannel:  make(chan interface{}),
 					},
 				},
-				mock_id_1: &engine.MockEngine{
+				mockID1: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_1,
+						ID:            mockID1,
 						Name:          "Mock 1",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
 						InputChannel:  make(chan interface{}),
 					},
 				},
-				mock_id_2: &engine.MockEngine{
+				mockID2: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_2,
+						ID:            mockID2,
 						Name:          "Mock 2",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
@@ -391,27 +400,27 @@ func TestRun(t *testing.T) {
 			configfile:   "",
 			readyTimeout: 30,
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_0,
+						ID:            mockID0,
 						Name:          "Mock 0",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
 						InputChannel:  make(chan interface{}),
 					},
 				},
-				mock_id_1: &engine.MockEngine{
+				mockID1: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_1,
+						ID:            mockID1,
 						Name:          "Mock 1",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
 						InputChannel:  make(chan interface{}),
 					},
 				},
-				mock_id_2: &engine.MockEngine{
+				mockID2: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:            mock_id_2,
+						ID:            mockID2,
 						Name:          "Mock 2",
 						Dependencies:  []uint{},
 						Subscriptions: make(map[chan interface{}]string),
@@ -429,10 +438,10 @@ func TestRun(t *testing.T) {
 				},
 			},
 			runOrder: []uint{
-				mock_id_2,
+				mockID2,
 				mock_id_3,
-				mock_id_0,
-				mock_id_1,
+				mockID0,
+				mockID1,
 			},
 			err: nil,
 		},
@@ -441,9 +450,6 @@ func TestRun(t *testing.T) {
 	for _, test := range tests {
 		t.Log(test.desc)
 		a := &Agent{
-			Loglevel:     test.loglevel,
-			Configdir:    test.configdir,
-			Configfile:   test.configfile,
 			Engines:      test.engines,
 			EngineStatus: test.engineStatus,
 			RunOrder:     test.runOrder,
@@ -452,7 +458,7 @@ func TestRun(t *testing.T) {
 			readyErrCh:   make(chan error),
 		}
 
-		err := a.run()
+		err := a.runEngines()
 		if err != nil && assert.Error(t, err) {
 			assert.Equal(t, test.err, err)
 		}
@@ -462,8 +468,8 @@ func TestRun(t *testing.T) {
 
 // Start
 func TestStart(t *testing.T) {
-	mock_id_0 := uint(0)
-	mock_id_1 := uint(1)
+	mockID0 := uint(0)
+	mockID1 := uint(1)
 
 	tests := []struct {
 		desc         string
@@ -490,18 +496,18 @@ func TestStart(t *testing.T) {
 			configdir:  "../test/conf.d",
 			configfile: "",
 			engines: map[uint]engine.Engine{
-				mock_id_0: &engine.MockEngine{
+				mockID0: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_0,
+						ID:           mockID0,
 						Name:         "Mock 0",
 						Dependencies: []uint{},
 					},
 				},
-				mock_id_1: &engine.MockEngine{
+				mockID1: &engine.MockEngine{
 					BasicEngine: engine.BasicEngine{
-						ID:           mock_id_1,
+						ID:           mockID1,
 						Name:         "Mock 1",
-						Dependencies: []uint{mock_id_0},
+						Dependencies: []uint{mockID0},
 					},
 				},
 			},
@@ -512,10 +518,7 @@ func TestStart(t *testing.T) {
 	for _, test := range tests {
 		t.Log(test.desc)
 		a := &Agent{
-			Ctx:          nil,
-			Loglevel:     test.loglevel,
-			Configdir:    test.configdir,
-			Configfile:   test.configfile,
+			Context:      nil,
 			Engines:      test.engines,
 			InitTimeout:  test.InitTimeout,
 			ReadyTimeout: test.ReadyTimeout,

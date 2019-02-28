@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"verdmell/configuration"
 	"verdmell/context"
 	"verdmell/engine"
 	"verdmell/utils"
@@ -39,17 +38,13 @@ const (
 	DEFAULT_STOP_TIMEOUT int = 60
 )
 
+// logger manage log
+var logger *message.Message
+
 // Agent is the element that coordinates all components
 type Agent struct {
 	// context
 	Context *context.Context
-
-	// loglevel for agent
-	Loglevel int `json:"loglevel"`
-	// configuration file name
-	Configfile string `json:"configuration_file"`
-	// folder to place configuration
-	Configdir string `json:"configuration_dir"`
 
 	// List of engines
 	Engines      map[uint]engine.Engine `json:"engines"`
@@ -85,7 +80,6 @@ type Agent struct {
 // Start method initialize the agent and the engines, make them run and work together
 func (a *Agent) Start() (int, error) {
 	var err error
-	a.Context.Logger.Debug("(Agent::Start)")
 
 	// initialize agent
 	err = a.init()
@@ -223,27 +217,19 @@ func (a *Agent) String() string {
 	return str
 }
 
-//
-// Private methods
-
-//
-// init method initialize data structures required to agent to be run
+// init method initialize data structures required to run the agent
 func (a *Agent) init() error {
 
-	if a.Context.Logger == nil {
-		a.Context.Logger = message.New(a.Context.Loglevel, os.Stderr, log.LstdFlags)
+	// initialize eng.Context.Logger
+	if logger == nil {
+		logger = message.New(message.INFO, os.Stderr, log.LstdFlags)
 	}
 
-	// generate a configuration
-	configuration, err := configuration.NewConfiguration(a.Context.Configfile, a.Context.Configdir)
-	if err != nil {
-		msg := "(Agent::init) " + err.Error()
-		a.Context.Logger.Error(msg)
-		return errors.New(msg)
+	if a.Context == nil {
+		a.Context = &context.Context{
+			Logger: message.New(message.INFO, os.Stderr, log.LstdFlags),
+		}
 	}
-	a.Context.Host = configuration.IP
-	a.Context.Port = configuration.Port
-	a.Context.Cluster = configuration.Cluster
 
 	// initialize engine status data structure
 	a.EngineStatus = make(map[uint]uint)

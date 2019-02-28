@@ -84,7 +84,8 @@ func NewConfiguration(file string, dir string) (*Configuration, error) {
 	}
 
 	// load configuration from file
-	if err := utils.LoadJSONFile(configurationFile, configuration); err != nil {
+	err = utils.LoadJSONFile(configurationFile, configuration)
+	if err != nil {
 		return nil, err
 	}
 
@@ -102,7 +103,8 @@ func NewConfiguration(file string, dir string) (*Configuration, error) {
 		configuration.Services.LoadTimeout = LOAD_TIMEOUT
 	}
 
-	if err := configuration.ValidateConfiguration(); err != nil {
+	err = configuration.ValidateConfiguration()
+	if err != nil {
 		return nil, err
 	}
 

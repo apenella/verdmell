@@ -101,7 +101,7 @@ func (eng *CheckEngine) Init() error {
 
 	if eng.checksFolder != "" {
 		// Get defined checks
-		if err = eng.LoadChecks(""); err != nil {
+		if err = eng.LoadChecks(); err != nil {
 			return errors.New("(CheckEngine::Init) " + err.Error())
 		}
 	} else {
@@ -218,20 +218,15 @@ func (eng *CheckEngine) CheckExecutor(c *Check) Executor {
 }
 
 // LoadChecks read checks from configuration and loads them to the engine
-func (eng *CheckEngine) LoadChecks(folder string) error {
+func (eng *CheckEngine) LoadChecks() error {
 	checksChan := make(chan []*Check)
 	checksChanErr := make(chan error)
-
-	// files is an array with all files found inside the folder
-	if folder == "" {
-		folder = eng.checksFolder
-	}
-	files := utils.GetFolderFiles(folder)
+	files := utils.GetFolderFiles(eng.checksFolder)
 
 	// call the goroutine for each file
 	for _, file := range files {
 		go func(f os.FileInfo) {
-			checks, err := retrieveChecksFromFile(folder + string(os.PathSeparator) + f.Name())
+			checks, err := retrieveChecksFromFile(eng.checksFolder + string(os.PathSeparator) + f.Name())
 			if err != nil {
 				checksChanErr <- err
 			} else {

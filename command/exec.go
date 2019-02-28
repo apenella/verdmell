@@ -14,15 +14,42 @@ import (
 	"github.com/apenella/messageOutput"
 )
 
+var configuration *configuration.Configuration
+
 // ExecCommand
 type ExecCommand struct{}
 
 // Run starts the agent and set the context and the engines
 func (c *ExecCommand) Run(args []string) int {
 	var loglevel int
+	var configfile string
+	var configdir string
+	var checks utils.StringList
 
 	flags := flag.NewFlagSet("exec", flag.ContinueOnError)
 	flags.Usage = func() { c.Help() }
+
+	flags.IntVar(&loglevel, "loglevel", 0, "Loglevel definition [0: INFO | 1: WARN | 2: ERROR | 3: DEBUG]")
+	flags.StringVar(&configfile, "configfile", "", "Configuration file")
+	flags.StringVar(&configdir, "configdir", "", "Folder where configuration is placed")
+	flags.Var(&checks, "check", "Checks to execute")
+
+	err := flags.Parse(args)
+	if err != nil {
+		return 1
+	}
+
+	// generate a configuration
+	configuration, err := configuration.NewConfiguration(configfile, configdir)
+	if err != nil {
+		msg := "(Agent::init) " + err.Error()
+		ctx.Logger.Error(msg)
+		return 1
+	}
+
+	ctx.Logger.SetLogLevel(loglevel)
+	ctx.Configdir = configuration.Checks.Folder
+	ctx.Configfile = configuration.Services.Folder
 
 	logger := message.GetMessager()
 
@@ -30,7 +57,12 @@ func (c *ExecCommand) Run(args []string) int {
 	e := make(map[uint]engine.Engine)
 
 	ctx := &context.Context{
-		Logger: logger,
+		Logger:         logger,
+		Host:           configuration.IP,
+		Port:           configuration.Port,
+		ChecksFolder:   configuration.Checks.Folder,
+		ServicesFolder: configuration.Services.Folder,
+		Cluster:        configuration.Cluster,
 	}
 
 	// Create check an empty check engine
@@ -45,26 +77,13 @@ func (c *ExecCommand) Run(args []string) int {
 	// In that case the client is an ClientExec
 	cl := &client.Client{
 		Context: ctx,
+		Worker: &client.Exec{
+			Engine:  ch,
+			Context: ctx,
+			Checks:  checks,
+		},
 	}
 	e[engine.CLIENT] = cl
-
-	ce := &client.Exec{
-		Engine:  ch,
-		Context: ctx,
-	}
-
-	flags.IntVar(&loglevel, "loglevel", 0, "Loglevel definition [0: INFO | 1: WARN | 2: ERROR | 3: DEBUG]")
-	flags.StringVar(&ctx.Configfile, "configfile", "", "Configuration file")
-	flags.StringVar(&ctx.Configdir, "configdir", "", "Folder where configuration is placed")
-	flags.Var(&ce.Checks, "check", "Checks to execute")
-
-	err := flags.Parse(args)
-	if err != nil {
-		return 1
-	}
-
-	ctx.Logger.SetLogLevel(loglevel)
-	cl.Worker = ce
 
 	// Create an agent
 	a := &agent.Agent{
