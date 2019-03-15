@@ -2,11 +2,13 @@ package command
 
 import (
 	"flag"
+	"fmt"
 	"time"
 
 	"verdmell/agent"
 	"verdmell/check"
 	"verdmell/client"
+	config "verdmell/configuration"
 	"verdmell/context"
 	"verdmell/engine"
 	"verdmell/utils"
@@ -14,7 +16,7 @@ import (
 	"github.com/apenella/messageOutput"
 )
 
-var configuration *configuration.Configuration
+var configuration *config.Configuration
 
 // ExecCommand
 type ExecCommand struct{}
@@ -40,22 +42,15 @@ func (c *ExecCommand) Run(args []string) int {
 	}
 
 	// generate a configuration
-	configuration, err := configuration.NewConfiguration(configfile, configdir)
+	configuration, err := config.NewConfiguration(configfile, configdir)
 	if err != nil {
-		msg := "(Agent::init) " + err.Error()
-		ctx.Logger.Error(msg)
+		msg := "(ExecCommand::Run) " + err.Error()
+		fmt.Println(msg)
+		//		log.Fatalln(msg)
 		return 1
 	}
 
-	ctx.Logger.SetLogLevel(loglevel)
-	ctx.Configdir = configuration.Checks.Folder
-	ctx.Configfile = configuration.Services.Folder
-
 	logger := message.GetMessager()
-
-	// Data structure to set the engines required by agent
-	e := make(map[uint]engine.Engine)
-
 	ctx := &context.Context{
 		Logger:         logger,
 		Host:           configuration.IP,
@@ -64,6 +59,10 @@ func (c *ExecCommand) Run(args []string) int {
 		ServicesFolder: configuration.Services.Folder,
 		Cluster:        configuration.Cluster,
 	}
+	ctx.Logger.SetLogLevel(loglevel)
+
+	// Data structure to set the engines required by agent
+	e := make(map[uint]engine.Engine)
 
 	// Create check an empty check engine
 	ch := &check.CheckEngine{

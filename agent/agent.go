@@ -204,7 +204,7 @@ func (a *Agent) Status() int {
 }
 
 //
-// String method transform the Configuration to string
+// String method transform the Agent to string
 func (a *Agent) String() string {
 	var err error
 	var str string
